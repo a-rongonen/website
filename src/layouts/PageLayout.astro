@@ -15,7 +15,6 @@ const path = Astro.url.pathname
 const canonical = new URL(path, Astro.site);
 const navigation = [
   { href: '/', label: 'Home' },
-  { href: '/cv', label: 'CV' },
   { href: '/en/portfolio', label: 'Portfolio' },
   { href: '/en/blog', label: 'Blog' },
 ];
@@ -29,16 +28,10 @@ const navigation = [
     <title>{title} | rongonen.fi</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {isCv && (
-      <>
-        <link rel="alternate" hreflang="en" href={new URL('/cv', Astro.site)} />
-        <link rel="alternate" hreflang="fi" href={new URL('/cv-fi', Astro.site)} />
-      </>
-    )}
   </head>
-  <body>
+  <body class:list={{ 'cv-page': isCv }}>
     <a class="skip-link" href="#main">{lang === 'fi' ? 'Siirry sisältöön' : 'Skip to content'}</a>
-    <header>
+    {!isCv && <header>
       <a href="/" lang="en">rongonen.fi</a>
       <nav aria-label={lang === 'fi' ? 'Päänavigaatio (englanniksi)' : 'Main navigation'} lang="en">
         <ul>
@@ -47,16 +40,8 @@ const navigation = [
           ))}
         </ul>
       </nav>
-    </header>
+    </header>}
     <main id="main">
-      {isCv && (
-        <nav aria-label={lang === 'fi' ? 'CV:n kieli' : 'CV language'}>
-          <ul>
-            <li><a href="/cv" lang="en" hreflang="en" aria-current={lang === 'en' ? 'page' : undefined}>English</a></li>
-            <li><a href="/cv-fi" lang="fi" hreflang="fi" aria-current={lang === 'fi' ? 'page' : undefined}>Suomi</a></li>
-          </ul>
-        </nav>
-      )}
       <slot />
     </main>
   </body>

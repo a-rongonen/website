@@ -1,8 +1,6 @@
 ---
-import PageLayout from '../layouts/PageLayout.astro';
+import CvLayout from '../layouts/CvLayout.astro';
+import { cvFinnish } from '../data/cv';
 ---
 
-<PageLayout title="CV — Suomi" description="Suomenkielinen CV — tulossa pian." lang="fi" isCv>
-  <h1>CV</h1>
-  <p>Tulossa pian.</p>
-</PageLayout>
+<CvLayout content={cvFinnish} />

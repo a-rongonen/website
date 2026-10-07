@@ -1,6 +1,6 @@
 # rongonen.fi
 
-A minimal static Astro foundation for a personal website. The initial pages deliberately contain only placeholders. Content structure, CV and portfolio material, and visual direction will be designed with the owner later.
+A static Astro personal website. Both CV pages implement the owner's approved structure with clearly labelled placeholder copy and a portrait silhouette. Home, Portfolio, and Blog remain simple placeholders; final content will be provided by the owner.
 
 ## Run locally
 
@@ -35,15 +35,23 @@ Before publishing a change, run `npm run check` and `npm run build`. A local pre
 | `/en/portfolio` | English | `src/pages/en/portfolio.astro` |
 | `/en/blog` | English | `src/pages/en/blog.astro` |
 
-Only the CV has two language versions. The CV pages link to each other; the homepage, portfolio, and blog are English. The homepage stays at `/` without a language redirect.
+Only the CV has two language versions; the homepage, portfolio, and blog are English. The homepage stays at `/` without a language redirect.
 
-- `src/layouts/PageLayout.astro` contains the shared HTML, navigation, basic CSS, canonical URLs, and CV language links.
+The visible site structure is **Home → Portfolio / Blog**. Keep `/cv` and `/cv-fi` as orphan pages reached by direct URL: no links to either CV from any page or navigation, no links between the CVs, and no language switcher. Omit alternate-language cross-links and exclude both CV routes from any future sitemap. Keep each page’s own canonical URL and correct HTML language.
+
+Both CV routes pass localized content to `src/layouts/CvLayout.astro`, with shared styles in `src/styles/cv.css`. The template provides the name/portrait area, Profile, Strengths, Skills, and Work and studies. Textured section backgrounds, dark glass cards, unique SVG icons, and alternating table rows follow the owner's structure brief.
+
+Edit the English and Finnish text in `src/data/cv.ts`; its `CvContent` type defines the common content shape. Cards are stored in mobile reading order: first left, first right, second left, second right. A small browser enhancement packs different-height cards into desktop columns; without JavaScript they remain a regular two-column grid. Below 700px all cards use one column in their original reading order.
+
+To replace the silhouette, add the approved transparent PNG to `public/images/` and set each language's optional `portrait` field to `{ src: '/images/your-portrait.png', alt: 'Localized description' }`. The image sits flush with the hero's lower boundary. Keep the asset out of `public/` until it is approved for publication. Replace placeholder copy and table rows with supplied facts only.
+
+- `src/layouts/PageLayout.astro` contains shared HTML, canonical URLs, and basic site navigation; the CV view omits the site header. There are no CV navigation or alternate-language links.
 - `src/pages/404.astro` supplies the missing-page message.
 - `astro.config.mjs` sets the canonical domain to `https://rongonen.fi`. The live domain connection is configured separately in `wrangler.jsonc`.
 - `public/`, if needed later, is for files copied directly to the public website. Never place private material there.
 - `ignored-files/` holds local planning notes and is excluded from Git. The implementation plan records the agreed scope; `operations-handover.md` records machine-specific access, deployment identifiers, verification, and troubleshooting lessons. These files are not included in a fresh clone. Older context documents contain superseded proposals. No credentials belong there.
 
-There is no CV content model, portfolio content model, blog publishing system, sitemap, RSS, or analytics yet. Those will be added when their content and design are agreed. Do not add sample experience or projects to fill the placeholders.
+There is no portfolio content model, blog publishing system, sitemap, RSS, or analytics yet. Those will be added when their content and design are agreed. Do not add sample experience or projects to fill the placeholders.
 
 ## Hosting
 

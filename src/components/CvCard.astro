@@ -1,0 +1,10 @@
+---
+import CvIcon from './CvIcon.astro';
+import type { CvCard } from '../data/cv';
+interface Props { card: CvCard }
+const { card } = Astro.props;
+---
+<article class="cv-card glass">
+  <h3><CvIcon name={card.icon} /><span>{card.title}</span></h3>
+  <p>{card.text}</p>
+</article>

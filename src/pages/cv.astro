@@ -1,8 +1,6 @@
 ---
-import PageLayout from '../layouts/PageLayout.astro';
+import CvLayout from '../layouts/CvLayout.astro';
+import { cvEnglish } from '../data/cv';
 ---
 
-<PageLayout title="CV" description="English CV — coming soon." isCv>
-  <h1>CV</h1>
-  <p>Coming soon.</p>
-</PageLayout>
+<CvLayout content={cvEnglish} />

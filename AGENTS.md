@@ -11,6 +11,8 @@
 - Use Astro file-based pages and a shared layout. No server rendering, Cloudflare adapter, client framework, database, or CMS is needed.
 - The host is Cloudflare Workers Static Assets, Worker `website`, connected to `a-rongonen/website` for builds from `main`. `site` is `https://rongonen.fi`. Keep the Worker name and custom domain in `wrangler.jsonc` consistent with Cloudflare.
 - Use `/` for the English homepage, `/cv` for the English CV, `/cv-fi` for the Finnish CV, `/en/portfolio` for the English portfolio, and `/en/blog` for the English blog. Only the CV has language alternatives. Do not introduce whole-site language prefixes or a root redirect.
+- The visible site structure is Home → Portfolio / Blog. Keep both CV routes orphaned: no links to them from any page or navigation, no links between them, and no language switcher. Omit alternate-language cross-links and exclude the CVs from any future sitemap.
+- Both CV routes render `src/layouts/CvLayout.astro` with shared styles in `src/styles/cv.css` and localized content in `src/data/cv.ts`. Keep this shared structure and the orphan-page behavior when editing either language.
 - Preserve these URLs without trailing slashes. Static output uses `build.format: 'file'`; Cloudflare uses `html_handling: 'drop-trailing-slash'` and `not_found_handling: '404-page'`.
 - Keep build-time pathname normalization in `PageLayout.astro`: file-format builds expose `.html` paths, which must not leak into canonical URLs or break current-navigation matching.
 - The `www` 301 redirect is a Cloudflare zone Single Redirect plus a proxied DNS record, separate from Wrangler. Preserve paths, queries, and both HTTP/HTTPS support. README documents the rule. Do not recreate the Worker or GitHub connection when continuing setup.
@@ -25,7 +27,7 @@
 
 - The first launch may use plain “coming soon” placeholders. The user leads content design and will provide CV/portfolio structure, content, and style direction later.
 - Do not invent biographical details, CV sections, project descriptions, content blocks, sample articles, or visual design requirements.
-- Keep HTML semantic, navigation keyboard-accessible, and layouts usable on small screens. Keep canonical URLs and page languages accurate; language alternatives belong only on the two CV pages.
+- Keep HTML semantic, navigation keyboard-accessible, and layouts usable on small screens. Keep each page’s canonical URL and HTML language accurate without adding links to either CV language version.
 - A blog content system, sitemap, RSS, and analytics are later steps, not prerequisites for the placeholder foundation.
 
 ## Verification and Git

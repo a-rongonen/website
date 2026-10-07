@@ -1,0 +1,83 @@
+---
+import PageLayout from './PageLayout.astro';
+import CvCard from '../components/CvCard.astro';
+import CvIcon from '../components/CvIcon.astro';
+import type { CvContent } from '../data/cv';
+import '../styles/cv.css';
+interface Props { content: CvContent }
+const { content } = Astro.props;
+---
+<PageLayout title={content.title} description={content.description} lang={content.lang} isCv>
+  <header class="cv-hero textured">
+    <div class="cv-container hero-inner">
+      <div class="hero-copy">
+        <p class="cv-eyebrow">{content.draft}</p>
+        <h1>{content.name}</h1>
+      </div>
+      <div class="cv-portrait">
+        {content.portrait ? (
+          <img src={content.portrait.src} alt={content.portrait.alt} width="480" height="560" fetchpriority="high" />
+        ) : (
+          <>
+            <svg class="portrait-placeholder" viewBox="0 0 320 380" aria-hidden="true" focusable="false">
+              <ellipse cx="160" cy="118" rx="67" ry="82" />
+              <path d="M124 177h72l9 36c65 14 100 65 110 167H5c10-102 45-153 110-167Z" />
+            </svg>
+            <span class="portrait-label">{content.portraitLabel}</span>
+          </>
+        )}
+      </div>
+    </div>
+  </header>
+
+  <section class="cv-section cv-profile textured" aria-labelledby="profile-heading">
+    <div class="cv-container">
+      <h2 id="profile-heading">{content.profile.heading}</h2>
+      <div class="glass profile-card"><p>{content.profile.text}</p></div>
+    </div>
+  </section>
+
+  {[{ id: 'strengths', ...content.strengths }, { id: 'skills', ...content.skills }].map(section => (
+    <section class={`cv-section cv-${section.id} textured`} aria-labelledby={`${section.id}-heading`}>
+      <div class="cv-container">
+        <h2 id={`${section.id}-heading`}>{section.heading}</h2>
+        <div class="cv-cards" data-card-stack>
+          {section.cards.map(card => <CvCard card={card} />)}
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <section class="cv-section cv-history textured" aria-labelledby="history-heading">
+    <div class="cv-container">
+      <h2 id="history-heading">{content.history.heading}</h2>
+      <div class="glass history-card">
+        <table>
+          <caption><span><CvIcon name="briefcase" />{content.history.tableTitle}</span></caption>
+          <thead><tr>{content.history.columns.map(column => <th scope="col">{column}</th>)}</tr></thead>
+          <tbody>{content.history.rows.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</tbody>
+        </table>
+      </div>
+      <div class="cv-cards" data-card-stack>
+        {content.history.cards.map(card => <CvCard card={card} />)}
+      </div>
+    </div>
+  </section>
+</PageLayout>
+
+<script>
+  // Small progressive enhancement: pack uneven cards while keeping the DOM in
+  // left/right reading order. Without JS, the same cards form a regular grid.
+  for (const stack of document.querySelectorAll<HTMLElement>('[data-card-stack]')) {
+    const cards = Array.from(stack.querySelectorAll<HTMLElement>('.cv-card'));
+    const observer = new ResizeObserver(() => {
+      const desktop = window.matchMedia('(min-width: 700px)').matches;
+      stack.classList.toggle('is-packed', desktop);
+      for (const card of cards) {
+        card.style.gridRowEnd = desktop ? `span ${Math.ceil(card.getBoundingClientRect().height) + 24}` : '';
+      }
+    });
+    for (const card of cards) observer.observe(card);
+    observer.observe(stack);
+  }
+</script>
