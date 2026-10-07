@@ -47,13 +47,20 @@ There is no CV content model, portfolio content model, blog publishing system, s
 
 ## Hosting
 
-The hosting target is **Cloudflare Workers Static Assets**, Worker `rongonen-website`, with source in [a-rongonen/website](https://github.com/a-rongonen/website). `wrangler.jsonc` contains deployment configuration. Public deployment and the GitHub build connection still need verification; this section will record their URLs when setup succeeds.
+The site uses **Cloudflare Workers Static Assets**, Worker `website`, with source in [a-rongonen/website](https://github.com/a-rongonen/website). `wrangler.jsonc` contains the account, Worker name, static-asset settings, and `rongonen.fi` custom domain.
+
+- Public site: [rongonen.fi](https://rongonen.fi)
+- Cloudflare address: [website.aleksanteri-rongonen1.workers.dev](https://website.aleksanteri-rongonen1.workers.dev)
+- Worker dashboard: [website on Cloudflare](https://dash.cloudflare.com/e42f3d2616075ff3e985c02dedbcfcbe/workers/services/view/website/production)
+- Production branch: `main`. This repository is connected to Workers Builds; check its Builds tab after each push. A successful Git push does not itself confirm a successful deployment.
 
 The build produces `index.html` plus individual HTML files such as `cv.html` and `en/blog.html`. Wrangler serves `./dist`, with `assets.html_handling: 'drop-trailing-slash'` and `assets.not_found_handling: '404-page'`. This preserves the requested URLs and serves the custom 404 with an HTTP 404 status. No Astro Cloudflare adapter or server rendering is required.
 
-Use **Node 24.12.0** in Cloudflare too, through `.node-version` or the `NODE_VERSION` build variable. Workers Builds should use production branch `main`, repository root, build command `npm run check && npm run build`, and deploy command `npx wrangler deploy`. The Worker name must match `rongonen-website` in `wrangler.jsonc`.
+Use **Node 24.12.0** in Cloudflare too, through `.node-version` or the `NODE_VERSION` build variable. Workers Builds uses production branch `main`, repository root, build command `npm run check && npm run build`, and deploy command `npx wrangler deploy`. The Worker name must match `website` in `wrangler.jsonc`. Branch preview URLs are disabled for the initial setup.
 
-Cloudflare API credentials are supplied outside the repository through the command environment. Never store them in this project or print them. Connecting automatic GitHub builds may require the owner's approval of Cloudflare's GitHub app. OVHcloud remains the domain registrar. No existing website needs to stay available during setup, but unrelated DNS records, including mail, must be preserved.
+Cloudflare API credentials are supplied outside the repository through the command environment. Never store them in this project or print them. The Cloudflare GitHub app has already been connected for this repository. OVHcloud remains the domain registrar. Preserve unrelated DNS records, including mail, during hosting changes. The `www` redirect still needs the zone's Single Redirect permission and is not configured yet.
+
+To undo a published code change, create a Git revert commit for that change and push it, then confirm the resulting Cloudflare build succeeds. Worker configuration and root-domain attachment live in `wrangler.jsonc`; GitHub build settings and any zone redirect rules live in Cloudflare's dashboard. Keep them documented here when changed.
 
 The `miniflare` dependency override selects the patched `sharp` 0.35.5 release for Wrangler's local image tooling (GHSA-wq5f-xc86-pv6w). Remove the override once Wrangler's dependency includes that fix, and verify local Cloudflare preview after changing it.
 

@@ -9,9 +9,9 @@
 - Use conventional static Astro, npm, and the committed `package-lock.json`.
 - Use Node.js 24.12.0, recorded in `.node-version`. Record any intentional version change in the documentation too.
 - Use Astro file-based pages and a shared layout. No server rendering, Cloudflare adapter, client framework, database, or CMS is needed.
-- The intended host is Cloudflare Workers Static Assets, with GitHub-based automatic deployment configured in a later step. `site` is `https://rongonen.fi`.
+- The host is Cloudflare Workers Static Assets, Worker `website`, connected to `a-rongonen/website` for builds from `main`. `site` is `https://rongonen.fi`. Keep the Worker name and custom domain in `wrangler.jsonc` consistent with Cloudflare.
 - Use `/` for the English homepage, `/cv` for the English CV, `/cv-fi` for the Finnish CV, `/en/portfolio` for the English portfolio, and `/en/blog` for the English blog. Only the CV has language alternatives. Do not introduce whole-site language prefixes or a root redirect.
-- Preserve these URLs without trailing slashes. Static output uses `build.format: 'file'`; configure Cloudflare HTML handling to match when deployment is added.
+- Preserve these URLs without trailing slashes. Static output uses `build.format: 'file'`; Cloudflare uses `html_handling: 'drop-trailing-slash'` and `not_found_handling: '404-page'`.
 
 ## Content and design
 
