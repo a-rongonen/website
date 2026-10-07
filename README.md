@@ -39,9 +39,9 @@ Only the CV has two language versions. The CV pages link to each other; the home
 
 - `src/layouts/PageLayout.astro` contains the shared HTML, navigation, basic CSS, canonical URLs, and CV language links.
 - `src/pages/404.astro` supplies the missing-page message.
-- `astro.config.mjs` sets the future canonical domain to `https://rongonen.fi`. That setting does not publish the website or connect the domain.
+- `astro.config.mjs` sets the canonical domain to `https://rongonen.fi`. The live domain connection is configured separately in `wrangler.jsonc`.
 - `public/`, if needed later, is for files copied directly to the public website. Never place private material there.
-- `ignored-files/` holds local planning notes and is excluded from Git. Read the updated implementation plan there for the agreed scope; older context documents contain superseded proposals. No credentials belong there.
+- `ignored-files/` holds local planning notes and is excluded from Git. The implementation plan records the agreed scope; `operations-handover.md` records machine-specific access, deployment identifiers, verification, and troubleshooting lessons. These files are not included in a fresh clone. Older context documents contain superseded proposals. No credentials belong there.
 
 There is no CV content model, portfolio content model, blog publishing system, sitemap, RSS, or analytics yet. Those will be added when their content and design are agreed. Do not add sample experience or projects to fill the placeholders.
 
@@ -68,6 +68,6 @@ The `miniflare` dependency override selects the patched `sharp` 0.35.5 release f
 
 ## Git workflow
 
-Saving changes local files. A commit records a checkpoint. A push sends commits to GitHub. Once Cloudflare automatic deployment is configured, a push to `main` publishes only after its build and deployment succeed.
+Saving changes local files. A commit records a checkpoint. A push sends commits to GitHub. Cloudflare automatic deployment is configured: every push to `main`, including documentation changes, starts a production build and publishes after that build and deployment succeed.
 
 Review `git status` and `git diff` before committing; inspect new files too. Commit source files and `package-lock.json`. Generated folders (`node_modules/`, `dist/`, `.astro/`) and local planning notes stay ignored. Prefer Bash or Python for custom scripts; do not add PowerShell scripts without the owner's agreement.
