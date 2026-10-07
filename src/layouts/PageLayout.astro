@@ -1,0 +1,91 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  lang?: 'en' | 'fi';
+  isCv?: boolean;
+}
+
+const { title, description, lang = 'en', isCv = false } = Astro.props;
+// File-format builds expose .html here; public URLs stay extensionless.
+const path = Astro.url.pathname
+  .replace(/\/index\.html$/, '/')
+  .replace(/\.html$/, '')
+  .replace(/\/$/, '') || '/';
+const canonical = new URL(path, Astro.site);
+const navigation = [
+  { href: '/', label: 'Home' },
+  { href: '/cv', label: 'CV' },
+  { href: '/en/portfolio', label: 'Portfolio' },
+  { href: '/en/blog', label: 'Blog' },
+];
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} | rongonen.fi</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {isCv && (
+      <>
+        <link rel="alternate" hreflang="en" href={new URL('/cv', Astro.site)} />
+        <link rel="alternate" hreflang="fi" href={new URL('/cv-fi', Astro.site)} />
+      </>
+    )}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{lang === 'fi' ? 'Siirry sisältöön' : 'Skip to content'}</a>
+    <header>
+      <a href="/" lang="en">rongonen.fi</a>
+      <nav aria-label={lang === 'fi' ? 'Päänavigaatio (englanniksi)' : 'Main navigation'} lang="en">
+        <ul>
+          {navigation.map(({ href, label }) => (
+            <li><a href={href} aria-current={path === href ? 'page' : undefined}>{label}</a></li>
+          ))}
+        </ul>
+      </nav>
+    </header>
+    <main id="main">
+      {isCv && (
+        <nav aria-label={lang === 'fi' ? 'CV:n kieli' : 'CV language'}>
+          <ul>
+            <li><a href="/cv" lang="en" hreflang="en" aria-current={lang === 'en' ? 'page' : undefined}>English</a></li>
+            <li><a href="/cv-fi" lang="fi" hreflang="fi" aria-current={lang === 'fi' ? 'page' : undefined}>Suomi</a></li>
+          </ul>
+        </nav>
+      )}
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style is:global>
+  body {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-family: system-ui, sans-serif;
+    line-height: 1.6;
+    color: #222;
+    background: #fff;
+  }
+
+  nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  main { margin-top: 3rem; }
+  a { color: #174ea6; }
+  a[aria-current='page'] { font-weight: bold; }
+  :focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+
+  .skip-link { position: absolute; left: -10000px; }
+  .skip-link:focus { position: static; }
+</style>
