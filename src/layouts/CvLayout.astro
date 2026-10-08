@@ -2,13 +2,16 @@
 import PageLayout from './PageLayout.astro';
 import CvCard from '../components/CvCard.astro';
 import CvIcon from '../components/CvIcon.astro';
+import CvNetwork from '../components/CvNetwork.astro';
+import { networkSectionStyle } from '../data/cv-network';
 import type { CvContent } from '../data/cv';
 import '../styles/cv.css';
 interface Props { content: CvContent }
 const { content } = Astro.props;
 ---
 <PageLayout title={content.title} description={content.description} lang={content.lang} isCv>
-  <header class="cv-hero textured">
+  <CvNetwork />
+  <header class="cv-hero cv-network-section" data-network-section="hero" style={networkSectionStyle('hero')}>
     <div class="cv-container hero-inner">
       <div class="hero-copy">
         <p class="cv-eyebrow">{content.draft}</p>
@@ -30,15 +33,15 @@ const { content } = Astro.props;
     </div>
   </header>
 
-  <section class="cv-section cv-profile textured" aria-labelledby="profile-heading">
+  <section class="cv-section cv-profile cv-network-section" data-network-section="profile" style={networkSectionStyle('profile')} aria-labelledby="profile-heading">
     <div class="cv-container">
       <h2 id="profile-heading">{content.profile.heading}</h2>
       <div class="glass profile-card"><p>{content.profile.text}</p></div>
     </div>
   </section>
 
-  {[{ id: 'strengths', ...content.strengths }, { id: 'skills', ...content.skills }].map(section => (
-    <section class={`cv-section cv-${section.id} textured`} aria-labelledby={`${section.id}-heading`}>
+  {[{ id: 'strengths' as const, ...content.strengths }, { id: 'skills' as const, ...content.skills }].map(section => (
+    <section class={`cv-section cv-${section.id} cv-network-section`} data-network-section={section.id} style={networkSectionStyle(section.id)} aria-labelledby={`${section.id}-heading`}>
       <div class="cv-container">
         <h2 id={`${section.id}-heading`}>{section.heading}</h2>
         <div class="cv-cards" data-card-stack>
@@ -48,7 +51,7 @@ const { content } = Astro.props;
     </section>
   ))}
 
-  <section class="cv-section cv-history textured" aria-labelledby="history-heading">
+  <section class="cv-section cv-history cv-network-section" data-network-section="history" style={networkSectionStyle('history')} aria-labelledby="history-heading">
     <div class="cv-container">
       <h2 id="history-heading">{content.history.heading}</h2>
       <div class="glass history-card">

@@ -1,0 +1,20 @@
+<cv-network aria-hidden="true"><canvas></canvas></cv-network>
+
+<script>
+  import { startNetwork } from '../scripts/cv-network';
+
+  class CvNetwork extends HTMLElement {
+    private cleanup?: () => void;
+
+    connectedCallback() {
+      if (!this.cleanup) this.cleanup = startNetwork(this);
+    }
+
+    disconnectedCallback() {
+      this.cleanup?.();
+      this.cleanup = undefined;
+    }
+  }
+
+  if (!customElements.get('cv-network')) customElements.define('cv-network', CvNetwork);
+</script>

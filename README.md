@@ -39,7 +39,7 @@ Only the CV has two language versions; the homepage, portfolio, and blog are Eng
 
 The visible site structure is **Home → Portfolio / Blog**. Keep `/cv` and `/cv-fi` as orphan pages reached by direct URL: no links to either CV from any page or navigation, no links between the CVs, and no language switcher. Omit alternate-language cross-links and exclude both CV routes from any future sitemap. Keep each page’s own canonical URL and correct HTML language.
 
-Both CV routes pass localized content to `src/layouts/CvLayout.astro`, with shared styles in `src/styles/cv.css`. The template provides the name/portrait area, Profile, Strengths, Skills, and Work and studies. Textured section backgrounds, dark glass cards, unique SVG icons, and alternating table rows follow the owner's structure brief.
+Both CV routes pass localized content to `src/layouts/CvLayout.astro`, with shared styles in `src/styles/cv.css`. The template provides the name/portrait area, Profile, Strengths, Skills, and Work and studies. Section-colored 3D network backgrounds, dark glass cards, unique SVG icons, and alternating table rows follow the owner's structure and visual direction.
 
 Edit the English and Finnish text in `src/data/cv.ts`; its `CvContent` type defines the common content shape. Cards are stored in mobile reading order: first left, first right, second left, second right. A small browser enhancement packs different-height cards into desktop columns; without JavaScript they remain a regular two-column grid. Below 700px all cards use one column in their original reading order.
 
@@ -52,6 +52,34 @@ To replace the silhouette, add the approved transparent PNG to `public/images/` 
 - `ignored-files/` holds local planning notes and is excluded from Git. The implementation plan records the agreed scope; `operations-handover.md` records machine-specific access, deployment identifiers, verification, and troubleshooting lessons. These files are not included in a fresh clone. Older context documents contain superseded proposals. No credentials belong there.
 
 There is no portfolio content model, blog publishing system, sitemap, RSS, or analytics yet. Those will be added when their content and design are agreed. Do not add sample experience or projects to fill the placeholders.
+
+## CV network background
+
+Both CV languages share a lightweight Canvas2D renderer that projects real 3D nodes and connections. There is no new runtime dependency. One continuous mesh and camera span the entire CV. Section masks change only its colors: a line crossing a boundary stays connected and changes color exactly at that boundary. Perspective makes nearby nodes move faster than distant nodes during scrolling. The mesh repeats vertically with connections between neighboring repeats, so it covers any CV length without restarting at headings.
+
+Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run dev` is running. Build again to update a production preview. Use six-digit hex colors.
+
+| Setting | Effect |
+| --- | --- |
+| `defaults.baseColor`, `centerColor`, `edgeColor` | Shared node/line color, gradient center, and gradient edges (black by default). |
+| `sections.hero/profile/strengths/skills/history` | Override any of those three colors for each section. Existing base/center overrides take precedence over defaults. |
+| `nodeCount` | Nodes in the shared repeating volume; capped at 600. Mobile uses `mobileNodeRatio`. |
+| `scene.width/height/depth` | Size of the 3D volume in world units; height is its vertical repeat period. More depth increases perspective differences. |
+| `connectionRadius`, `connectionFrequency` | Link nearby nodes within this 3D radius, with a probability from 0 to 1. |
+| `maxConnectionsPerNode` | Limit visual density and drawing work; capped at 12. |
+| `lineWidth`, `nodeSize` | Line width and dot radius in CSS pixels; dot size also responds to perspective. Zero hides either primitive. |
+| `depthDarkening` | 0 gives constant color; 1 gives the strongest fade toward black with depth. Lines interpolate their endpoints' node colors. |
+| `cameraDistance` | Distance to the scene center; lower values zoom in. Clamped outside half the scene diagonal so rotated nodes cannot cross the camera. |
+| `parallax` | Scroll-driven camera travel (0–2). Zero makes a static projection scroll with the document. |
+| `motion.enabled`, `motion.drift`, `motion.autoRotation` | Optional idle motion. Disabled by default. Drift is world-unit amplitude; autoRotation is the speed of a subtle oscillating yaw, not full revolutions. |
+| `mobileBreakpoint`, `mobileNodeRatio`, `maxPixelRatio` | Responsive density and rendering resolution limits. |
+| `seed` | Repeatable arrangement; change for a new network. |
+
+For example, change `sections.skills.centerColor` for its background, `sections.skills.baseColor` for its dots and lines, or add `edgeColor: '#080808'` to that section to replace its black edges with dark gray.
+
+The viewport-sized canvas draws only visible sections, precomputes connections, coalesces scroll updates, and stops when idle or the tab is hidden. It sits behind the existing content and cannot intercept clicks. Reduced-motion preferences disable parallax and idle animation; a static projection continues across the sections and scrolls with the document. Printing hides the canvas; CSS gradients and all CV content remain available without JavaScript.
+
+Implementation: `src/components/CvNetwork.astro`, `src/scripts/cv-network.ts`, and the pure geometry module `src/scripts/cv-network-scene.ts`. Run `node --test tests/cv-network-scene.test.mjs` for the geometry regression checks, plus the usual `npm run check` and `npm run build`. Browser review should cover both CV routes, section boundaries, narrow screens, scroll depth, and reduced motion.
 
 ## Hosting
 
