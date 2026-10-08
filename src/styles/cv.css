@@ -21,7 +21,10 @@
 cv-network {
   display: block;
   position: fixed;
-  inset: 0;
+  inset: 0 0 auto;
+  /* Stable while mobile browser bars expand/collapse; still follows rotation. */
+  height: 100vh;
+  height: 100lvh;
   z-index: 1;
   pointer-events: none;
   overflow: hidden;

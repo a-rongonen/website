@@ -54,7 +54,9 @@ export function startNetwork(host: HTMLElement): () => void {
 
   function measure() {
     width = document.documentElement.clientWidth;
-    height = window.innerHeight;
+    // Match the stable CSS viewport instead of the toolbar-sensitive innerHeight.
+    // Both the bitmap and projection must use the same size to avoid stretching.
+    height = host.clientHeight;
     const nextMobile = width < config.mobileBreakpoint;
     if (mobile !== nextMobile) {
       mobile = nextMobile;
@@ -208,6 +210,7 @@ export function startNetwork(host: HTMLElement): () => void {
   print.addEventListener('change', refreshMotion, events);
   const resize = new ResizeObserver(measure);
   measure();
+  resize.observe(host);
   for (const band of bands) resize.observe(band.element);
 
   return () => {
