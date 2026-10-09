@@ -23,7 +23,7 @@ export const cvDesign = {
     backgroundSrc: '/images/cv-background-placeholder.svg', // Public image URL, e.g. /images/cv-background.jpg.
     backgroundPosition: 'center',
     backgroundOpacity: 0.7, // 0–1; keep the title readable over a photo.
-    bottomFade: 140, // CSS pixels fading the image into the section background.
+    bottomFade: 0, // Optional image fade in CSS pixels; 0 keeps a sharp lower edge.
   },
 };
 
@@ -68,5 +68,5 @@ export function cvDesignStyle(sectionBaseColor: string) {
     --cv-heading-color-stop: ${Math.max(whiteStop, Math.min(100, headings.colorStop))}%;
     --cv-hero-position: ${hero.backgroundPosition};
     --cv-hero-opacity: ${unitInterval(hero.backgroundOpacity)};
-    --cv-hero-fade: ${Math.max(0, hero.bottomFade)}px;`;
+    --cv-hero-mask: ${hero.bottomFade > 0 ? `linear-gradient(#000 max(0px, calc(100% - ${hero.bottomFade}px)), transparent)` : 'none'};`;
 }

@@ -22,17 +22,18 @@
   position: absolute;
   left: 0;
   right: 0;
-  /* Each boundary is the 50/50 midpoint, including without JavaScript. */
-  height: min(calc(var(--network-transition) / 2), 50%);
+  /* Content boundaries are 50/50 midpoints; the hero opts out. */
   pointer-events: none;
 }
 .cv-network-section::before {
   top: 0;
+  height: min(calc(var(--network-transition-in) / 2), 50%);
   background: linear-gradient(90deg, var(--network-previous-edge), var(--network-previous-center) 50%, var(--network-previous-edge));
   mask-image: linear-gradient(rgb(0 0 0 / .5), transparent);
 }
 .cv-network-section::after {
   bottom: 0;
+  height: min(calc(var(--network-transition-out) / 2), 50%);
   background: linear-gradient(90deg, var(--network-next-edge), var(--network-next-center) 50%, var(--network-next-edge));
   mask-image: linear-gradient(transparent, rgb(0 0 0 / .5));
 }
@@ -57,7 +58,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   object-fit: cover;
   object-position: var(--cv-hero-position);
   opacity: var(--cv-hero-opacity);
-  mask-image: linear-gradient(#000 max(0px, calc(100% - var(--cv-hero-fade))), transparent);
+  mask-image: var(--cv-hero-mask);
   pointer-events: none;
 }
 .hero-inner { display: grid; grid-template-columns: 1.5fr 1fr; align-items: end; gap: 2rem; min-height: 470px; }

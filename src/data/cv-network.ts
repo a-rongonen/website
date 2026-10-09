@@ -57,15 +57,29 @@ export function networkPalette(section: NetworkSection): NetworkPalette {
   return { ...cvNetworkConfig.defaults, ...cvNetworkConfig.sections[section] };
 }
 
+/** The hero has a sharp edge; only content sections blend into one another. */
+export function networkTransitionNeighbors(section: NetworkSection) {
+  const sections = Object.keys(cvNetworkConfig.sections) as NetworkSection[];
+  const index = sections.indexOf(section);
+  const previous = sections[Math.max(0, index - 1)];
+  const next = sections[Math.min(sections.length - 1, index + 1)];
+  return {
+    previous: section === 'hero' || previous === 'hero' ? section : previous,
+    next: section === 'hero' || next === 'hero' ? section : next,
+  };
+}
+
 /** The gradient is present even when JavaScript or canvas is unavailable. */
 export function networkSectionStyle(section: NetworkSection) {
   const palette = networkPalette(section);
-  const sections = Object.keys(cvNetworkConfig.sections) as NetworkSection[];
-  const previous = networkPalette(sections[Math.max(0, sections.indexOf(section) - 1)]);
-  const next = networkPalette(sections[Math.min(sections.length - 1, sections.indexOf(section) + 1)]);
+  const neighbors = networkTransitionNeighbors(section);
+  const previous = networkPalette(neighbors.previous);
+  const next = networkPalette(neighbors.next);
+  const transition = Math.max(0, cvNetworkConfig.sectionTransition);
   return `--network-base: ${palette.baseColor}; --network-center: ${palette.centerColor};
     --network-edge: ${palette.edgeColor}; --network-previous-center: ${previous.centerColor};
     --network-previous-edge: ${previous.edgeColor}; --network-next-center: ${next.centerColor};
     --network-next-edge: ${next.edgeColor};
-    --network-transition: ${Math.max(0, cvNetworkConfig.sectionTransition)}px; ${cvDesignStyle(palette.baseColor)}`;
+    --network-transition-in: ${neighbors.previous === section ? 0 : transition}px;
+    --network-transition-out: ${neighbors.next === section ? 0 : transition}px; ${cvDesignStyle(palette.baseColor)}`;
 }

@@ -21,7 +21,10 @@ try {
       assert.equal(await page.locator('.cv-hero-background').count(),1);
       assert.match(await page.locator('.cv-portrait img').getAttribute('src'), /\.png$/);
       assert(await page.locator('canvas').evaluate((c,f)=>!!c.getContext(f?'2d':'webgl2'),fallback));
-      const heroAlpha=await page.evaluate(async fade=>{
+      assert.equal(await page.locator('.cv-hero-background').evaluate(e=>getComputedStyle(e).maskImage),'none');
+      assert.equal(await page.locator('.cv-hero').evaluate(e=>getComputedStyle(e,'::after').height),'0px');
+      assert.equal(await page.locator('.cv-profile').evaluate(e=>getComputedStyle(e,'::before').height),'0px');
+      const heroAlpha=await page.evaluate(async ()=>{
         scrollTo(0,0);dispatchEvent(new Event('scroll'));
         return new Promise(resolve=>requestAnimationFrame(()=>{
           const canvas=document.querySelector('canvas'),gl=canvas.getContext('webgl2');
@@ -29,7 +32,7 @@ try {
           if(gl){pixels=new Uint8Array(canvas.width*canvas.height*4);gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);}
           else pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
           const hero=document.querySelector('.cv-hero').getBoundingClientRect();
-          const ratio=canvas.width/document.documentElement.clientWidth,cutoff=hero.bottom-Math.min(fade,hero.height)/2-1;
+          const ratio=canvas.width/document.documentElement.clientWidth,cutoff=hero.bottom-1;
           let maximum=0;
           for(let row=0;row<canvas.height;row++){
             const y=gl?(canvas.height-row-.5)/ratio:(row+.5)/ratio;
@@ -38,8 +41,8 @@ try {
           }
           resolve(maximum);
         }));
-      },cvNetworkConfig.sectionTransition);
-      assert.equal(heroAlpha,0,'Invisible hero palette must not paint black mesh over the photo outside its fade');
+      });
+      assert.equal(heroAlpha,0,'Hero must stay free of the content-section mesh, including its lower edge');
       for (const [previous,current] of [['profile','strengths'],['strengths','skills'],['skills','history']]) {
         const y = await page.locator(`[data-network-section="${current}"]`).evaluate(e=>e.getBoundingClientRect().top+scrollY);
         await page.evaluate(y=>scrollTo(0,y-180),y);
@@ -102,7 +105,8 @@ try {
   const context=await browser.newContext({javaScriptEnabled:false});
   const page=await context.newPage();await page.goto(base+'/cv');
   const pixelReader=await browser.newPage();
-  assert.equal(await page.locator('.cv-profile').evaluate(e=>parseFloat(getComputedStyle(e,'::before').height)),cvNetworkConfig.sectionTransition/2);
+  assert.equal(await page.locator('.cv-profile').evaluate(e=>getComputedStyle(e,'::before').height),'0px');
+  assert.equal(await page.locator('.cv-hero-background').evaluate(e=>getComputedStyle(e).maskImage),'none');
   assert(await page.locator('.cv-portrait img').evaluate(i=>i.complete&&i.naturalWidth>0));
   // Background pixels must share the mesh's midpoint at the actual section boundary.
   await page.evaluate(()=>{const style=document.createElement('style');style.textContent='.cv-container { visibility: hidden; } cv-network { display: none; }';document.head.append(style);});

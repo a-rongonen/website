@@ -1,4 +1,4 @@
-import { cvNetworkConfig as config, networkPalette, type NetworkSection } from '../data/cv-network';
+import { cvNetworkConfig as config, networkPalette, networkTransitionNeighbors, type NetworkSection } from '../data/cv-network';
 import { clamp, createScene, createDepthOrder, depthBrightness, projectPoint } from './cv-network-scene';
 import { createNetworkGpu } from './cv-network-webgl';
 
@@ -10,6 +10,8 @@ type PaletteBand = {
   rgb: number[];
   previousRgb: number[];
   nextRgb: number[];
+  fadeIn: boolean;
+  fadeOut: boolean;
   visibleRanges: { top: number; height: number }[];
   transition: number;
   invisible: boolean;
@@ -45,15 +47,19 @@ export function startNetwork(host: HTMLElement): () => void {
   const projected: ProjectedNode[] = [];
   let depthOrder = createDepthOrder(geometry.nodes);
   const bands: PaletteBand[] = Array.from(document.querySelectorAll<HTMLElement>('[data-network-section]')).map(element => {
-    const palette = networkPalette(element.dataset.networkSection as NetworkSection);
-    return { element, top: 0, height: 0, previousRgb: [], nextRgb: [], visibleRanges: [], transition: 0, rgb: rgbChannels(palette.baseColor),
+    const section = element.dataset.networkSection as NetworkSection;
+    const palette = networkPalette(section);
+    const neighbors = networkTransitionNeighbors(section);
+    return { element, top: 0, height: 0,
+      previousRgb: rgbChannels(networkPalette(neighbors.previous).baseColor),
+      nextRgb: rgbChannels(networkPalette(neighbors.next).baseColor),
+      fadeIn: neighbors.previous !== section, fadeOut: neighbors.next !== section, visibleRanges: [], transition: 0, rgb: rgbChannels(palette.baseColor),
       invisible: [palette.baseColor, palette.centerColor, palette.edgeColor].every(color => color.toLowerCase() === '#000000') };
   });
   const visiblePalettes = bands.map(band => !band.invisible);
   bands.forEach((band, index) => {
-    band.previousRgb = bands[Math.max(0, index - 1)].rgb;
-    band.nextRgb = bands[Math.min(bands.length - 1, index + 1)].rgb;
-    if (config.sectionTransition > 0 && (visiblePalettes[index - 1] || visiblePalettes[index + 1])) band.invisible = false;
+    if (config.sectionTransition > 0 && ((band.fadeIn && visiblePalettes[index - 1])
+      || (band.fadeOut && visiblePalettes[index + 1]))) band.invisible = false;
   });
   let frame = 0;
   let elapsed = 0;
@@ -110,12 +116,12 @@ export function startNetwork(host: HTMLElement): () => void {
       band.height = bounds.height;
       // Each half stays inside its section, including unusually short sections.
       band.transition = Math.min(bounds.height, Math.max(0, config.sectionTransition));
-      // A black section normally has no mesh. Only paint the half-fades so black
-      // nodes do not cover the hero image outside its transition.
+      // A black section normally has no mesh. Paint only enabled half-fades;
+      // the hero remains entirely outside the content-section transitions.
       const half = band.transition / 2;
       band.visibleRanges = visiblePalettes[index] ? [{ top: band.top, height: band.height }] : [
-        ...(half > 0 && visiblePalettes[index - 1] ? [{ top: band.top, height: half }] : []),
-        ...(half > 0 && visiblePalettes[index + 1] ? [{ top: band.top + band.height - half, height: half }] : []),
+        ...(half > 0 && band.fadeIn && visiblePalettes[index - 1] ? [{ top: band.top, height: half }] : []),
+        ...(half > 0 && band.fadeOut && visiblePalettes[index + 1] ? [{ top: band.top + band.height - half, height: half }] : []),
       ];
     }
     requestDraw();
