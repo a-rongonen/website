@@ -58,7 +58,10 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 .cv-portrait img { display: block; width: 100%; height: auto; max-height: 450px; object-fit: contain; object-position: bottom; }
 .portrait-placeholder { display: block; width: 100%; max-height: 400px; fill: #a3bab1; opacity: .65; }
 .portrait-label { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); font-size: .7rem; letter-spacing: .07em; white-space: nowrap; background: #213a38; padding: .45rem .75rem; border-radius: 2rem; }
-.cv-section { padding-block: max(0px, var(--cv-section-edge-distance)); }
+.cv-section {
+  padding-block-start: max(0px, var(--cv-section-start-spacing));
+  padding-block-end: max(0px, var(--cv-section-end-spacing));
+}
 /* Edge spacing belongs to the section, regardless of its first/last element. */
 .cv-section > .cv-container { display: flow-root; }
 .cv-section > .cv-container > :first-child { margin-block-start: 0; }

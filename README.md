@@ -49,7 +49,8 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 
 | Setting | Effect |
 | --- | --- |
-| `sectionEdgeDistance` | Equal distance from each content section's top/bottom edge to its first/last element. Accepts a CSS length, e.g. `'80px'` or `'5rem'`; default `'clamp(4rem, 8vw, 6.5rem)'` keeps the responsive 64-104px inset. Outer element margins and trailing card-stack gaps do not add to it. The hero keeps its separate portrait layout; print uses 2rem. |
+| `sectionStartSpacing` | Space after each content section begins, before its first element. CSS length, e.g. `'48px'` or `'3rem'`; default `'clamp(4rem, 8vw, 6.5rem)'` (responsive 64-104px). |
+| `sectionEndSpacing` | Space after each content section's last element, before the section ends. Independent CSS length; same responsive default as `sectionStartSpacing`. |
 | `hero.backgroundSrc` | Public background image path; an empty string disables the image. |
 | `hero.backgroundPosition` | CSS object position for cropping, e.g. `center` or `70% center`. |
 | `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 0.7). |
@@ -65,6 +66,8 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 | `headings.tint` | Lerp from white text (0) to the vertical white-to-section-color gradient (1); default 0.8. |
 | `headings.whiteMix` | Lighten the gradient's lower color (0–1); default 0.25 keeps dark palettes legible. Use 0 for the pure base color. |
 | `headings.whiteStop`, `colorStop` | Gradient stop positions as percentages down each text box; defaults 0 and 100. Multiline titles share one gradient. |
+
+The two section spacing controls replace `sectionEdgeDistance` and apply to both CV languages. They measure from the actual section boundary to the element's layout box. Text has space inside its line box, and the color fade extends into the next section, so equal values need not look equal. Tune the start and end separately for the desired visual balance. Outer element margins and trailing card-stack gaps do not add to these distances. The hero keeps its separate portrait layout; print uses 2rem at both edges.
 
 Box fills, borders, and main headings inherit `sections.<name>.baseColor` from `cv-network.ts`. Heading gradients cover only the name and section titles (h1/h2). Body text, icons, card titles, table captions, headers/cells, and labels share `contentColor`. Box tint mixes the default fill with a dark version of the section hue and capped saturation. Both endpoints use the default color's HSL lightness, so tinting never imports the bright theme lightness or spins through unrelated hues. Print and forced-color modes use readable solid text. Changing a section base color updates its mesh, box fills, edges, and main headings together.
 

@@ -1,6 +1,8 @@
 /** Shared presentation controls for both CV languages. */
 export const cvDesign = {
-  sectionEdgeDistance: 'clamp(4rem, 8vw, 6.5rem)', // Equal top/bottom content inset; any nonnegative CSS length.
+  // Independent content-section spacing; use CSS lengths such as '48px' or '4rem'.
+  sectionStartSpacing: 'clamp(4rem, 8vw, 6.5rem)', // After the section begins, before its first element.
+  sectionEndSpacing: 'clamp(4rem, 8vw, 6.5rem)', // After its last element, before the section ends.
   contentColor: '#d1d4d4', // Shared body text, icons, small headings, and table text.
   boxes: {
     defaultColor: '#182225', // Six-digit hex; its lightness controls how dark boxes stay.
@@ -56,7 +58,8 @@ export function cvDesignStyle(sectionBaseColor: string) {
   };
   const whiteStop = Math.max(0, Math.min(100, headings.whiteStop));
   return `--cv-content-color: ${cvDesign.contentColor};
-    --cv-section-edge-distance: ${cvDesign.sectionEdgeDistance};
+    --cv-section-start-spacing: ${cvDesign.sectionStartSpacing};
+    --cv-section-end-spacing: ${cvDesign.sectionEndSpacing};
     --cv-box-top: ${fill(source.lightness)};
     --cv-box-bottom: ${fill(source.lightness * (1 - unitInterval(boxes.shade)))};
     --cv-box-opacity: ${unitInterval(boxes.opacity) * 100}%;
