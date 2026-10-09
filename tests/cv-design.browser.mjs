@@ -21,6 +21,25 @@ try {
       assert.equal(await page.locator('.cv-hero-background').count(),1);
       assert.match(await page.locator('.cv-portrait img').getAttribute('src'), /\.png$/);
       assert(await page.locator('canvas').evaluate((c,f)=>!!c.getContext(f?'2d':'webgl2'),fallback));
+      const heroAlpha=await page.evaluate(async fade=>{
+        scrollTo(0,0);dispatchEvent(new Event('scroll'));
+        return new Promise(resolve=>requestAnimationFrame(()=>{
+          const canvas=document.querySelector('canvas'),gl=canvas.getContext('webgl2');
+          let pixels;
+          if(gl){pixels=new Uint8Array(canvas.width*canvas.height*4);gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);}
+          else pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+          const hero=document.querySelector('.cv-hero').getBoundingClientRect();
+          const ratio=canvas.width/document.documentElement.clientWidth,cutoff=hero.bottom-Math.min(fade,hero.height)/2-1;
+          let maximum=0;
+          for(let row=0;row<canvas.height;row++){
+            const y=gl?(canvas.height-row-.5)/ratio:(row+.5)/ratio;
+            if(y>=cutoff)continue;
+            for(let x=0;x<canvas.width;x++)maximum=Math.max(maximum,pixels[(row*canvas.width+x)*4+3]);
+          }
+          resolve(maximum);
+        }));
+      },cvNetworkConfig.sectionTransition);
+      assert.equal(heroAlpha,0,'Invisible hero palette must not paint black mesh over the photo outside its fade');
       for (const [previous,current] of [['profile','strengths'],['strengths','skills'],['skills','history']]) {
         const y = await page.locator(`[data-network-section="${current}"]`).evaluate(e=>e.getBoundingClientRect().top+scrollY);
         await page.evaluate(y=>scrollTo(0,y-180),y);
@@ -35,12 +54,15 @@ try {
             else data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
             const ratio=canvas.width/document.documentElement.clientWidth;
             const top=document.querySelector(`[data-network-section="${current.name}"]`).getBoundingClientRect().top;
+            const before=document.querySelector(`[data-network-section="${previous.name}"]`).getBoundingClientRect();
+            const after=document.querySelector(`[data-network-section="${current.name}"]`).getBoundingClientRect();
             let samples=0,error=0, early=0,late=0;
             for(let row=0;row<canvas.height;row++) {
               const screenY=gl ? (canvas.height-row-.5)/ratio : (row+.5)/ratio;
-              const t=(screenY-top)/fade;
+              const localFade=Math.min(fade, screenY<top ? before.height : after.height);
+              const t=.5+(screenY-top)/localFade;
               if(t<.05||t>.95)continue;
-              const expected=current.rgb.map((v,i)=>previous[i]+(v-previous[i])*t);
+              const expected=current.rgb.map((v,i)=>previous.rgb[i]+(v-previous.rgb[i])*t);
               const expectedSum=expected.reduce((a,b)=>a+b,0);
               for(let x=0;x<canvas.width;x++){
                 const i=(row*canvas.width+x)*4;
@@ -52,7 +74,7 @@ try {
             }
             resolve({samples,error,early,late});
           }));
-        },{previous:rgb(networkPalette(previous).baseColor),current:{name:current,rgb:rgb(networkPalette(current).baseColor)},fade:cvNetworkConfig.sectionTransition});
+        },{previous:{name:previous,rgb:rgb(networkPalette(previous).baseColor)},current:{name:current,rgb:rgb(networkPalette(current).baseColor)},fade:cvNetworkConfig.sectionTransition});
         assert(result.samples>100 && result.early>10 && result.late>10,JSON.stringify(result));
         assert(result.error<.03,`Smooth palette pixels: ${JSON.stringify(result)}`);
       }
@@ -79,8 +101,32 @@ try {
   }
   const context=await browser.newContext({javaScriptEnabled:false});
   const page=await context.newPage();await page.goto(base+'/cv');
-  assert.equal(await page.locator('.cv-profile').evaluate(e=>getComputedStyle(e,'::before').height),'180px');
+  const pixelReader=await browser.newPage();
+  assert.equal(await page.locator('.cv-profile').evaluate(e=>parseFloat(getComputedStyle(e,'::before').height)),cvNetworkConfig.sectionTransition/2);
   assert(await page.locator('.cv-portrait img').evaluate(i=>i.complete&&i.naturalWidth>0));
-  console.log('No-JavaScript section fade and PNG PASS');
+  // Background pixels must share the mesh's midpoint at the actual section boundary.
+  await page.evaluate(()=>{const style=document.createElement('style');style.textContent='.cv-container { visibility: hidden; } cv-network { display: none; }';document.head.append(style);});
+  for (const [previous,current] of [['profile','strengths'],['strengths','skills'],['skills','history']]) {
+    const boundary=await page.locator('[data-network-section="'+current+'"]').evaluate(e=>e.getBoundingClientRect().top+scrollY);
+    await page.evaluate(y=>scrollTo(0,y-180),boundary);
+    const top=await page.locator('[data-network-section="'+current+'"]').evaluate(e=>e.getBoundingClientRect().top);
+    const screenshot=await page.screenshot();
+    const samples=await pixelReader.evaluate(async ({source,top})=>{
+      const image=new Image();image.src=source;await image.decode();
+      const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
+      const context=canvas.getContext('2d');context.drawImage(image,0,0);
+      return [-45,0,45].map(offset=>{
+        const y=Math.floor(top)+offset;
+        return {y:y+.5,pixel:[...context.getImageData(Math.floor(canvas.width/2),y,1,1).data].slice(0,3)};
+      });
+    },{source:'data:image/png;base64,'+screenshot.toString('base64'),top});
+    const from=rgb(networkPalette(previous).centerColor),to=rgb(networkPalette(current).centerColor);
+    for(const sample of samples){
+      const t=.5+(sample.y-top)/cvNetworkConfig.sectionTransition;
+      const expected=to.map((value,i)=>from[i]+(value-from[i])*t);
+      assert(sample.pixel.every((value,i)=>Math.abs(value-expected[i])<=2),'Centered CSS fade: '+JSON.stringify({previous,current,sample,expected}));
+    }
+  }
+  console.log('No-JavaScript centered background pixels and PNG PASS');
   await context.close();
 } finally { await browser.close(); }

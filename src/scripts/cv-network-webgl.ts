@@ -7,7 +7,11 @@ export type NetworkView = {
   repeatHeight: number; unitScale: number; staticProjection: boolean;
   firstRow: number; rowCount: number; lineWidth: number; nodeSize: number;
 };
-export type NetworkBand = { top: number; height: number; rgb: number[]; previousRgb: number[]; transition: number; invisible: boolean };
+export type NetworkBand = {
+  top: number; height: number; rgb: number[]; previousRgb: number[]; nextRgb?: number[];
+  transition: number; invisible: boolean;
+  visibleRanges?: { top: number; height: number }[];
+};
 
 const projection = `
 uniform vec2 u_viewport;
@@ -56,13 +60,14 @@ void main() {
 }`;
 
 const paletteFragment = `
-uniform vec3 u_color, u_previousColor;
+uniform vec3 u_color, u_previousColor, u_nextColor;
 uniform vec2 u_viewport;
-uniform float u_bandTop, u_transition, u_pixelRatio;
+uniform float u_bandTop, u_bandBottom, u_transition, u_pixelRatio;
 vec3 sectionColor() {
   float y = u_viewport.y - gl_FragCoord.y / u_pixelRatio;
-  float t = u_transition > 0.0 ? clamp((y - u_bandTop) / u_transition, 0.0, 1.0) : 1.0;
-  return mix(u_previousColor, u_color, t);
+  float incoming = u_transition > 0.0 ? clamp(.5 + (y - u_bandTop) / u_transition, .5, 1.0) : 1.0;
+  float outgoing = u_transition > 0.0 ? clamp(.5 - (u_bandBottom - y) / u_transition, 0.0, .5) : 0.0;
+  return mix(mix(u_previousColor, u_color, incoming), u_nextColor, outgoing);
 }
 `;
 
@@ -141,7 +146,7 @@ export function createNetworkGpu(canvas: HTMLCanvasElement) {
       if (!gl!.getProgramParameter(result, gl!.LINK_STATUS)) throw new Error('Network shader linking failed');
       const names = ['viewport', 'camera', 'cameraY', 'anchorY', 'focal', 'repeat', 'unitScale',
         'rotation', 'static', 'firstRow', 'depthExtent', 'darkening', 'pixelRatio',
-        'lineWidth', 'nodeSize', 'maxPointSize', 'color', 'previousColor', 'bandTop', 'transition'];
+        'lineWidth', 'nodeSize', 'maxPointSize', 'color', 'previousColor', 'nextColor', 'bandTop', 'bandBottom', 'transition'];
       const uniforms = Object.fromEntries(names.map(name => [name, gl!.getUniformLocation(result, 'u_' + name)]));
       const vao = gl!.createVertexArray();
       const buffer = gl!.createBuffer();
@@ -242,18 +247,24 @@ export function createNetworkGpu(canvas: HTMLCanvasElement) {
           pixelRatio: view.pixelRatio, lineWidth: view.lineWidth, nodeSize: view.nodeSize, maxPointSize,
         })) gl!.uniform1f(u[name], value);
         for (const band of bands) {
-          const top = Math.max(0, band.top - scrollY);
-          const bottom = Math.min(view.height, band.top + band.height - scrollY);
-          if (bottom <= top || band.invisible) continue;
-          const first = Math.round(top * view.pixelRatio);
-          const last = Math.round(bottom * view.pixelRatio);
-          gl!.scissor(0, canvas.height - last, canvas.width, last - first);
+          if (band.top + band.height <= scrollY || band.top >= scrollY + view.height || band.invisible) continue;
           gl!.uniform3f(u.color, band.rgb[0] / 255, band.rgb[1] / 255, band.rgb[2] / 255);
           gl!.uniform3f(u.previousColor, band.previousRgb[0] / 255, band.previousRgb[1] / 255, band.previousRgb[2] / 255);
+          const next = band.nextRgb ?? band.rgb;
+          gl!.uniform3f(u.nextColor, next[0] / 255, next[1] / 255, next[2] / 255);
           gl!.uniform1f(u.bandTop, band.top - scrollY);
+          gl!.uniform1f(u.bandBottom, band.top + band.height - scrollY);
           gl!.uniform1f(u.transition, band.transition);
-          gl!.drawArraysInstanced(isLine ? gl!.TRIANGLES : gl!.POINTS, 0,
-            isLine ? lineVertices : view.rowCount, isLine ? view.rowCount : nodeCount);
+          for (const range of band.visibleRanges ?? [band]) {
+            const top = Math.max(0, range.top - scrollY);
+            const bottom = Math.min(view.height, range.top + range.height - scrollY);
+            if (bottom <= top) continue;
+            const first = Math.round(top * view.pixelRatio);
+            const last = Math.round(bottom * view.pixelRatio);
+            gl!.scissor(0, canvas.height - last, canvas.width, last - first);
+            gl!.drawArraysInstanced(isLine ? gl!.TRIANGLES : gl!.POINTS, 0,
+              isLine ? lineVertices : view.rowCount, isLine ? view.rowCount : nodeCount);
+          }
         }
       }
       gl!.bindVertexArray(null);

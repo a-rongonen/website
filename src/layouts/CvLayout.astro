@@ -68,6 +68,9 @@ const { content } = Astro.props;
 </PageLayout>
 
 <script>
+  import { alignSectionText } from '../scripts/cv-section-spacing';
+  alignSectionText();
+
   // Small progressive enhancement: pack uneven cards while keeping the DOM in
   // left/right reading order. Without JS, the same cards form a regular grid.
   for (const stack of document.querySelectorAll<HTMLElement>('[data-card-stack]')) {

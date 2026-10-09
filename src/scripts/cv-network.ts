@@ -9,6 +9,8 @@ type PaletteBand = {
   height: number;
   rgb: number[];
   previousRgb: number[];
+  nextRgb: number[];
+  visibleRanges: { top: number; height: number }[];
   transition: number;
   invisible: boolean;
 };
@@ -44,12 +46,14 @@ export function startNetwork(host: HTMLElement): () => void {
   let depthOrder = createDepthOrder(geometry.nodes);
   const bands: PaletteBand[] = Array.from(document.querySelectorAll<HTMLElement>('[data-network-section]')).map(element => {
     const palette = networkPalette(element.dataset.networkSection as NetworkSection);
-    return { element, top: 0, height: 0, previousRgb: [], transition: 0, rgb: rgbChannels(palette.baseColor),
+    return { element, top: 0, height: 0, previousRgb: [], nextRgb: [], visibleRanges: [], transition: 0, rgb: rgbChannels(palette.baseColor),
       invisible: [palette.baseColor, palette.centerColor, palette.edgeColor].every(color => color.toLowerCase() === '#000000') };
   });
+  const visiblePalettes = bands.map(band => !band.invisible);
   bands.forEach((band, index) => {
     band.previousRgb = bands[Math.max(0, index - 1)].rgb;
-    if (index > 0 && config.sectionTransition > 0 && !bands[index - 1].invisible) band.invisible = false;
+    band.nextRgb = bands[Math.min(bands.length - 1, index + 1)].rgb;
+    if (config.sectionTransition > 0 && (visiblePalettes[index - 1] || visiblePalettes[index + 1])) band.invisible = false;
   });
   let frame = 0;
   let elapsed = 0;
@@ -100,11 +104,19 @@ export function startNetwork(host: HTMLElement): () => void {
       canvas!.width = backingWidth;
       canvas!.height = backingHeight;
     }
-    for (const band of bands) {
+    for (const [index, band] of bands.entries()) {
       const bounds = band.element.getBoundingClientRect();
       band.top = bounds.top + window.scrollY;
       band.height = bounds.height;
+      // Each half stays inside its section, including unusually short sections.
       band.transition = Math.min(bounds.height, Math.max(0, config.sectionTransition));
+      // A black section normally has no mesh. Only paint the half-fades so black
+      // nodes do not cover the hero image outside its transition.
+      const half = band.transition / 2;
+      band.visibleRanges = visiblePalettes[index] ? [{ top: band.top, height: band.height }] : [
+        ...(half > 0 && visiblePalettes[index - 1] ? [{ top: band.top, height: half }] : []),
+        ...(half > 0 && visiblePalettes[index + 1] ? [{ top: band.top + band.height - half, height: half }] : []),
+      ];
     }
     requestDraw();
   }
@@ -184,17 +196,28 @@ export function startNetwork(host: HTMLElement): () => void {
     for (const band of bands) {
       const top = band.top - scrollY;
       const bottom = top + band.height;
-      if (bottom <= 0 || top >= height || band.invisible) continue;
-      const clipTop = Math.max(0, top);
-      const clipBottom = Math.min(height, bottom);
+      if (bottom <= 0 || top >= height || band.invisible || !band.visibleRanges.length) continue;
+      const clipTop = Math.max(0, band.visibleRanges[0].top - scrollY);
+      const lastRange = band.visibleRanges[band.visibleRanges.length - 1];
+      const clipBottom = Math.min(height, lastRange.top + lastRange.height - scrollY);
+      if (clipBottom <= clipTop) continue;
+      const transitionStops = [top, top + band.transition / 4, top + band.transition / 2,
+        bottom - band.transition / 2, bottom - band.transition / 4, bottom];
       const colorAt = (y: number, brightness: number) => {
-        const mix = band.transition > 0 ? clamp((y - top) / band.transition, 0, 1) : 1;
-        return `rgb(${band.rgb.map((channel, i) =>
-          Math.round((band.previousRgb[i] + (channel - band.previousRgb[i]) * mix) * brightness)).join(',')})`;
+        const incoming = band.transition > 0 ? clamp(.5 + (y - top) / band.transition, .5, 1) : 1;
+        const outgoing = band.transition > 0 ? clamp(.5 - (bottom - y) / band.transition, 0, .5) : 0;
+        return `rgb(${band.rgb.map((channel, i) => {
+          const color = band.previousRgb[i] + (channel - band.previousRgb[i]) * incoming;
+          return Math.round((color + (band.nextRgb[i] - color) * outgoing) * brightness);
+        }).join(',')})`;
       };
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, clipTop, width, clipBottom - clipTop);
+      for (const range of band.visibleRanges) {
+        const rangeTop = Math.max(0, range.top - scrollY);
+        const rangeBottom = Math.min(height, range.top + range.height - scrollY);
+        if (rangeBottom > rangeTop) ctx.rect(0, rangeTop, width, rangeBottom - rangeTop);
+      }
       ctx.clip();
 
       if (lineWidth > 0) {
@@ -210,7 +233,7 @@ export function startNetwork(host: HTMLElement): () => void {
             gradient.addColorStop(0, colorAt(a.y, a.brightness));
             // Stops at the fade boundaries keep long crossing edges continuous.
             if (b.y !== a.y && band.transition > 0) {
-              for (const y of [top, top + band.transition / 2, top + band.transition]) {
+              for (const y of transitionStops) {
                 const t = (y - a.y) / (b.y - a.y);
                 if (t > 0 && t < 1) gradient.addColorStop(t, colorAt(y, a.brightness + (b.brightness - a.brightness) * t));
               }
@@ -230,9 +253,14 @@ export function startNetwork(host: HTMLElement): () => void {
           const node = projected[(i % rowCount) * count + index];
           if (node.x < -node.radius || node.x > width + node.radius
             || node.y < clipTop - node.radius || node.y > clipBottom + node.radius) continue;
-          if (band.transition > 0 && node.y + node.radius > top && node.y - node.radius < top + band.transition) {
+          if (band.transition > 0 && (node.y - node.radius < top + band.transition / 2
+            || node.y + node.radius > bottom - band.transition / 2)) {
             const gradient = ctx.createLinearGradient(0, node.y - node.radius, 0, node.y + node.radius);
             gradient.addColorStop(0, colorAt(node.y - node.radius, node.brightness));
+            for (const y of transitionStops) {
+              const t = (y - node.y + node.radius) / (2 * node.radius);
+              if (t > 0 && t < 1) gradient.addColorStop(t, colorAt(y, node.brightness));
+            }
             gradient.addColorStop(1, colorAt(node.y + node.radius, node.brightness));
             ctx.fillStyle = gradient;
           } else ctx.fillStyle = colorAt(node.y, node.brightness);

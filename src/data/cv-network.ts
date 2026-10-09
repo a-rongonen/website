@@ -24,7 +24,7 @@ export const cvNetworkConfig = {
     history: { baseColor: '#7acbbf', centerColor: '#10342f' },
   } satisfies Record<string, Partial<NetworkPalette>>,
 
-  sectionTransition: 180, // CSS pixels fading into each new section; 0 = hard boundary.
+  sectionTransition: 180, // CSS pixels centered across section boundaries; 0 = hard boundary.
 
   nodeCount: 170, // Per shared, vertically repeating mesh volume. Mobile scales this count.
   scene: { width: 1800, height: 800, depth: 3000 }, // World units.
@@ -62,8 +62,10 @@ export function networkSectionStyle(section: NetworkSection) {
   const palette = networkPalette(section);
   const sections = Object.keys(cvNetworkConfig.sections) as NetworkSection[];
   const previous = networkPalette(sections[Math.max(0, sections.indexOf(section) - 1)]);
+  const next = networkPalette(sections[Math.min(sections.length - 1, sections.indexOf(section) + 1)]);
   return `--network-base: ${palette.baseColor}; --network-center: ${palette.centerColor};
     --network-edge: ${palette.edgeColor}; --network-previous-center: ${previous.centerColor};
-    --network-previous-edge: ${previous.edgeColor};
+    --network-previous-edge: ${previous.edgeColor}; --network-next-center: ${next.centerColor};
+    --network-next-edge: ${next.edgeColor};
     --network-transition: ${Math.max(0, cvNetworkConfig.sectionTransition)}px; ${cvDesignStyle(palette.baseColor)}`;
 }

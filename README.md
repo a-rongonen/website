@@ -49,8 +49,7 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 
 | Setting | Effect |
 | --- | --- |
-| `sectionStartSpacing` | Space after each content section begins, before its first element. CSS length, e.g. `'48px'` or `'3rem'`; default `'clamp(4rem, 8vw, 6.5rem)'` (responsive 64-104px). |
-| `sectionEndSpacing` | Space after each content section's last element, before the section ends. Independent CSS length; same responsive default as `sectionStartSpacing`. |
+| `sectionEdgeDistance` | Shared distance from either content-section edge to the content. CSS length, e.g. `'64px'` or `'4rem'`; default `'clamp(4rem, 8vw, 6.5rem)'` (responsive 64-104px). |
 | `hero.backgroundSrc` | Public background image path; an empty string disables the image. |
 | `hero.backgroundPosition` | CSS object position for cropping, e.g. `center` or `70% center`. |
 | `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 0.7). |
@@ -67,7 +66,7 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 | `headings.whiteMix` | Lighten the gradient's lower color (0–1); default 0.25 keeps dark palettes legible. Use 0 for the pure base color. |
 | `headings.whiteStop`, `colorStop` | Gradient stop positions as percentages down each text box; defaults 0 and 100. Multiline titles share one gradient. |
 
-The two section spacing controls replace `sectionEdgeDistance` and apply to both CV languages. They measure from the actual section boundary to the element's layout box. Text has space inside its line box, and the color fade extends into the next section, so equal values need not look equal. Tune the start and end separately for the desired visual balance. Outer element margins and trailing card-stack gaps do not add to these distances. The hero keeps its separate portrait layout; print uses 2rem at both edges.
+One `sectionEdgeDistance` replaces the separate start/end controls in both CV languages. Outer margins and trailing card-stack gaps are removed, exposed first/last text uses font-aware trimming with automatic accent and descender allowance, and color transitions meet at their 50/50 midpoint on the section boundary. This keeps content spacing and the visual color boundary aligned as text wraps and cards change height. Measurements update when text wraps, fonts load, or text changes, with no per-scroll text measurements. Without JavaScript or native text-box trimming, headings keep ordinary readable line spacing. The hero keeps its separate portrait layout; print uses 2rem at both edges.
 
 Box fills, borders, and main headings inherit `sections.<name>.baseColor` from `cv-network.ts`. Heading gradients cover only the name and section titles (h1/h2). Body text, icons, card titles, table captions, headers/cells, and labels share `contentColor`. Box tint mixes the default fill with a dark version of the section hue and capped saturation. Both endpoints use the default color's HSL lightness, so tinting never imports the bright theme lightness or spins through unrelated hues. Print and forced-color modes use readable solid text. Changing a section base color updates its mesh, box fills, edges, and main headings together.
 
@@ -91,7 +90,7 @@ Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run 
 | --- | --- |
 | `defaults.baseColor`, `centerColor`, `edgeColor` | Shared node/line color, gradient center, and gradient edges (black by default). |
 | `sections.hero/profile/strengths/skills/history` | Override any of those three colors for each section. Existing base/center overrides take precedence over defaults. |
-| `sectionTransition` | Fade distance in CSS pixels at the start of each new section (default 180). Zero restores hard boundaries. The fade is capped at the section height. Applies to CSS backgrounds and both mesh renderers. |
+| `sectionTransition` | Full fade distance in CSS pixels centered on each section boundary (default 180: 90px on each side). Zero restores hard boundaries. Each half is capped at half its section's height so short sections cannot overlap fades. CSS backgrounds and both mesh renderers share the same midpoint. |
 | `nodeCount` | Nodes in the shared repeating volume; capped at 600. Mobile uses `mobileNodeRatio`. |
 | `scene.width/height/depth` | Scene framing and depth in world units. More depth increases perspective differences; framing stays independent of repeat spacing. |
 | `verticalRepeat.enabled` | Repeat the connected mesh down the entire CV. Turning this off leaves one finite volume, which can scroll out of view. |
@@ -111,6 +110,8 @@ For example, change `sections.skills.centerColor` for its background, `sections.
 The canvas uses stable large-viewport height (`100lvh`, with a `100vh` fallback), and the renderer measures that same CSS box. Mobile address-bar expansion therefore does not rescale the camera or stretch the bitmap; normal window resizing and rotation still update it. The GPU uploads node and line geometry once and draws its vertical repeats with instancing. Both renderers paint nodes from far to near across all repeats, so overlapping nodes respect depth. This order is cached during scrolling; enabling optional yaw animation recomputes the order and updates only the small GPU node buffer as the angle changes. Scrolling updates camera and color uniforms instead of rebuilding per-line gradients. Only visible section colors are drawn; all-black-on-black sections are skipped. The renderer coalesces scroll updates and stops when idle or the tab is hidden. Touch devices retain the dark glass tint but omit backdrop blur to avoid repeatedly blurring the animated background. It sits behind the existing content and cannot intercept clicks. Reduced-motion preferences disable parallax and idle animation; a static projection continues across the sections and scrolls with the document. Printing hides the canvas; CSS gradients and all CV content remain available without JavaScript.
 
 Implementation: `src/components/CvNetwork.astro`, `src/scripts/cv-network.ts`, the GPU shaders in `src/scripts/cv-network-webgl.ts`, and the pure geometry module `src/scripts/cv-network-scene.ts`. Run `node --test tests/cv-network-scene.test.mjs` for the geometry regression checks, plus the usual `npm run check` and `npm run build`. Browser review should cover both CV routes, section boundaries, narrow screens, scroll depth, and reduced motion.
+
+The rendered-spacing regression is `node tests/cv-spacing.browser.mjs` with the browser environment variables below (default port 8793). It measures painted heading letters and card borders, compares gradient and solid text to catch clipped accents, and checks both languages at desktop/mobile widths and custom shared distances.
 
 The design regression suite is `node tests/cv-design.browser.mjs` (same environment variables below; defaults to preview port 8788). It checks actual interpolated pixel colors in both renderers, image loading, narrow screens, print, forced colors, and no-JavaScript rendering.
 
