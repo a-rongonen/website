@@ -65,5 +65,5 @@ export function networkSectionStyle(section: NetworkSection) {
   return `--network-base: ${palette.baseColor}; --network-center: ${palette.centerColor};
     --network-edge: ${palette.edgeColor}; --network-previous-center: ${previous.centerColor};
     --network-previous-edge: ${previous.edgeColor};
-    --network-transition: ${Math.max(0, cvNetworkConfig.sectionTransition)}px; ${cvDesignStyle()}`;
+    --network-transition: ${Math.max(0, cvNetworkConfig.sectionTransition)}px; ${cvDesignStyle(palette.baseColor)}`;
 }

@@ -53,13 +53,19 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 | `hero.backgroundPosition` | CSS object position for cropping, e.g. `center` or `70% center`. |
 | `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 0.7). |
 | `hero.bottomFade` | Image fade at the hero bottom, in CSS pixels; 0 disables the fade. |
+| `contentColor` | Shared body text, icons, small headings, captions, table headers/cells, and labels. Defaults to the former body text color `#d1d4d4`; use any CSS color, e.g. `#cccccc`. |
+| `boxes.defaultColor` | Six-digit hex for the untinted fill (default `#182225`). Its HSL lightness sets the darkness for every section. |
+| `boxes.tint` | 0 uses the default fill; 1 adopts the section hue and capped saturation while preserving the default color's lightness. Default 0.75. Gray themes desaturate the fill. |
+| `boxes.saturationLimit` | Maximum theme saturation (0-1; default 0.4), keeping vivid base colors restrained. |
+| `boxes.shade` | Fraction to darken the lower fill-gradient stop (0-1; default 0.25). |
+| `boxes.opacity` | Fill opacity (0-1; default 0.92). Reduced-transparency mode uses an opaque tinted fill. |
 | `borders.tint` | Lerp from the original gray edges (0) to section-colored edges (1); default 0.8. |
 | `borders.whiteMix` | Mix white into the colored edge highlight (0–1); default 0.25. |
 | `headings.tint` | Lerp from white text (0) to the vertical white-to-section-color gradient (1); default 0.8. |
 | `headings.whiteMix` | Lighten the gradient's lower color (0–1); default 0.25 keeps dark palettes legible. Use 0 for the pure base color. |
 | `headings.whiteStop`, `colorStop` | Gradient stop positions as percentages down each text box; defaults 0 and 100. Multiline titles share one gradient. |
 
-Borders and headings inherit `sections.<name>.baseColor` from `cv-network.ts`. Heading gradients cover the name, section titles, card titles, and table caption, while icons retain their solid color. Print and forced-color modes use readable solid text. Changing a section base color updates its mesh, edges, and headings together.
+Box fills, borders, and main headings inherit `sections.<name>.baseColor` from `cv-network.ts`. Heading gradients cover only the name and section titles (h1/h2). Body text, icons, card titles, table captions, headers/cells, and labels share `contentColor`. Box tint mixes the default fill with a dark version of the section hue and capped saturation. Both endpoints use the default color's HSL lightness, so tinting never imports the bright theme lightness or spins through unrelated hues. Print and forced-color modes use readable solid text. Changing a section base color updates its mesh, box fills, edges, and main headings together.
 
 To replace the silhouette, add the approved transparent PNG to `public/images/` and set each language's optional `portrait` field to `{ src: '/images/your-portrait.png', alt: 'Localized description' }`. The image sits flush with the hero's lower boundary. Keep the asset out of `public/` until it is approved for publication. Replace placeholder copy and table rows with supplied facts only.
 

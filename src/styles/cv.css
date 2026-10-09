@@ -1,10 +1,8 @@
 .cv-page {
-  --cv-text: #f4f2ee;
-  --cv-muted: #d1d4d4;
   max-width: none;
   margin: 0;
   padding: 0;
-  color: var(--cv-text);
+  color: #d1d4d4;
   background: #000;
   font-family: 'Segoe UI', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -16,6 +14,7 @@
 .cv-container { position: relative; z-index: 2; width: min(100% - 3rem, 960px); margin-inline: auto; }
 .cv-network-section {
   position: relative;
+  color: var(--cv-content-color);
   background: linear-gradient(90deg, var(--network-edge), var(--network-center) 50%, var(--network-edge));
 }
 .cv-network-section::before {
@@ -53,12 +52,12 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 }
 .hero-inner { display: grid; grid-template-columns: 1.5fr 1fr; align-items: end; gap: 2rem; min-height: 470px; }
 .hero-copy { align-self: center; padding-block: 4rem; }
-.cv-eyebrow { margin: 0 0 1.6rem; text-transform: uppercase; letter-spacing: .2em; font-size: .75rem; font-weight: 600; color: #d8e7e2; }
+.cv-eyebrow { margin: 0 0 1.6rem; text-transform: uppercase; letter-spacing: .2em; font-size: .75rem; font-weight: 600; }
 .cv-page h1 { max-width: 11ch; margin: 0; text-transform: uppercase; font-size: clamp(2.4rem, 5.5vw, 4.8rem); line-height: .98; letter-spacing: -.065em; font-weight: 750; overflow-wrap: anywhere; }
 .cv-portrait { position: relative; align-self: end; display: flex; justify-content: center; }
 .cv-portrait img { display: block; width: 100%; height: auto; max-height: 450px; object-fit: contain; object-position: bottom; }
 .portrait-placeholder { display: block; width: 100%; max-height: 400px; fill: #a3bab1; opacity: .65; }
-.portrait-label { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); font-size: .7rem; letter-spacing: .07em; white-space: nowrap; background: #213a38; color: #e2ebe6; padding: .45rem .75rem; border-radius: 2rem; }
+.portrait-label { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); font-size: .7rem; letter-spacing: .07em; white-space: nowrap; background: #213a38; padding: .45rem .75rem; border-radius: 2rem; }
 .cv-section { padding-block: clamp(4rem, 8vw, 6.5rem); }
 .cv-page h2 { margin: 0 0 2.75rem; text-align: center; text-transform: uppercase; font-size: clamp(2.3rem, 6.5vw, 4.8rem); line-height: 1.05; letter-spacing: -.045em; font-weight: 700; text-wrap: balance; }
 /* Tint is a lerp from the original gray highlight to the section palette. */
@@ -68,7 +67,9 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   --edge-muted: color-mix(in srgb, #8fa5ae, var(--edge-tinted) var(--cv-border-tint));
   border: 1px solid transparent;
   border-radius: 1.25rem;
-  background: linear-gradient(130deg, #182225e8, #11191eea) padding-box,
+  background: linear-gradient(130deg,
+      color-mix(in srgb, var(--cv-box-top) var(--cv-box-opacity), transparent),
+      color-mix(in srgb, var(--cv-box-bottom) var(--cv-box-opacity), transparent)) padding-box,
     linear-gradient(135deg,
       color-mix(in srgb, var(--edge-bright) 40%, transparent),
       color-mix(in srgb, var(--edge-muted) 5%, transparent) 35%, #00000080 60%,
@@ -77,9 +78,9 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
-/* Clip only text boxes, so heading icons retain their own solid color. */
+/* Only the name and section headings receive the gradient. */
 @supports (background-clip: text) {
-  .cv-page h1, .cv-page h2, .cv-card h3 > span, .history-title {
+  .cv-page h1, .cv-page h2 {
     --heading-bottom: color-mix(in srgb, var(--network-base), white var(--cv-heading-white));
     color: transparent;
     background-image: linear-gradient(180deg, #fff var(--cv-heading-white-stop),
@@ -90,7 +91,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 }
 .profile-card { max-width: 760px; margin-inline: auto; padding: clamp(1.6rem, 4vw, 3rem); }
 .cv-page p { margin-top: 0; }
-.profile-card p { margin: 0; font-size: clamp(1.1rem, 2.1vw, 1.35rem); line-height: 1.8; color: var(--cv-muted); }
+.profile-card p { margin: 0; font-size: clamp(1.1rem, 2.1vw, 1.35rem); line-height: 1.8; }
 .cv-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-items: start; }
 .cv-cards.is-packed { grid-auto-rows: 1px; grid-auto-flow: dense; row-gap: 0; }
 .cv-cards.is-packed > :nth-child(odd) { grid-column: 1; }
@@ -98,14 +99,14 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 .cv-card { min-width: 0; padding: clamp(1.5rem, 3.5vw, 2.5rem); }
 .cv-card h3, .history-card caption { margin: 0 0 1.15rem; font-size: 1.3rem; font-weight: 600; line-height: 1.4; }
 .cv-card h3, .history-card caption > span { display: flex; align-items: center; gap: .8rem; }
-.cv-card svg, .history-card svg { flex: 0 0 1.5rem; color: #c6d8d3; }
-.cv-card p { margin: 0; color: var(--cv-muted); line-height: 1.8; font-size: 1.05rem; }
+.cv-card svg, .history-card svg { flex: 0 0 1.5rem; }
+.cv-card p { margin: 0; line-height: 1.8; font-size: 1.05rem; }
 .history-card { overflow: hidden; margin-bottom: 1.5rem; }
 .history-card table { width: 100%; border-collapse: collapse; table-layout: fixed; text-align: left; }
 .history-card caption { text-align: left; padding: 2rem 2rem 1.4rem; margin: 0; }
 .history-card th, .history-card td { padding: 1.1rem 2rem; overflow-wrap: anywhere; }
-.history-card th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; color: #c3d2ce; }
-.history-card td { color: var(--cv-muted); font-size: .95rem; }
+.history-card th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
+.history-card td { font-size: .95rem; }
 .history-card tbody tr:nth-child(odd) { background: #d1e7e012; }
 .history-card tbody tr:nth-child(even) { background: #060d1138; }
 
@@ -132,27 +133,27 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .glass { background: #172125; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .glass { background: var(--cv-box-top); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
 @media print {
   .cv-page { color: #111; background: #fff; }
-  .cv-network-section { background: #fff; }
+  .cv-network-section { color: #333; background: #fff; }
   .cv-network-section::before, .cv-hero-background { display: none; }
-  .cv-page h1, .cv-page h2, .cv-card h3 > span, .history-title { color: #111; background: none; }
+  .cv-page h1, .cv-page h2 { color: #111; background: none; }
   cv-network { display: none; }
   .cv-section { padding-block: 2rem; }
   .hero-inner { min-height: 0; }
   .cv-portrait { display: none; }
   .cv-page h1 { font-size: 2.5rem; }
   .cv-page h2 { font-size: 2rem; }
-  .glass { color: #111; background: #fff; border-color: #aaa; box-shadow: none; backdrop-filter: none; break-inside: avoid; }
+  .glass { color: #333; background: #fff; border-color: #aaa; box-shadow: none; backdrop-filter: none; break-inside: avoid; }
   .cv-page p, .cv-page svg, .history-card th, .history-card td { color: #333; }
   .cv-cards.is-packed { grid-auto-rows: auto; gap: 1rem; }
   .cv-card { grid-row-end: auto !important; }
 }
 
 @media (forced-colors: active) {
-  .cv-page h1, .cv-page h2, .cv-card h3 > span, .history-title { color: CanvasText; background: none; }
+  .cv-page h1, .cv-page h2 { color: CanvasText; background: none; }
   .glass { border-color: CanvasText; }
 }
