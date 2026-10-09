@@ -1,5 +1,5 @@
 import { cvNetworkConfig as config, networkPalette, type NetworkSection } from '../data/cv-network';
-import { clamp, createScene, depthBrightness, projectPoint } from './cv-network-scene';
+import { clamp, createScene, createDepthOrder, depthBrightness, projectPoint } from './cv-network-scene';
 import { createNetworkGpu } from './cv-network-webgl';
 
 type ProjectedNode = { x: number; y: number; radius: number; brightness: number };
@@ -41,6 +41,7 @@ export function startNetwork(host: HTMLElement): () => void {
   let mobile: boolean | undefined;
   let geometry: ReturnType<typeof createScene> = { nodes: [], edges: [] };
   const projected: ProjectedNode[] = [];
+  let depthOrder = createDepthOrder(geometry.nodes);
   const bands: PaletteBand[] = Array.from(document.querySelectorAll<HTMLElement>('[data-network-section]')).map(element => {
     const palette = networkPalette(element.dataset.networkSection as NetworkSection);
     return { element, top: 0, height: 0, previousRgb: [], transition: 0, rgb: rgbChannels(palette.baseColor),
@@ -90,6 +91,7 @@ export function startNetwork(host: HTMLElement): () => void {
         nodeCount: config.nodeCount * (mobile ? clamp(config.mobileNodeRatio, 0, 1) : 1),
       });
       gpu?.setGeometry(geometry.nodes, geometry.edges);
+      depthOrder = createDepthOrder(geometry.nodes);
     }
     pixelRatio = Math.min(window.devicePixelRatio || 1, Math.max(1, config.maxPixelRatio));
     const backingWidth = Math.round(width * pixelRatio);
@@ -178,6 +180,7 @@ export function startNetwork(host: HTMLElement): () => void {
       }
     }
 
+    const nodeOrder = depthOrder(sin, cos);
     for (const band of bands) {
       const top = band.top - scrollY;
       const bottom = top + band.height;
@@ -223,7 +226,8 @@ export function startNetwork(host: HTMLElement): () => void {
       }
       if (nodeSize > 0) {
         for (let i = 0; i < pointCount; i++) {
-          const node = projected[i];
+          const index = nodeOrder[Math.floor(i / rowCount)];
+          const node = projected[(i % rowCount) * count + index];
           if (node.x < -node.radius || node.x > width + node.radius
             || node.y < clipTop - node.radius || node.y > clipBottom + node.radius) continue;
           if (band.transition > 0 && node.y + node.radius > top && node.y - node.radius < top + band.transition) {

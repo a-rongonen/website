@@ -13,14 +13,15 @@ page.on('pageerror', error=>errors.push(error.message));
 await page.addInitScript(()=>{
   window.meshCalls=[];window.meshFrames=0;window.meshUploads=0;
   const proto=WebGL2RenderingContext.prototype;
-  const clear=proto.clear, draw=proto.drawArraysInstanced, upload=proto.bufferData;
+  const clear=proto.clear, draw=proto.drawArraysInstanced, upload=proto.bufferData, update=proto.bufferSubData;
   proto.clear=function(...args){window.meshCalls=[];window.meshFrames++;return clear.apply(this,args);};
   proto.bufferData=function(...args){window.meshUploads++;return upload.apply(this,args);};
+  proto.bufferSubData=function(...args){window.meshUploads++;return update.apply(this,args);};
   proto.drawArraysInstanced=function(...args){
     const program=this.getParameter(this.CURRENT_PROGRAM);
     const uniform=name=>this.getUniform(program,this.getUniformLocation(program,'u_'+name));
     window.meshCalls.push({
-      instances:args[3],repeat:uniform('repeat'),anchor:uniform('anchorY'),cameraY:uniform('cameraY'),
+      instances:args[0]===this.POINTS?args[2]:args[3],repeat:uniform('repeat'),anchor:uniform('anchorY'),cameraY:uniform('cameraY'),
       focal:uniform('focal'),firstRow:uniform('firstRow'),color:Array.from(uniform('color')),
       static:uniform('static'),unitScale:uniform('unitScale'),rotation:Array.from(uniform('rotation')),scissor:Array.from(this.getParameter(this.SCISSOR_BOX)),
     });

@@ -1,4 +1,4 @@
-import type { Point3D, Edge } from './cv-network-scene';
+import { createDepthOrder, type Point3D, type Edge } from './cv-network-scene';
 
 export type NetworkView = {
   width: number; height: number; pixelRatio: number;
@@ -18,7 +18,7 @@ vec3 project(vec3 point, float rowOffset) {
   float x = point.x * u_rotation.y + point.z * u_rotation.x;
   float z = point.z * u_rotation.y - point.x * u_rotation.x;
   float scale = u_focal / max(1.0, u_camera - z);
-  float row = u_firstRow + float(gl_InstanceID) + rowOffset;
+  float row = u_firstRow + rowOffset;
   float y = u_anchorY + (point.y - u_cameraY) * scale
     + row * u_repeat * mix(scale, u_unitScale, u_static);
   return vec3(u_viewport.x * .5 + x * scale, y, scale);
@@ -41,7 +41,7 @@ uniform float u_lineWidth;
 out float v_brightness, v_side, v_along, v_length;
 ${projection}
 void main() {
-  vec3 start = project(a_start, 0.0), end = project(a_end, a_endRow);
+  vec3 start = project(a_start, float(gl_InstanceID)), end = project(a_end, float(gl_InstanceID) + a_endRow);
   vec2 delta = end.xy - start.xy;
   float segmentLength = max(length(delta), .001);
   vec2 direction = delta / segmentLength;
@@ -87,7 +87,7 @@ uniform float u_nodeSize, u_maxPointSize;
 out float v_brightness, v_radius, v_size;
 ${projection}
 void main() {
-  vec3 point = project(a_point, 0.0);
+  vec3 point = project(a_point, float(gl_VertexID));
   float radius = u_nodeSize * clamp(point.z, .4, 2.5) * u_pixelRatio;
   gl_Position = clipPosition(point.xy);
   gl_PointSize = min(u_maxPointSize, 2.0 * radius + 2.0);
@@ -107,7 +107,7 @@ void main() {
   outputColor = vec4(sectionColor() * v_brightness, alpha);
 }`;
 
-/** Static GPU buffers are uploaded only on geometry changes, never on scroll. */
+/** Geometry stays on the GPU; only optional rotation changes the node ordering. */
 export function createNetworkGpu(canvas: HTMLCanvasElement) {
   const gl = canvas.getContext('webgl2', { alpha: true, antialias: false, depth: false, stencil: false,
     premultipliedAlpha: true, powerPreference: 'low-power' });
@@ -153,6 +153,10 @@ export function createNetworkGpu(canvas: HTMLCanvasElement) {
     const lines = program(lineVertex, lineFragment);
     const nodes = program(nodeVertex, nodeFragment);
     let nodeCount = 0;
+    let nodePoints: Point3D[] = [];
+    let depthOrder = createDepthOrder(nodePoints);
+    let uploadedOrder: number[] = [];
+    let nodeVertices = new Float32Array(0);
     let lineVertices = 0;
     const maxPointSize = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE)[1] as number;
 
@@ -162,13 +166,29 @@ export function createNetworkGpu(canvas: HTMLCanvasElement) {
       gl!.vertexAttribPointer(location, size, gl!.FLOAT, false, stride, offset);
     }
 
+    function writeNodeVertices(order: number[]) {
+      order.forEach((index, i) => {
+        const point = nodePoints[index];
+        nodeVertices[i * 3] = point.x;
+        nodeVertices[i * 3 + 1] = point.y;
+        nodeVertices[i * 3 + 2] = point.z;
+      });
+    }
+
     function setGeometry(points: Point3D[], edges: Edge[]) {
       nodeCount = points.length;
+      nodePoints = points;
+      depthOrder = createDepthOrder(points);
+      uploadedOrder = depthOrder(0, 1);
+      nodeVertices = new Float32Array(points.length * 3);
+      writeNodeVertices(uploadedOrder);
       lineVertices = edges.length * 6;
       gl!.bindVertexArray(nodes.vao);
       gl!.bindBuffer(gl!.ARRAY_BUFFER, nodes.buffer);
-      gl!.bufferData(gl!.ARRAY_BUFFER, new Float32Array(points.flatMap(p => [p.x, p.y, p.z])), gl!.STATIC_DRAW);
+      gl!.bufferData(gl!.ARRAY_BUFFER, nodeVertices, gl!.STATIC_DRAW);
       attribute(nodes.program, 'a_point', 3, 12, 0);
+      // Draw every vertical copy of a far node before advancing to a nearer node.
+      gl!.vertexAttribDivisor(gl!.getAttribLocation(nodes.program, 'a_point'), 1);
 
       const vertices = new Float32Array(lineVertices * 9);
       let offset = 0;
@@ -196,6 +216,13 @@ export function createNetworkGpu(canvas: HTMLCanvasElement) {
       gl!.clearColor(0, 0, 0, 0);
       gl!.clear(gl!.COLOR_BUFFER_BIT);
       if (!nodeCount) return;
+      const order = depthOrder(view.sin, view.cos);
+      if (order !== uploadedOrder) {
+        writeNodeVertices(order);
+        gl!.bindBuffer(gl!.ARRAY_BUFFER, nodes.buffer);
+        gl!.bufferSubData(gl!.ARRAY_BUFFER, 0, nodeVertices);
+        uploadedOrder = order;
+      }
       gl!.enable(gl!.BLEND);
       gl!.blendFuncSeparate(gl!.SRC_ALPHA, gl!.ONE_MINUS_SRC_ALPHA, gl!.ONE, gl!.ONE_MINUS_SRC_ALPHA);
       gl!.enable(gl!.SCISSOR_TEST);
@@ -226,7 +253,7 @@ export function createNetworkGpu(canvas: HTMLCanvasElement) {
           gl!.uniform1f(u.bandTop, band.top - scrollY);
           gl!.uniform1f(u.transition, band.transition);
           gl!.drawArraysInstanced(isLine ? gl!.TRIANGLES : gl!.POINTS, 0,
-            isLine ? lineVertices : nodeCount, view.rowCount);
+            isLine ? lineVertices : view.rowCount, isLine ? view.rowCount : nodeCount);
         }
       }
       gl!.bindVertexArray(null);

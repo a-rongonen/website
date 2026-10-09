@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createScene, depthBrightness, projectPoint } from '../src/scripts/cv-network-scene.ts';
+import { createScene, createDepthOrder, depthBrightness, projectPoint } from '../src/scripts/cv-network-scene.ts';
 import { cvNetworkConfig, networkPalette, networkSectionStyle } from '../src/data/cv-network.ts';
 
 const options = {
@@ -174,4 +174,18 @@ test('repeated cell endpoints share node positions and translate continuously wi
       closeTo(firstProjection.y, repeatedProjection.y);
     }
   }
+});
+
+
+test('node paint order follows camera depth and stays cached during scrolling', () => {
+  const points = [{x: 300, y: 0, z: 100}, {x: -300, y: 400, z: -100}];
+  const original = structuredClone(points);
+  const order = createDepthOrder(points);
+  const initial = order(0, 1);
+  assert.deepEqual(initial, [1, 0]);
+  assert.equal(order(0, 1), initial, 'Unchanged rotation must reuse the same ordering');
+  assert.deepEqual(order(1, 0), [0, 1], 'Rotation can reverse near/far order');
+  assert.deepEqual(order(0, 1), initial);
+  assert.deepEqual(points, original, 'Sorting must preserve edge endpoint indices');
+  assert.deepEqual(createDepthOrder([])(0, 1), []);
 });

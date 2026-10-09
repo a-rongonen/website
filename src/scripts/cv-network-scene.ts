@@ -67,3 +67,18 @@ export function projectPoint(point: Point3D, cameraDistance: number, cameraY: nu
   const scale = focalLength / distance;
   return { x: point.x * scale, y: (point.y - cameraY) * scale, scale, distance };
 }
+
+/** Cache far-to-near node indices: scrolling and vertical repeats do not change depth. */
+export function createDepthOrder(points: Point3D[]) {
+  let previousSin = NaN, previousCos = NaN;
+  let order: number[] = [];
+  return (sin: number, cos: number) => {
+    if (sin !== previousSin || cos !== previousCos) {
+      order = points.map((_, index) => index).sort((a, b) =>
+        (points[a].z - points[b].z) * cos - (points[a].x - points[b].x) * sin);
+      previousSin = sin;
+      previousCos = cos;
+    }
+    return order;
+  };
+}
