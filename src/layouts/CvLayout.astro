@@ -3,6 +3,7 @@ import PageLayout from './PageLayout.astro';
 import CvCard from '../components/CvCard.astro';
 import CvIcon from '../components/CvIcon.astro';
 import CvNetwork from '../components/CvNetwork.astro';
+import { cvDesign } from '../data/cv-design';
 import { networkSectionStyle } from '../data/cv-network';
 import type { CvContent } from '../data/cv';
 import '../styles/cv.css';
@@ -12,6 +13,7 @@ const { content } = Astro.props;
 <PageLayout title={content.title} description={content.description} lang={content.lang} isCv>
   <CvNetwork />
   <header class="cv-hero cv-network-section" data-network-section="hero" style={networkSectionStyle('hero')}>
+    {cvDesign.hero.backgroundSrc && <img class="cv-hero-background" src={cvDesign.hero.backgroundSrc} alt="" aria-hidden="true" fetchpriority="high" />}
     <div class="cv-container hero-inner">
       <div class="hero-copy">
         <p class="cv-eyebrow">{content.draft}</p>
@@ -22,10 +24,7 @@ const { content } = Astro.props;
           <img src={content.portrait.src} alt={content.portrait.alt} width="480" height="560" fetchpriority="high" />
         ) : (
           <>
-            <svg class="portrait-placeholder" viewBox="0 0 320 380" aria-hidden="true" focusable="false">
-              <ellipse cx="160" cy="118" rx="67" ry="82" />
-              <path d="M124 177h72l9 36c65 14 100 65 110 167H5c10-102 45-153 110-167Z" />
-            </svg>
+            <img class="portrait-placeholder" src="/images/cv-person-placeholder.png" alt="" width="320" height="380" />
             <span class="portrait-label">{content.portraitLabel}</span>
           </>
         )}
@@ -56,7 +55,7 @@ const { content } = Astro.props;
       <h2 id="history-heading">{content.history.heading}</h2>
       <div class="glass history-card">
         <table>
-          <caption><span><CvIcon name="briefcase" />{content.history.tableTitle}</span></caption>
+          <caption><span><CvIcon name="briefcase" /><span class="history-title">{content.history.tableTitle}</span></span></caption>
           <thead><tr>{content.history.columns.map(column => <th scope="col">{column}</th>)}</tr></thead>
           <tbody>{content.history.rows.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</tbody>
         </table>

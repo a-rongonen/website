@@ -7,7 +7,7 @@ export type NetworkView = {
   repeatHeight: number; unitScale: number; staticProjection: boolean;
   firstRow: number; rowCount: number; lineWidth: number; nodeSize: number;
 };
-export type NetworkBand = { top: number; height: number; rgb: number[]; invisible: boolean };
+export type NetworkBand = { top: number; height: number; rgb: number[]; previousRgb: number[]; transition: number; invisible: boolean };
 
 const projection = `
 uniform vec2 u_viewport;
@@ -55,10 +55,21 @@ void main() {
   v_length = segmentLength;
 }`;
 
+const paletteFragment = `
+uniform vec3 u_color, u_previousColor;
+uniform vec2 u_viewport;
+uniform float u_bandTop, u_transition, u_pixelRatio;
+vec3 sectionColor() {
+  float y = u_viewport.y - gl_FragCoord.y / u_pixelRatio;
+  float t = u_transition > 0.0 ? clamp((y - u_bandTop) / u_transition, 0.0, 1.0) : 1.0;
+  return mix(u_previousColor, u_color, t);
+}
+`;
+
 const lineFragment = `#version 300 es
 precision highp float;
-uniform vec3 u_color;
-uniform float u_lineWidth, u_pixelRatio;
+${paletteFragment}
+uniform float u_lineWidth;
 in float v_brightness, v_side, v_along, v_length;
 out vec4 outputColor;
 void main() {
@@ -66,7 +77,7 @@ void main() {
   float distance = length(vec2(v_side, cap));
   float aa = .75 / u_pixelRatio;
   float alpha = 1.0 - smoothstep(u_lineWidth * .5 - aa, u_lineWidth * .5 + aa, distance);
-  outputColor = vec4(u_color * v_brightness, alpha);
+  outputColor = vec4(sectionColor() * v_brightness, alpha);
 }`;
 
 const nodeVertex = `#version 300 es
@@ -87,13 +98,13 @@ void main() {
 
 const nodeFragment = `#version 300 es
 precision highp float;
-uniform vec3 u_color;
+${paletteFragment}
 in float v_brightness, v_radius, v_size;
 out vec4 outputColor;
 void main() {
   float distance = length((gl_PointCoord - .5) * v_size);
   float alpha = 1.0 - smoothstep(v_radius - .75, v_radius + .75, distance);
-  outputColor = vec4(u_color * v_brightness, alpha);
+  outputColor = vec4(sectionColor() * v_brightness, alpha);
 }`;
 
 /** Static GPU buffers are uploaded only on geometry changes, never on scroll. */
@@ -130,7 +141,7 @@ export function createNetworkGpu(canvas: HTMLCanvasElement) {
       if (!gl!.getProgramParameter(result, gl!.LINK_STATUS)) throw new Error('Network shader linking failed');
       const names = ['viewport', 'camera', 'cameraY', 'anchorY', 'focal', 'repeat', 'unitScale',
         'rotation', 'static', 'firstRow', 'depthExtent', 'darkening', 'pixelRatio',
-        'lineWidth', 'nodeSize', 'maxPointSize', 'color'];
+        'lineWidth', 'nodeSize', 'maxPointSize', 'color', 'previousColor', 'bandTop', 'transition'];
       const uniforms = Object.fromEntries(names.map(name => [name, gl!.getUniformLocation(result, 'u_' + name)]));
       const vao = gl!.createVertexArray();
       const buffer = gl!.createBuffer();
@@ -211,6 +222,9 @@ export function createNetworkGpu(canvas: HTMLCanvasElement) {
           const last = Math.round(bottom * view.pixelRatio);
           gl!.scissor(0, canvas.height - last, canvas.width, last - first);
           gl!.uniform3f(u.color, band.rgb[0] / 255, band.rgb[1] / 255, band.rgb[2] / 255);
+          gl!.uniform3f(u.previousColor, band.previousRgb[0] / 255, band.previousRgb[1] / 255, band.previousRgb[2] / 255);
+          gl!.uniform1f(u.bandTop, band.top - scrollY);
+          gl!.uniform1f(u.transition, band.transition);
           gl!.drawArraysInstanced(isLine ? gl!.TRIANGLES : gl!.POINTS, 0,
             isLine ? lineVertices : nodeCount, view.rowCount);
         }

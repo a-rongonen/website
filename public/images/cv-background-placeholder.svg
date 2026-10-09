@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="800" viewBox="0 0 1600 800">
+  <defs>
+    <radialGradient id="glow"><stop stop-color="#466e77"/><stop offset="1" stop-color="#000"/></radialGradient>
+    <linearGradient id="line"><stop stop-color="#a3e3ff" stop-opacity="0"/><stop offset=".6" stop-color="#a3e3ff" stop-opacity=".2"/><stop offset="1" stop-color="#7acbbf" stop-opacity="0"/></linearGradient>
+  </defs>
+  <path fill="#000" d="M0 0h1600v800H0z"/>
+  <ellipse cx="1100" cy="400" rx="750" ry="530" fill="url(#glow)"/>
+  <g fill="none" stroke="url(#line)" stroke-width="2">
+    <path d="M200 800 850 0M500 800 1150 0M800 800 1450 0M1100 800 1750 0"/>
+    <path d="M0 160h1600M0 400h1600M0 640h1600"/>
+  </g>
+</svg>

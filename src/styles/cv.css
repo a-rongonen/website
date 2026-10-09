@@ -18,6 +18,15 @@
   position: relative;
   background: linear-gradient(90deg, var(--network-edge), var(--network-center) 50%, var(--network-edge));
 }
+.cv-network-section::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: min(var(--network-transition), 100%);
+  background: linear-gradient(90deg, var(--network-previous-edge), var(--network-previous-center) 50%, var(--network-previous-edge));
+  mask-image: linear-gradient(#000, transparent);
+  pointer-events: none;
+}
 cv-network {
   display: block;
   position: fixed;
@@ -31,6 +40,17 @@ cv-network {
 }
 cv-network canvas { display: block; width: 100%; height: 100%; }
 .cv-hero { overflow: hidden; }
+.cv-hero-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--cv-hero-position);
+  opacity: var(--cv-hero-opacity);
+  mask-image: linear-gradient(#000 max(0px, calc(100% - var(--cv-hero-fade))), transparent);
+  pointer-events: none;
+}
 .hero-inner { display: grid; grid-template-columns: 1.5fr 1fr; align-items: end; gap: 2rem; min-height: 470px; }
 .hero-copy { align-self: center; padding-block: 4rem; }
 .cv-eyebrow { margin: 0 0 1.6rem; text-transform: uppercase; letter-spacing: .2em; font-size: .75rem; font-weight: 600; color: #d8e7e2; }
@@ -41,14 +61,32 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 .portrait-label { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); font-size: .7rem; letter-spacing: .07em; white-space: nowrap; background: #213a38; color: #e2ebe6; padding: .45rem .75rem; border-radius: 2rem; }
 .cv-section { padding-block: clamp(4rem, 8vw, 6.5rem); }
 .cv-page h2 { margin: 0 0 2.75rem; text-align: center; text-transform: uppercase; font-size: clamp(2.3rem, 6.5vw, 4.8rem); line-height: 1.05; letter-spacing: -.045em; font-weight: 700; text-wrap: balance; }
+/* Tint is a lerp from the original gray highlight to the section palette. */
 .glass {
+  --edge-tinted: color-mix(in srgb, var(--network-base), white var(--cv-border-white));
+  --edge-bright: color-mix(in srgb, #d9e6e6, var(--edge-tinted) var(--cv-border-tint));
+  --edge-muted: color-mix(in srgb, #8fa5ae, var(--edge-tinted) var(--cv-border-tint));
   border: 1px solid transparent;
   border-radius: 1.25rem;
   background: linear-gradient(130deg, #182225e8, #11191eea) padding-box,
-    linear-gradient(135deg, #d9e6e665, #8fa5ae0d 35%, #00000080 60%, #d9e6e63d) border-box;
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--edge-bright) 40%, transparent),
+      color-mix(in srgb, var(--edge-muted) 5%, transparent) 35%, #00000080 60%,
+      color-mix(in srgb, var(--edge-bright) 24%, transparent)) border-box;
   box-shadow: 0 18px 45px #08101824, inset 0 1px 0 #ffffff08;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+}
+/* Clip only text boxes, so heading icons retain their own solid color. */
+@supports (background-clip: text) {
+  .cv-page h1, .cv-page h2, .cv-card h3 > span, .history-title {
+    --heading-bottom: color-mix(in srgb, var(--network-base), white var(--cv-heading-white));
+    color: transparent;
+    background-image: linear-gradient(180deg, #fff var(--cv-heading-white-stop),
+      color-mix(in srgb, #fff, var(--heading-bottom) var(--cv-heading-tint)) var(--cv-heading-color-stop));
+    background-clip: text;
+    -webkit-background-clip: text;
+  }
 }
 .profile-card { max-width: 760px; margin-inline: auto; padding: clamp(1.6rem, 4vw, 3rem); }
 .cv-page p { margin-top: 0; }
@@ -59,7 +97,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 .cv-cards.is-packed > :nth-child(even) { grid-column: 2; }
 .cv-card { min-width: 0; padding: clamp(1.5rem, 3.5vw, 2.5rem); }
 .cv-card h3, .history-card caption { margin: 0 0 1.15rem; font-size: 1.3rem; font-weight: 600; line-height: 1.4; }
-.cv-card h3, .history-card caption span { display: flex; align-items: center; gap: .8rem; }
+.cv-card h3, .history-card caption > span { display: flex; align-items: center; gap: .8rem; }
 .cv-card svg, .history-card svg { flex: 0 0 1.5rem; color: #c6d8d3; }
 .cv-card p { margin: 0; color: var(--cv-muted); line-height: 1.8; font-size: 1.05rem; }
 .history-card { overflow: hidden; margin-bottom: 1.5rem; }
@@ -100,6 +138,8 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 @media print {
   .cv-page { color: #111; background: #fff; }
   .cv-network-section { background: #fff; }
+  .cv-network-section::before, .cv-hero-background { display: none; }
+  .cv-page h1, .cv-page h2, .cv-card h3 > span, .history-title { color: #111; background: none; }
   cv-network { display: none; }
   .cv-section { padding-block: 2rem; }
   .hero-inner { min-height: 0; }
@@ -110,4 +150,9 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .cv-page p, .cv-page svg, .history-card th, .history-card td { color: #333; }
   .cv-cards.is-packed { grid-auto-rows: auto; gap: 1rem; }
   .cv-card { grid-row-end: auto !important; }
+}
+
+@media (forced-colors: active) {
+  .cv-page h1, .cv-page h2, .cv-card h3 > span, .history-title { color: CanvasText; background: none; }
+  .glass { border-color: CanvasText; }
 }

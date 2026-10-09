@@ -43,19 +43,37 @@ Both CV routes pass localized content to `src/layouts/CvLayout.astro`, with shar
 
 Edit the English and Finnish text in `src/data/cv.ts`; its `CvContent` type defines the common content shape. Cards are stored in mobile reading order: first left, first right, second left, second right. A small browser enhancement packs different-height cards into desktop columns; without JavaScript they remain a regular two-column grid. Below 700px all cards use one column in their original reading order.
 
+The hero has two independent image layers: a decorative full-width background and a foreground PNG anchored to its lower edge. The supplied abstract SVG background and transparent silhouette PNG are explicitly temporary placeholders, not a real portrait.
+
+Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
+
+| Setting | Effect |
+| --- | --- |
+| `hero.backgroundSrc` | Public background image path; an empty string disables the image. |
+| `hero.backgroundPosition` | CSS object position for cropping, e.g. `center` or `70% center`. |
+| `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 0.7). |
+| `hero.bottomFade` | Image fade at the hero bottom, in CSS pixels; 0 disables the fade. |
+| `borders.tint` | Lerp from the original gray edges (0) to section-colored edges (1); default 0.8. |
+| `borders.whiteMix` | Mix white into the colored edge highlight (0–1); default 0.25. |
+| `headings.tint` | Lerp from white text (0) to the vertical white-to-section-color gradient (1); default 0.8. |
+| `headings.whiteMix` | Lighten the gradient's lower color (0–1); default 0.25 keeps dark palettes legible. Use 0 for the pure base color. |
+| `headings.whiteStop`, `colorStop` | Gradient stop positions as percentages down each text box; defaults 0 and 100. Multiline titles share one gradient. |
+
+Borders and headings inherit `sections.<name>.baseColor` from `cv-network.ts`. Heading gradients cover the name, section titles, card titles, and table caption, while icons retain their solid color. Print and forced-color modes use readable solid text. Changing a section base color updates its mesh, edges, and headings together.
+
 To replace the silhouette, add the approved transparent PNG to `public/images/` and set each language's optional `portrait` field to `{ src: '/images/your-portrait.png', alt: 'Localized description' }`. The image sits flush with the hero's lower boundary. Keep the asset out of `public/` until it is approved for publication. Replace placeholder copy and table rows with supplied facts only.
 
 - `src/layouts/PageLayout.astro` contains shared HTML, canonical URLs, and basic site navigation; the CV view omits the site header. There are no CV navigation or alternate-language links.
 - `src/pages/404.astro` supplies the missing-page message.
 - `astro.config.mjs` sets the canonical domain to `https://rongonen.fi`. The live domain connection is configured separately in `wrangler.jsonc`.
-- `public/`, if needed later, is for files copied directly to the public website. Never place private material there.
+- `public/` contains assets copied directly to the public website. Never place private material there.
 - `ignored-files/` holds local planning notes and is excluded from Git. The implementation plan records the agreed scope; `operations-handover.md` records machine-specific access, deployment identifiers, verification, and troubleshooting lessons. These files are not included in a fresh clone. Older context documents contain superseded proposals. No credentials belong there.
 
 There is no portfolio content model, blog publishing system, sitemap, RSS, or analytics yet. Those will be added when their content and design are agreed. Do not add sample experience or projects to fill the placeholders.
 
 ## CV network background
 
-Both CV languages share a lightweight WebGL2 renderer that projects real 3D nodes and connections, with a Canvas2D fallback when WebGL is unavailable or its context is lost. There is no new runtime dependency. One continuous mesh and camera span the entire CV. Section masks change only its colors: a line crossing a boundary stays connected and changes color exactly at that boundary. Perspective makes nearby nodes move faster than distant nodes during scrolling. The mesh repeats vertically with connections between neighboring repeats, so it covers any CV length without restarting at headings.
+Both CV languages share a lightweight WebGL2 renderer that projects real 3D nodes and connections, with a Canvas2D fallback when WebGL is unavailable or its context is lost. There is no new runtime dependency. One continuous mesh and camera span the entire CV. Section masks change only its colors: a line crossing a boundary stays connected and gradually changes color through the same fade as the background. Perspective makes nearby nodes move faster than distant nodes during scrolling. The mesh repeats vertically with connections between neighboring repeats, so it covers any CV length without restarting at headings.
 
 Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run dev` is running. Build again to update a production preview. Use six-digit hex colors.
 
@@ -63,6 +81,7 @@ Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run 
 | --- | --- |
 | `defaults.baseColor`, `centerColor`, `edgeColor` | Shared node/line color, gradient center, and gradient edges (black by default). |
 | `sections.hero/profile/strengths/skills/history` | Override any of those three colors for each section. Existing base/center overrides take precedence over defaults. |
+| `sectionTransition` | Fade distance in CSS pixels at the start of each new section (default 180). Zero restores hard boundaries. The fade is capped at the section height. Applies to CSS backgrounds and both mesh renderers. |
 | `nodeCount` | Nodes in the shared repeating volume; capped at 600. Mobile uses `mobileNodeRatio`. |
 | `scene.width/height/depth` | Scene framing and depth in world units. More depth increases perspective differences; framing stays independent of repeat spacing. |
 | `verticalRepeat.enabled` | Repeat the connected mesh down the entire CV. Turning this off leaves one finite volume, which can scroll out of view. |
@@ -82,6 +101,8 @@ For example, change `sections.skills.centerColor` for its background, `sections.
 The canvas uses stable large-viewport height (`100lvh`, with a `100vh` fallback), and the renderer measures that same CSS box. Mobile address-bar expansion therefore does not rescale the camera or stretch the bitmap; normal window resizing and rotation still update it. The GPU uploads node and line geometry once and draws its vertical repeats with instancing. Scrolling updates camera and color uniforms instead of rebuilding per-line gradients. Only visible section colors are drawn; all-black-on-black sections are skipped. The renderer coalesces scroll updates and stops when idle or the tab is hidden. Touch devices retain the dark glass tint but omit backdrop blur to avoid repeatedly blurring the animated background. It sits behind the existing content and cannot intercept clicks. Reduced-motion preferences disable parallax and idle animation; a static projection continues across the sections and scrolls with the document. Printing hides the canvas; CSS gradients and all CV content remain available without JavaScript.
 
 Implementation: `src/components/CvNetwork.astro`, `src/scripts/cv-network.ts`, the GPU shaders in `src/scripts/cv-network-webgl.ts`, and the pure geometry module `src/scripts/cv-network-scene.ts`. Run `node --test tests/cv-network-scene.test.mjs` for the geometry regression checks, plus the usual `npm run check` and `npm run build`. Browser review should cover both CV routes, section boundaries, narrow screens, scroll depth, and reduced motion.
+
+The design regression suite is `node tests/cv-design.browser.mjs` (same environment variables below; defaults to preview port 8788). It checks actual interpolated pixel colors in both renderers, image loading, narrow screens, print, forced colors, and no-JavaScript rendering.
 
 The optional browser regression suite is `node tests/cv-network-webgl.browser.mjs` against a running production preview. It uses an externally installed Playwright runtime (no new production dependency). Set `PLAYWRIGHT_MODULE` to its ESM module URL if it is not on Node's module path, `BROWSER_CHANNEL` to an installed channel such as `msedge` if needed, and `CV_PREVIEW_URL` to override the default `http://127.0.0.1:8787`. The suite checks GPU buffer reuse, pixel-level vertical repetition, repeat controls, shared cameras, mobile toolbar/orientation behavior, reduced motion, optional animation, and GPU failure fallback.
 

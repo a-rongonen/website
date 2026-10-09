@@ -1,3 +1,5 @@
+import { cvDesignStyle } from './cv-design.ts';
+
 export type NetworkPalette = {
   /** Six-digit hex colors. Nodes and lines always share the base color. */
   baseColor: string;
@@ -21,6 +23,8 @@ export const cvNetworkConfig = {
     skills: { baseColor: '#d9b298', centerColor: '#3b2927' },
     history: { baseColor: '#7acbbf', centerColor: '#10342f' },
   } satisfies Record<string, Partial<NetworkPalette>>,
+
+  sectionTransition: 180, // CSS pixels fading into each new section; 0 = hard boundary.
 
   nodeCount: 170, // Per shared, vertically repeating mesh volume. Mobile scales this count.
   scene: { width: 1800, height: 800, depth: 3000 }, // World units.
@@ -56,5 +60,10 @@ export function networkPalette(section: NetworkSection): NetworkPalette {
 /** The gradient is present even when JavaScript or canvas is unavailable. */
 export function networkSectionStyle(section: NetworkSection) {
   const palette = networkPalette(section);
-  return `--network-center: ${palette.centerColor}; --network-edge: ${palette.edgeColor};`;
+  const sections = Object.keys(cvNetworkConfig.sections) as NetworkSection[];
+  const previous = networkPalette(sections[Math.max(0, sections.indexOf(section) - 1)]);
+  return `--network-base: ${palette.baseColor}; --network-center: ${palette.centerColor};
+    --network-edge: ${palette.edgeColor}; --network-previous-center: ${previous.centerColor};
+    --network-previous-edge: ${previous.edgeColor};
+    --network-transition: ${Math.max(0, cvNetworkConfig.sectionTransition)}px; ${cvDesignStyle()}`;
 }

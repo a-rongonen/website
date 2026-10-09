@@ -8,6 +8,8 @@ type PaletteBand = {
   top: number;
   height: number;
   rgb: number[];
+  previousRgb: number[];
+  transition: number;
   invisible: boolean;
 };
 
@@ -41,8 +43,12 @@ export function startNetwork(host: HTMLElement): () => void {
   const projected: ProjectedNode[] = [];
   const bands: PaletteBand[] = Array.from(document.querySelectorAll<HTMLElement>('[data-network-section]')).map(element => {
     const palette = networkPalette(element.dataset.networkSection as NetworkSection);
-    return { element, top: 0, height: 0, rgb: rgbChannels(palette.baseColor),
+    return { element, top: 0, height: 0, previousRgb: [], transition: 0, rgb: rgbChannels(palette.baseColor),
       invisible: [palette.baseColor, palette.centerColor, palette.edgeColor].every(color => color.toLowerCase() === '#000000') };
+  });
+  bands.forEach((band, index) => {
+    band.previousRgb = bands[Math.max(0, index - 1)].rgb;
+    if (index > 0 && config.sectionTransition > 0 && !bands[index - 1].invisible) band.invisible = false;
   });
   let frame = 0;
   let elapsed = 0;
@@ -96,6 +102,7 @@ export function startNetwork(host: HTMLElement): () => void {
       const bounds = band.element.getBoundingClientRect();
       band.top = bounds.top + window.scrollY;
       band.height = bounds.height;
+      band.transition = Math.min(bounds.height, Math.max(0, config.sectionTransition));
     }
     requestDraw();
   }
@@ -177,8 +184,11 @@ export function startNetwork(host: HTMLElement): () => void {
       if (bottom <= 0 || top >= height || band.invisible) continue;
       const clipTop = Math.max(0, top);
       const clipBottom = Math.min(height, bottom);
-      const colors = geometry.nodes.map((_, i) =>
-        `rgb(${band.rgb.map(channel => Math.round(channel * projected[i].brightness)).join(',')})`);
+      const colorAt = (y: number, brightness: number) => {
+        const mix = band.transition > 0 ? clamp((y - top) / band.transition, 0, 1) : 1;
+        return `rgb(${band.rgb.map((channel, i) =>
+          Math.round((band.previousRgb[i] + (channel - band.previousRgb[i]) * mix) * brightness)).join(',')})`;
+      };
       ctx.save();
       ctx.beginPath();
       ctx.rect(0, clipTop, width, clipBottom - clipTop);
@@ -194,8 +204,15 @@ export function startNetwork(host: HTMLElement): () => void {
             if (Math.max(a.y, b.y) < clipTop || Math.min(a.y, b.y) > clipBottom
               || Math.max(a.x, b.x) < 0 || Math.min(a.x, b.x) > width) continue;
             const gradient = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-            gradient.addColorStop(0, colors[edge.from]);
-            gradient.addColorStop(1, colors[edge.to]);
+            gradient.addColorStop(0, colorAt(a.y, a.brightness));
+            // Stops at the fade boundaries keep long crossing edges continuous.
+            if (b.y !== a.y && band.transition > 0) {
+              for (const y of [top, top + band.transition / 2, top + band.transition]) {
+                const t = (y - a.y) / (b.y - a.y);
+                if (t > 0 && t < 1) gradient.addColorStop(t, colorAt(y, a.brightness + (b.brightness - a.brightness) * t));
+              }
+            }
+            gradient.addColorStop(1, colorAt(b.y, b.brightness));
             ctx.strokeStyle = gradient;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -209,7 +226,12 @@ export function startNetwork(host: HTMLElement): () => void {
           const node = projected[i];
           if (node.x < -node.radius || node.x > width + node.radius
             || node.y < clipTop - node.radius || node.y > clipBottom + node.radius) continue;
-          ctx.fillStyle = colors[i % count];
+          if (band.transition > 0 && node.y + node.radius > top && node.y - node.radius < top + band.transition) {
+            const gradient = ctx.createLinearGradient(0, node.y - node.radius, 0, node.y + node.radius);
+            gradient.addColorStop(0, colorAt(node.y - node.radius, node.brightness));
+            gradient.addColorStop(1, colorAt(node.y + node.radius, node.brightness));
+            ctx.fillStyle = gradient;
+          } else ctx.fillStyle = colorAt(node.y, node.brightness);
           ctx.beginPath();
           ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
           ctx.fill();
