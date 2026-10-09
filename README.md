@@ -49,6 +49,7 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 
 | Setting | Effect |
 | --- | --- |
+| `sectionEdgeDistance` | Equal distance from each content section's top/bottom edge to its first/last element. Accepts a CSS length, e.g. `'80px'` or `'5rem'`; default `'clamp(4rem, 8vw, 6.5rem)'` keeps the responsive 64-104px inset. Outer element margins and trailing card-stack gaps do not add to it. The hero keeps its separate portrait layout; print uses 2rem. |
 | `hero.backgroundSrc` | Public background image path; an empty string disables the image. |
 | `hero.backgroundPosition` | CSS object position for cropping, e.g. `center` or `70% center`. |
 | `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 0.7). |

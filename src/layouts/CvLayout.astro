@@ -75,8 +75,13 @@ const { content } = Astro.props;
     const observer = new ResizeObserver(() => {
       const desktop = window.matchMedia('(min-width: 700px)').matches;
       stack.classList.toggle('is-packed', desktop);
-      for (const card of cards) {
-        card.style.gridRowEnd = desktop ? `span ${Math.ceil(card.getBoundingClientRect().height) + 24}` : '';
+      const nextRow = [1, 1];
+      for (const [index, card] of cards.entries()) {
+        const column = index % 2;
+        const span = Math.ceil(card.getBoundingClientRect().height);
+        // Leave a gap only between cards, never after the last card in a column.
+        card.style.gridRow = desktop ? `${nextRow[column]} / span ${span}` : '';
+        nextRow[column] += span + 24;
       }
     });
     for (const card of cards) observer.observe(card);
