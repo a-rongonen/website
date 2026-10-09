@@ -1,5 +1,6 @@
 import { cvNetworkConfig as config, networkPalette, type NetworkSection } from '../data/cv-network';
 import { clamp, createScene, depthBrightness, projectPoint } from './cv-network-scene';
+import { createNetworkGpu } from './cv-network-webgl';
 
 type ProjectedNode = { x: number; y: number; radius: number; brightness: number };
 type PaletteBand = {
@@ -7,14 +8,26 @@ type PaletteBand = {
   top: number;
   height: number;
   rgb: number[];
+  invisible: boolean;
 };
 
 const rgbChannels = (hex: string) => [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16));
 
 export function startNetwork(host: HTMLElement): () => void {
-  const canvas = host.querySelector('canvas');
-  const context = canvas?.getContext('2d');
-  if (!canvas || !context) return () => {};
+  let canvas = host.querySelector('canvas');
+  if (!canvas) return () => {};
+  let gpu = createNetworkGpu(canvas);
+  let context: CanvasRenderingContext2D | null = null;
+  const useCanvasFallback = () => {
+    gpu?.dispose();
+    gpu = null;
+    const replacement = document.createElement('canvas');
+    canvas!.replaceWith(replacement);
+    canvas = replacement;
+    context = canvas.getContext('2d');
+  };
+  if (!gpu) useCanvasFallback();
+  if (!gpu && !context) return () => {};
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const print = window.matchMedia('print');
@@ -26,10 +39,11 @@ export function startNetwork(host: HTMLElement): () => void {
   let mobile: boolean | undefined;
   let geometry: ReturnType<typeof createScene> = { nodes: [], edges: [] };
   const projected: ProjectedNode[] = [];
-  const bands: PaletteBand[] = Array.from(document.querySelectorAll<HTMLElement>('[data-network-section]')).map(element => ({
-    element, top: 0, height: 0,
-    rgb: rgbChannels(networkPalette(element.dataset.networkSection as NetworkSection).baseColor),
-  }));
+  const bands: PaletteBand[] = Array.from(document.querySelectorAll<HTMLElement>('[data-network-section]')).map(element => {
+    const palette = networkPalette(element.dataset.networkSection as NetworkSection);
+    return { element, top: 0, height: 0, rgb: rgbChannels(palette.baseColor),
+      invisible: [palette.baseColor, palette.centerColor, palette.edgeColor].every(color => color.toLowerCase() === '#000000') };
+  });
   let frame = 0;
   let elapsed = 0;
   let previousTime = 0;
@@ -40,6 +54,8 @@ export function startNetwork(host: HTMLElement): () => void {
     height: Math.max(1, config.scene.height),
     depth: Math.max(1, config.scene.depth),
   };
+  // Keep repeat spacing independent of the camera's framing dimensions.
+  const repeatHeight = config.verticalRepeat.enabled ? Math.max(100, config.verticalRepeat.height) : world.height;
   // Rotation is around the vertical axis; translated rows never affect depth.
   const sceneRadius = Math.hypot(world.width, world.height, world.depth) / 2;
   const cameraDistance = Math.max(config.cameraDistance, sceneRadius + 20);
@@ -63,10 +79,11 @@ export function startNetwork(host: HTMLElement): () => void {
       // One graph for the whole CV, with connections across vertical repeats.
       geometry = createScene({
         ...config,
-        scene: world,
-        wrapY: true,
+        scene: { ...world, height: repeatHeight },
+        wrapY: config.verticalRepeat.enabled,
         nodeCount: config.nodeCount * (mobile ? clamp(config.mobileNodeRatio, 0, 1) : 1),
       });
+      gpu?.setGeometry(geometry.nodes, geometry.edges);
     }
     pixelRatio = Math.min(window.devicePixelRatio || 1, Math.max(1, config.maxPixelRatio));
     const backingWidth = Math.round(width * pixelRatio);
@@ -88,13 +105,8 @@ export function startNetwork(host: HTMLElement): () => void {
     if (disposed || document.hidden || print.matches) return;
     if (continuous() && previousTime) elapsed += Math.min((time - previousTime) / 1000, 0.05);
     previousTime = time;
-    const ctx = context!;
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    ctx.clearRect(0, 0, width, height);
+    if (width <= 0 || height <= 0) return;
     const count = geometry.nodes.length;
-    if (!count) return;
-    ctx.lineWidth = lineWidth;
-    ctx.lineCap = 'round';
     const scrollY = window.scrollY;
     const motion = continuous();
     const yaw = motion ? Math.sin(elapsed * config.motion.autoRotation) * 0.18 : 0;
@@ -109,19 +121,32 @@ export function startNetwork(host: HTMLElement): () => void {
     const depthExtent = Math.abs(sin) * world.width / 2 + Math.abs(cos) * world.depth / 2;
     const closestScale = focalLength / (cameraDistance - depthExtent);
     const farthestScale = focalLength / (cameraDistance + depthExtent);
-    const period = world.height * unitScale;
+    const period = repeatHeight * unitScale;
 
     // Include neighboring rows for edges that cross the repeating volume's ends.
     // Only viewport-neighbor copies are needed, however long the CV becomes.
     const viewExtent = (height / 2 + nodeSize * 2.5) / farthestScale;
-    const staticExtent = (world.height / 2 + Math.abs(drift)) * closestScale + nodeSize * 2.5;
-    const firstRow = parallax === 0
+    const staticExtent = (repeatHeight / 2 + Math.abs(drift)) * closestScale + nodeSize * 2.5;
+    const firstRow = !config.verticalRepeat.enabled ? 0 : parallax === 0
       ? Math.floor((-anchorY - staticExtent) / period) - 1
-      : Math.floor((cameraY - viewExtent) / world.height) - 1;
-    const lastRow = parallax === 0
+      : Math.floor((cameraY - viewExtent) / repeatHeight) - 1;
+    const lastRow = !config.verticalRepeat.enabled ? 0 : parallax === 0
       ? Math.ceil((height - anchorY + staticExtent) / period) + 1
-      : Math.ceil((cameraY + viewExtent) / world.height) + 1;
+      : Math.ceil((cameraY + viewExtent) / repeatHeight) + 1;
     const rowCount = lastRow - firstRow + 1;
+    if (gpu) {
+      gpu.render({ width, height, pixelRatio, cameraDistance, cameraY, anchorY, focalLength,
+        sin, cos, depthExtent, depthDarkening: config.depthDarkening, repeatHeight, unitScale,
+        staticProjection: parallax === 0, firstRow, rowCount, lineWidth, nodeSize }, bands, scrollY);
+      if (motion) requestDraw();
+      return;
+    }
+    const ctx = context!;
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    if (!count) return;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
     const pointCount = rowCount * count;
     while (projected.length < pointCount) projected.push({ x: 0, y: 0, radius: 0, brightness: 0 });
     projected.length = pointCount;
@@ -139,7 +164,7 @@ export function startNetwork(host: HTMLElement): () => void {
         output.x = width / 2 + point.x;
         // Without parallax, repeat a static projection at a uniform screen-space
         // interval. Every point then scrolls exactly with the document.
-        const rowOffset = (firstRow + row) * (parallax === 0 ? period : world.height * point.scale);
+        const rowOffset = (firstRow + row) * (parallax === 0 ? period : repeatHeight * point.scale);
         output.y = anchorY + point.y + rowOffset;
         output.radius = nodeSize * clamp(point.scale, 0.4, 2.5);
         output.brightness = brightness;
@@ -149,7 +174,7 @@ export function startNetwork(host: HTMLElement): () => void {
     for (const band of bands) {
       const top = band.top - scrollY;
       const bottom = top + band.height;
-      if (bottom <= 0 || top >= height) continue;
+      if (bottom <= 0 || top >= height || band.invisible) continue;
       const clipTop = Math.max(0, top);
       const clipBottom = Math.min(height, bottom);
       const colors = geometry.nodes.map((_, i) =>
@@ -202,6 +227,11 @@ export function startNetwork(host: HTMLElement): () => void {
     requestDraw();
   }
 
+  canvas.addEventListener('webglcontextlost', event => {
+    event.preventDefault();
+    useCanvasFallback();
+    measure();
+  }, events);
   window.addEventListener('scroll', requestDraw, { ...events, passive: true });
   window.addEventListener('resize', measure, events);
   window.addEventListener('pageshow', measure, events);
@@ -218,5 +248,6 @@ export function startNetwork(host: HTMLElement): () => void {
     cancelAnimationFrame(frame);
     resize.disconnect();
     abort.abort();
+    gpu?.dispose();
   };
 }

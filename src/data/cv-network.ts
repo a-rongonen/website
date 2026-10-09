@@ -23,7 +23,11 @@ export const cvNetworkConfig = {
   } satisfies Record<string, Partial<NetworkPalette>>,
 
   nodeCount: 170, // Per shared, vertically repeating mesh volume. Mobile scales this count.
-  scene: { width: 1900, height: 2000, depth: 3000 }, // World units.
+  scene: { width: 1800, height: 800, depth: 3000 }, // World units.
+  verticalRepeat: {
+    enabled: true, // Reuse the same connected mesh vertically.
+    height: 800, // World units per repeat; larger = repeats farther apart / fewer dots in view.
+  },
   connectionRadius: 1000, // Maximum 3D distance between linked nodes.
   connectionFrequency: 0.8, // Chance of linking eligible neighbors: 0–1.
   maxConnectionsPerNode: 3, // Bounds clutter and drawing work.

@@ -55,7 +55,7 @@ There is no portfolio content model, blog publishing system, sitemap, RSS, or an
 
 ## CV network background
 
-Both CV languages share a lightweight Canvas2D renderer that projects real 3D nodes and connections. There is no new runtime dependency. One continuous mesh and camera span the entire CV. Section masks change only its colors: a line crossing a boundary stays connected and changes color exactly at that boundary. Perspective makes nearby nodes move faster than distant nodes during scrolling. The mesh repeats vertically with connections between neighboring repeats, so it covers any CV length without restarting at headings.
+Both CV languages share a lightweight WebGL2 renderer that projects real 3D nodes and connections, with a Canvas2D fallback when WebGL is unavailable or its context is lost. There is no new runtime dependency. One continuous mesh and camera span the entire CV. Section masks change only its colors: a line crossing a boundary stays connected and changes color exactly at that boundary. Perspective makes nearby nodes move faster than distant nodes during scrolling. The mesh repeats vertically with connections between neighboring repeats, so it covers any CV length without restarting at headings.
 
 Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run dev` is running. Build again to update a production preview. Use six-digit hex colors.
 
@@ -64,7 +64,9 @@ Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run 
 | `defaults.baseColor`, `centerColor`, `edgeColor` | Shared node/line color, gradient center, and gradient edges (black by default). |
 | `sections.hero/profile/strengths/skills/history` | Override any of those three colors for each section. Existing base/center overrides take precedence over defaults. |
 | `nodeCount` | Nodes in the shared repeating volume; capped at 600. Mobile uses `mobileNodeRatio`. |
-| `scene.width/height/depth` | Size of the 3D volume in world units; height is its vertical repeat period. More depth increases perspective differences. |
+| `scene.width/height/depth` | Scene framing and depth in world units. More depth increases perspective differences; framing stays independent of repeat spacing. |
+| `verticalRepeat.enabled` | Repeat the connected mesh down the entire CV. Turning this off leaves one finite volume, which can scroll out of view. |
+| `verticalRepeat.height` | World units per repeated volume; minimum 100. Larger values spread the same node count over a taller repeat and make repeats less frequent. Smaller values increase density. |
 | `connectionRadius`, `connectionFrequency` | Link nearby nodes within this 3D radius, with a probability from 0 to 1. |
 | `maxConnectionsPerNode` | Limit visual density and drawing work; capped at 12. |
 | `lineWidth`, `nodeSize` | Line width and dot radius in CSS pixels; dot size also responds to perspective. Zero hides either primitive. |
@@ -77,9 +79,11 @@ Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run 
 
 For example, change `sections.skills.centerColor` for its background, `sections.skills.baseColor` for its dots and lines, or add `edgeColor: '#080808'` to that section to replace its black edges with dark gray.
 
-The canvas uses stable large-viewport height (`100lvh`, with a `100vh` fallback), and the renderer measures that same CSS box. Mobile address-bar expansion therefore does not rescale the camera or stretch the bitmap; normal window resizing and rotation still update it. The viewport-sized canvas draws only visible sections, precomputes connections, coalesces scroll updates, and stops when idle or the tab is hidden. It sits behind the existing content and cannot intercept clicks. Reduced-motion preferences disable parallax and idle animation; a static projection continues across the sections and scrolls with the document. Printing hides the canvas; CSS gradients and all CV content remain available without JavaScript.
+The canvas uses stable large-viewport height (`100lvh`, with a `100vh` fallback), and the renderer measures that same CSS box. Mobile address-bar expansion therefore does not rescale the camera or stretch the bitmap; normal window resizing and rotation still update it. The GPU uploads node and line geometry once and draws its vertical repeats with instancing. Scrolling updates camera and color uniforms instead of rebuilding per-line gradients. Only visible section colors are drawn; all-black-on-black sections are skipped. The renderer coalesces scroll updates and stops when idle or the tab is hidden. Touch devices retain the dark glass tint but omit backdrop blur to avoid repeatedly blurring the animated background. It sits behind the existing content and cannot intercept clicks. Reduced-motion preferences disable parallax and idle animation; a static projection continues across the sections and scrolls with the document. Printing hides the canvas; CSS gradients and all CV content remain available without JavaScript.
 
-Implementation: `src/components/CvNetwork.astro`, `src/scripts/cv-network.ts`, and the pure geometry module `src/scripts/cv-network-scene.ts`. Run `node --test tests/cv-network-scene.test.mjs` for the geometry regression checks, plus the usual `npm run check` and `npm run build`. Browser review should cover both CV routes, section boundaries, narrow screens, scroll depth, and reduced motion.
+Implementation: `src/components/CvNetwork.astro`, `src/scripts/cv-network.ts`, the GPU shaders in `src/scripts/cv-network-webgl.ts`, and the pure geometry module `src/scripts/cv-network-scene.ts`. Run `node --test tests/cv-network-scene.test.mjs` for the geometry regression checks, plus the usual `npm run check` and `npm run build`. Browser review should cover both CV routes, section boundaries, narrow screens, scroll depth, and reduced motion.
+
+The optional browser regression suite is `node tests/cv-network-webgl.browser.mjs` against a running production preview. It uses an externally installed Playwright runtime (no new production dependency). Set `PLAYWRIGHT_MODULE` to its ESM module URL if it is not on Node's module path, `BROWSER_CHANNEL` to an installed channel such as `msedge` if needed, and `CV_PREVIEW_URL` to override the default `http://127.0.0.1:8787`. The suite checks GPU buffer reuse, pixel-level vertical repetition, repeat controls, shared cameras, mobile toolbar/orientation behavior, reduced motion, optional animation, and GPU failure fallback.
 
 ## Hosting
 
