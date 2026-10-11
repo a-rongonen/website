@@ -82,9 +82,9 @@ try {
         assert(result.error<.03,`Smooth palette pixels: ${JSON.stringify(result)}`);
       }
       await page.emulateMedia({media:'print'});
-      assert.equal(await page.locator('h1').evaluate(e=>getComputedStyle(e).color),'rgb(17, 17, 17)');
+      assert.equal(await page.locator('.cv-hero h1').evaluate(e=>getComputedStyle(e).color),'rgb(17, 17, 17)');
       await page.emulateMedia({media:'screen',forcedColors:'active'});
-      assert.notEqual(await page.locator('h1').evaluate(e=>getComputedStyle(e).color),'rgba(0, 0, 0, 0)');
+      assert.notEqual(await page.locator('.cv-hero h1').evaluate(e=>getComputedStyle(e).color),'rgba(0, 0, 0, 0)');
       await page.emulateMedia({forcedColors:'none'});
       for(const width of [390,325]){
         await page.setViewportSize({width,height:844});

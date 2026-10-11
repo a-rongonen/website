@@ -13,7 +13,7 @@ export interface CvContent {
   name: string;
   draft: string;
   portraitLabel: string;
-  portrait?: { src: string; alt: string };
+  portrait?: { src: string; alt: string; width: number; height: number };
   profile: { heading: string; text: string };
   strengths: { heading: string; cards: CvCard[] };
   skills: { heading: string; cards: CvCard[] };
@@ -51,6 +51,7 @@ export const cvEnglish: CvContent = {
   name: 'Aleksanteri Rongonen',
   draft: 'CV / Content coming soon',
   portraitLabel: 'Portrait coming soon',
+  portrait: { src: '/images/cv-image.png', alt: 'Aleksanteri Rongonen', width: 725, height: 1000 },
   profile: {
     heading: 'Profile',
     text: 'Placeholder text. This space is reserved for the profile introduction. The final content will be added later.',
@@ -73,6 +74,7 @@ export const cvFinnish: CvContent = {
   name: 'Aleksanteri Rongonen',
   draft: 'CV / Sisältö tulossa pian',
   portraitLabel: 'Kuva tulossa pian',
+  portrait: { src: '/images/cv-image.png', alt: 'Aleksanteri Rongonen', width: 725, height: 1000 },
   profile: {
     heading: 'Profiili',
     text: 'Paikkamerkkiteksti. Tähän tulee profiilin esittely. Lopullinen sisältö lisätään myöhemmin.',

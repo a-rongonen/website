@@ -20,10 +20,35 @@ export const cvDesign = {
     colorStop: 100, // Percentage down the text where the tinted color arrives.
   },
   hero: {
-    backgroundSrc: '/images/cv-background-placeholder.svg', // Public image URL, e.g. /images/cv-background.jpg.
-    backgroundPosition: 'center',
-    backgroundOpacity: 0.7, // 0–1; keep the title readable over a photo.
+    backgroundSrc: '/images/cv-background.png', // 1px strip, repeated horizontally; '' disables it.
+    backgroundOpacity: 1, // 0–1; 1 preserves the supplied image colors.
     bottomFade: 0, // Optional image fade in CSS pixels; 0 keeps a sharp lower edge.
+    // CSS lengths: rem follows text size; vw follows viewport width; % is relative.
+    // The full strip always scales to the hero height without cropping, and tiles horizontally.
+    desktop: { // Viewports at least 700 CSS px wide.
+      minHeight: 'clamp(29.375rem, 36vw, 34rem)', // Hero height; grows if content needs more room.
+      foregroundWidth: '100%', // % of the portrait column (mobile: % of content width).
+      foregroundMaxHeight: '28.125rem', // Preserves image proportions; limits its height.
+      foregroundAlign: 'center', // 'flex-start', 'center', or 'flex-end' within its column.
+      foregroundOffsetX: '0%', // Positive moves right; % of the rendered image width.
+      foregroundOffsetY: '0%', // Positive moves down; % of the rendered image height.
+      foregroundScale: 1, // Visual zoom from the bottom center; does not change layout.
+      copyPaddingTop: '4rem',
+      copyPaddingBottom: '4rem',
+      gap: '2rem', // Space between the title and portrait columns.
+    },
+    mobile: { // Viewports below 700 CSS px; title above portrait.
+      minHeight: '32rem',
+      foregroundWidth: '60%',
+      foregroundMaxHeight: '16.25rem',
+      foregroundAlign: 'flex-end',
+      foregroundOffsetX: '0%',
+      foregroundOffsetY: '0%',
+      foregroundScale: 1,
+      copyPaddingTop: '3.5rem',
+      copyPaddingBottom: '1.75rem',
+      gap: '0rem',
+    },
   },
 };
 
@@ -66,7 +91,9 @@ export function cvDesignStyle(sectionBaseColor: string) {
     --cv-heading-white: ${unitInterval(headings.whiteMix) * 100}%;
     --cv-heading-white-stop: ${whiteStop}%;
     --cv-heading-color-stop: ${Math.max(whiteStop, Math.min(100, headings.colorStop))}%;
-    --cv-hero-position: ${hero.backgroundPosition};
+    ${(['desktop', 'mobile'] as const).map(mode => Object.entries(hero[mode]).map(([key, value]) =>
+      `--cv-hero-${mode}-${key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}: ${value};`
+    ).join('\n')).join('\n')}
     --cv-hero-opacity: ${unitInterval(hero.backgroundOpacity)};
     --cv-hero-mask: ${hero.bottomFade > 0 ? `linear-gradient(#000 max(0px, calc(100% - ${hero.bottomFade}px)), transparent)` : 'none'};`;
 }

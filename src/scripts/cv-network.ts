@@ -46,7 +46,9 @@ export function startNetwork(host: HTMLElement): () => void {
   let geometry: ReturnType<typeof createScene> = { nodes: [], edges: [] };
   const projected: ProjectedNode[] = [];
   let depthOrder = createDepthOrder(geometry.nodes);
-  const bands: PaletteBand[] = Array.from(document.querySelectorAll<HTMLElement>('[data-network-section]')).map(element => {
+  // The hero palette also styles its text/background, but must never enable a mesh.
+  // Exclude it from the shared bands used by both GPU and Canvas2D renderers.
+  const bands: PaletteBand[] = Array.from(document.querySelectorAll<HTMLElement>('[data-network-section]:not([data-network-section="hero"])')).map(element => {
     const section = element.dataset.networkSection as NetworkSection;
     const palette = networkPalette(section);
     const neighbors = networkTransitionNeighbors(section);

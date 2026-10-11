@@ -49,24 +49,47 @@ cv-network {
   overflow: hidden;
 }
 cv-network canvas { display: block; width: 100%; height: 100%; }
-.cv-hero { overflow: hidden; }
+.cv-hero {
+  --hero-min-height: var(--cv-hero-desktop-min-height);
+  --hero-foreground-width: var(--cv-hero-desktop-foreground-width);
+  --hero-foreground-max-height: var(--cv-hero-desktop-foreground-max-height);
+  --hero-foreground-align: var(--cv-hero-desktop-foreground-align);
+  --hero-foreground-offset-x: var(--cv-hero-desktop-foreground-offset-x);
+  --hero-foreground-offset-y: var(--cv-hero-desktop-foreground-offset-y);
+  --hero-foreground-scale: var(--cv-hero-desktop-foreground-scale);
+  --hero-copy-padding-top: var(--cv-hero-desktop-copy-padding-top);
+  --hero-copy-padding-bottom: var(--cv-hero-desktop-copy-padding-bottom);
+  --hero-gap: var(--cv-hero-desktop-gap);
+  overflow: hidden;
+}
 .cv-hero-background {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: var(--cv-hero-position);
+  /* Tile horizontally and fit the entire strip to the hero height without cropping. */
+  background-repeat: repeat-x;
+  background-position: center bottom;
+  background-size: 1px 100%;
   opacity: var(--cv-hero-opacity);
   mask-image: var(--cv-hero-mask);
   pointer-events: none;
 }
-.hero-inner { display: grid; grid-template-columns: 1.5fr 1fr; align-items: end; gap: 2rem; min-height: 470px; }
-.hero-copy { align-self: center; padding-block: 4rem; }
+.hero-inner { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: end; gap: var(--hero-gap); min-height: var(--hero-min-height); }
+.hero-copy { align-self: center; padding-block: var(--hero-copy-padding-top) var(--hero-copy-padding-bottom); }
 .cv-eyebrow { margin: 0 0 1.6rem; text-transform: uppercase; letter-spacing: .2em; font-size: .75rem; font-weight: 600; }
 .cv-page h1 { max-width: 11ch; margin: 0; text-transform: uppercase; font-size: clamp(2.4rem, 5.5vw, 4.8rem); line-height: .98; letter-spacing: -.065em; font-weight: 750; overflow-wrap: anywhere; }
-.cv-portrait { position: relative; align-self: end; display: flex; justify-content: center; }
-.cv-portrait img { display: block; width: 100%; height: auto; max-height: 450px; object-fit: contain; object-position: bottom; }
+.cv-portrait { position: relative; min-width: 0; align-self: end; display: flex; justify-content: var(--hero-foreground-align); }
+.cv-portrait img {
+  display: block;
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  max-width: var(--hero-foreground-width);
+  max-height: var(--hero-foreground-max-height);
+  transform-origin: center bottom;
+  transform: translate(var(--hero-foreground-offset-x), var(--hero-foreground-offset-y)) scale(var(--hero-foreground-scale));
+}
 .portrait-placeholder { display: block; width: 100%; max-height: 400px; fill: #a3bab1; opacity: .65; }
 .portrait-label { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); font-size: .7rem; letter-spacing: .07em; white-space: nowrap; background: #213a38; padding: .45rem .75rem; border-radius: 2rem; }
 .cv-section {
@@ -143,13 +166,22 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 .history-card tbody tr:nth-child(even) { background: #060d1138; }
 
 @media (max-width: 699px) {
+  .cv-hero {
+    --hero-min-height: var(--cv-hero-mobile-min-height);
+    --hero-foreground-width: var(--cv-hero-mobile-foreground-width);
+    --hero-foreground-max-height: var(--cv-hero-mobile-foreground-max-height);
+    --hero-foreground-align: var(--cv-hero-mobile-foreground-align);
+    --hero-foreground-offset-x: var(--cv-hero-mobile-foreground-offset-x);
+    --hero-foreground-offset-y: var(--cv-hero-mobile-foreground-offset-y);
+    --hero-foreground-scale: var(--cv-hero-mobile-foreground-scale);
+    --hero-copy-padding-top: var(--cv-hero-mobile-copy-padding-top);
+    --hero-copy-padding-bottom: var(--cv-hero-mobile-copy-padding-bottom);
+    --hero-gap: var(--cv-hero-mobile-gap);
+  }
   .cv-container { width: min(100% - 2rem, 520px); }
-  .hero-inner { min-height: 0; grid-template-columns: 1fr; gap: 0; }
-  .hero-copy { padding: 3.5rem 0 1.75rem; }
+  .hero-inner { grid-template-columns: 1fr; }
   .cv-page h1 { font-size: clamp(2.4rem, 10vw, 4.8rem); }
   .cv-eyebrow { font-size: .65rem; margin-bottom: 1rem; }
-  .cv-portrait { width: 60%; margin-left: auto; }
-  .portrait-placeholder, .cv-portrait img { max-height: 260px; }
   .portrait-label { bottom: 1.25rem; font-size: .6rem; }
   .cv-page h2 { margin-bottom: 2rem; }
   .cv-cards { grid-template-columns: 1fr; }

@@ -17,7 +17,7 @@ export const cvNetworkConfig = {
 
   // Each section inherits defaults; override any of the three colors here.
   sections: {
-    hero: { baseColor: '#000000', centerColor: '#000000' },
+    hero: { baseColor: '#ffffff', centerColor: '#ffffff' },
     profile: { baseColor: '#a3e3ff', centerColor: '#031519' },
     strengths: { baseColor: '#b3a2ff', centerColor: '#08031f' },
     skills: { baseColor: '#ff6767', centerColor: '#1f0513' },

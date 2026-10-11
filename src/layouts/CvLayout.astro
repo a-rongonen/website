@@ -13,7 +13,7 @@ const { content } = Astro.props;
 <PageLayout title={content.title} description={content.description} lang={content.lang} isCv>
   <CvNetwork />
   <header class="cv-hero cv-network-section" data-network-section="hero" style={networkSectionStyle('hero')}>
-    {cvDesign.hero.backgroundSrc && <img class="cv-hero-background" src={cvDesign.hero.backgroundSrc} alt="" aria-hidden="true" fetchpriority="high" />}
+    {cvDesign.hero.backgroundSrc && <div class="cv-hero-background" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(cvDesign.hero.backgroundSrc)})` }} />}
     <div class="cv-container hero-inner">
       <div class="hero-copy">
         <p class="cv-eyebrow">{content.draft}</p>
@@ -21,7 +21,7 @@ const { content } = Astro.props;
       </div>
       <div class="cv-portrait">
         {content.portrait ? (
-          <img src={content.portrait.src} alt={content.portrait.alt} width="480" height="560" fetchpriority="high" />
+          <img src={content.portrait.src} alt={content.portrait.alt} width={content.portrait.width} height={content.portrait.height} fetchpriority="high" />
         ) : (
           <>
             <img class="portrait-placeholder" src="/images/cv-person-placeholder.png" alt="" width="320" height="380" />

@@ -1,6 +1,6 @@
 # rongonen.fi
 
-A static Astro personal website. Both CV pages implement the owner's approved structure with clearly labelled placeholder copy and a portrait silhouette. Home, Portfolio, and Blog remain simple placeholders; final content will be provided by the owner.
+A static Astro personal website. Both CV pages implement the owner's approved structure with clearly labelled placeholder copy and the supplied portrait. Home, Portfolio, and Blog remain simple placeholders; final content will be provided by the owner.
 
 ## Run locally
 
@@ -43,7 +43,7 @@ Both CV routes pass localized content to `src/layouts/CvLayout.astro`, with shar
 
 Edit the English and Finnish text in `src/data/cv.ts`; its `CvContent` type defines the common content shape. Cards are stored in mobile reading order: first left, first right, second left, second right. A small browser enhancement packs different-height cards into desktop columns; without JavaScript they remain a regular two-column grid. Below 700px all cards use one column in their original reading order.
 
-The hero has two independent image layers: a decorative full-width background and a foreground PNG anchored to its lower edge. The supplied abstract SVG background and transparent silhouette PNG are explicitly temporary placeholders, not a real portrait.
+The hero uses the supplied `public/images/cv-background.png` as a horizontally repeated 1-pixel strip and `public/images/cv-image.png` (725 × 1000) as a transparent foreground portrait. The full background strip scales vertically to exactly match the hero height, with no cropping on mobile or desktop. The portrait sits flush with the bottom by default. Both languages share these settings.
 
 Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 
@@ -51,8 +51,7 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 | --- | --- |
 | `sectionEdgeDistance` | Shared distance from either content-section edge to the content. CSS length, e.g. `'64px'` or `'4rem'`; default `'clamp(4rem, 8vw, 6.5rem)'` (responsive 64-104px). |
 | `hero.backgroundSrc` | Public background image path; an empty string disables the image. |
-| `hero.backgroundPosition` | CSS object position for cropping, e.g. `center` or `70% center`. |
-| `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 0.7). |
+| `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 1). |
 | `hero.bottomFade` | Optional image fade at the hero bottom, in CSS pixels. Default 0 keeps the image sharp to its lower edge. |
 | `contentColor` | Shared body text, icons, small headings, captions, table headers/cells, and labels. Defaults to the former body text color `#d1d4d4`; use any CSS color, e.g. `#cccccc`. |
 | `boxes.defaultColor` | Six-digit hex for the untinted fill (default `#182225`). Its HSL lightness sets the darkness for every section. |
@@ -70,7 +69,27 @@ One `sectionEdgeDistance` replaces the separate start/end controls in both CV la
 
 Box fills, borders, and main headings inherit `sections.<name>.baseColor` from `cv-network.ts`. Heading gradients cover only the name and section titles (h1/h2). Body text, icons, card titles, table captions, headers/cells, and labels share `contentColor`. Box tint mixes the default fill with a dark version of the section hue and capped saturation. Both endpoints use the default color's HSL lightness, so tinting never imports the bright theme lightness or spins through unrelated hues. Print and forced-color modes use readable solid text. Changing a section base color updates its mesh, box fills, edges, and main headings together.
 
-To replace the silhouette, add the approved transparent PNG to `public/images/` and set each language's optional `portrait` field to `{ src: '/images/your-portrait.png', alt: 'Localized description' }`. The image sits flush with the hero's lower boundary. Keep the asset out of `public/` until it is approved for publication. Replace placeholder copy and table rows with supplied facts only.
+### Hero sizing and positioning
+
+In **`src/data/cv-design.ts` → `cvDesign.hero`**, edit the `desktop` and `mobile` blocks independently. Mobile applies below 700 CSS pixels; desktop applies from 700 upwards. Save while `npm run dev` is running to see changes; rebuild if using a production preview.
+
+| Setting in each block | Effect |
+| --- | --- |
+| `minHeight` | Minimum height of the whole hero, including its background. Content can make it taller to avoid clipping the title. Desktop defaults to `clamp(29.375rem, 36vw, 34rem)`; mobile to `32rem`. |
+| `foregroundWidth` | Maximum portrait width: desktop `100%` of its grid column, mobile `60%` of the content width. The height limit may make it narrower. |
+| `foregroundMaxHeight` | Maximum portrait height: desktop `28.125rem`, mobile `16.25rem`. Width and height limits preserve the original proportions. |
+| `foregroundAlign` | Horizontal alignment within the portrait column: `'flex-start'`, `'center'`, or `'flex-end'`. Mobile uses the full content width as its column. |
+| `foregroundOffsetX` | Fine horizontal offset; positive moves right, negative left. `'10%'` moves by 10% of the rendered image's width. |
+| `foregroundOffsetY` | Fine vertical offset; positive moves down (cropping the bottom), negative moves up (leaving a gap). `'0%'` keeps the portrait flush with the bottom. Percentages refer to the rendered image's height. |
+| `foregroundScale` | Visual zoom from the bottom center; `1` is normal, `1.1` is 10% larger. Does not reserve extra layout space; large values can overlap the title or crop at the hero edges. |
+| `copyPaddingTop`, `copyPaddingBottom` | Space above/below the title block. |
+| `gap` | Space between title and portrait: horizontal on desktop, vertical on mobile. |
+
+Change `mobile.minHeight` or `desktop.minHeight` to adjust the hero height; the background always fits its full height automatically. The former `backgroundHeight` crop control has been removed. Set `mobile.foregroundAlign` to `'center'` to center the portrait, or `desktop.foregroundOffsetX` to `'-10%'` to nudge it left. To make the portrait larger without visual overlap, increase both its width and height limits; use scale for finer adjustments.
+
+`rem` follows the root text size, `vw` is a percentage of the viewport width, and `%` follows the reference described above. These are CSS layout units, independent of physical display pixels; browser zoom and text-size preferences still work. The repeating tile itself is intentionally 1 CSS pixel wide. The existing `bottomFade` option remains in CSS pixels and defaults to 0 for a sharp lower edge.
+
+The localized `portrait` entries in `src/data/cv.ts` select the foreground file, alt text, and its natural `width`/`height`. Update those dimensions if replacing the image so the browser can reserve the correct aspect ratio before loading. Replace placeholder copy and table rows with supplied facts only.
 
 - `src/layouts/PageLayout.astro` contains shared HTML, canonical URLs, and basic site navigation; the CV view omits the site header. There are no CV navigation or alternate-language links.
 - `src/pages/404.astro` supplies the missing-page message.
@@ -89,7 +108,7 @@ Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run 
 | Setting | Effect |
 | --- | --- |
 | `defaults.baseColor`, `centerColor`, `edgeColor` | Shared node/line color, gradient center, and gradient edges (black by default). |
-| `sections.hero/profile/strengths/skills/history` | Override any of those three colors for each section. Existing base/center overrides take precedence over defaults. |
+| `sections.hero/profile/strengths/skills/history` | Override any of those three colors for each section. Existing base/center overrides take precedence over defaults. The hero is always excluded from the node graph, regardless of its colors; its palette still controls its heading and CSS background. |
 | `sectionTransition` | Full fade distance in CSS pixels centered on each content-section boundary (the hero is excluded; default 180: 90px on each side). Zero restores hard boundaries. Each half is capped at half its section's height so short sections cannot overlap fades. CSS backgrounds and both mesh renderers share the same midpoint. |
 | `nodeCount` | Nodes in the shared repeating volume; capped at 600. Mobile uses `mobileNodeRatio`. |
 | `scene.width/height/depth` | Scene framing and depth in world units. More depth increases perspective differences; framing stays independent of repeat spacing. |
