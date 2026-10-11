@@ -84,19 +84,13 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   /* Stay visible with expanded mobile browser bars without resizing the hero. */
   bottom: calc(1.5rem + 100lvh - 100svh);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: .5rem;
   padding: .5rem;
-  border-radius: 2rem;
+  border-radius: 50%;
   color: #fff;
   background: #101819d9;
   text-decoration: none;
-  font-size: .7rem;
-  letter-spacing: .06em;
-  line-height: 1.4;
 }
-.cv-scroll-cue > span:last-child { padding-inline: .4rem; }
 .cv-scroll-cue-icon {
   display: grid;
   place-items: center;
