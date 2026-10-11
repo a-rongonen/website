@@ -12,6 +12,7 @@ export interface CvContent {
   description: string;
   name: string;
   draft: string;
+  scrollPrompt: string;
   portraitLabel: string;
   portrait?: { src: string; alt: string; width: number; height: number };
   profile: { heading: string; text: string };
@@ -50,6 +51,7 @@ export const cvEnglish: CvContent = {
   description: 'Aleksanteri Rongonen’s CV. Structure preview with placeholder content.',
   name: 'Aleksanteri Rongonen',
   draft: 'CV / Content coming soon',
+  scrollPrompt: 'Scroll down',
   portraitLabel: 'Portrait coming soon',
   portrait: { src: '/images/cv-image.png', alt: 'Aleksanteri Rongonen', width: 725, height: 1000 },
   profile: {
@@ -73,6 +75,7 @@ export const cvFinnish: CvContent = {
   description: 'Aleksanteri Rongosen CV. Rakenteen esikatselu paikkamerkkisisällöllä.',
   name: 'Aleksanteri Rongonen',
   draft: 'CV / Sisältö tulossa pian',
+  scrollPrompt: 'Vieritä alas',
   portraitLabel: 'Kuva tulossa pian',
   portrait: { src: '/images/cv-image.png', alt: 'Aleksanteri Rongonen', width: 725, height: 1000 },
   profile: {

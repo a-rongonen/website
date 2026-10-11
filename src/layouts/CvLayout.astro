@@ -30,11 +30,19 @@ const { content } = Astro.props;
         )}
       </div>
     </div>
+    <a class="cv-scroll-cue" href="#profile-heading">
+      <span class="cv-scroll-cue-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m6 7 6 6 6-6M6 13l6 6 6-6" />
+        </svg>
+      </span>
+      <span>{content.scrollPrompt}</span>
+    </a>
   </header>
 
   <section class="cv-section cv-profile cv-network-section" data-network-section="profile" style={networkSectionStyle('profile')} aria-labelledby="profile-heading">
     <div class="cv-container">
-      <h2 id="profile-heading">{content.profile.heading}</h2>
+      <h2 id="profile-heading" tabindex="-1">{content.profile.heading}</h2>
       <div class="glass profile-card"><p>{content.profile.text}</p></div>
     </div>
   </section>
