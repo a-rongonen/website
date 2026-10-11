@@ -75,7 +75,7 @@ In **`src/data/cv-design.ts` → `cvDesign.hero`**, edit the `desktop` and `mobi
 
 | Setting in each block | Effect |
 | --- | --- |
-| `minHeight` | Minimum height of the whole hero, including its background. Content can make it taller to avoid clipping the title. Desktop defaults to `clamp(29.375rem, 36vw, 34rem)`; mobile to `32rem`. |
+| `minHeight` | Minimum height of the whole hero, including its background. Both desktop and mobile default to `100dvh`, filling the current visible viewport and following mobile browser-bar changes. Content can make it taller on short screens or with enlarged text to avoid clipping the title. |
 | `foregroundWidth` | Maximum portrait width: desktop `100%` of its grid column, mobile `60%` of the content width. The height limit may make it narrower. |
 | `foregroundMaxHeight` | Maximum portrait height: desktop `28.125rem`, mobile `16.25rem`. Width and height limits preserve the original proportions. |
 | `foregroundAlign` | Horizontal alignment within the portrait column: `'flex-start'`, `'center'`, or `'flex-end'`. Mobile uses the full content width as its column. |

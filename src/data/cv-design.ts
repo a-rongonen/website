@@ -26,7 +26,7 @@ export const cvDesign = {
     // CSS lengths: rem follows text size; vw follows viewport width; % is relative.
     // The full strip always scales to the hero height without cropping, and tiles horizontally.
     desktop: { // Viewports at least 700 CSS px wide.
-      minHeight: 'clamp(29.375rem, 36vw, 34rem)', // Hero height; grows if content needs more room.
+      minHeight: '100dvh', // Fill the visible viewport; grow only if content needs more room.
       foregroundWidth: '100%', // % of the portrait column (mobile: % of content width).
       foregroundMaxHeight: '28.125rem', // Preserves image proportions; limits its height.
       foregroundAlign: 'center', // 'flex-start', 'center', or 'flex-end' within its column.
@@ -38,7 +38,7 @@ export const cvDesign = {
       gap: '2rem', // Space between the title and portrait columns.
     },
     mobile: { // Viewports below 700 CSS px; title above portrait.
-      minHeight: '32rem',
+      minHeight: '100dvh', // Follow the visible height as mobile browser bars expand/collapse.
       foregroundWidth: '60%',
       foregroundMaxHeight: '16.25rem',
       foregroundAlign: 'flex-end',
