@@ -78,6 +78,20 @@ const { content } = Astro.props;
   import { alignSectionText } from '../scripts/cv-section-spacing';
   alignSectionText();
 
+  const scrollCue = document.querySelector<HTMLElement>('.cv-scroll-cue');
+  if (scrollCue) {
+    const updateScrollCue = () => {
+      // A deliberate scroll: a quarter-screen, bounded for short/tall viewports.
+      const threshold = Math.max(120, Math.min(240, window.innerHeight * .25));
+      scrollCue.classList.toggle('is-paused', window.scrollY >= threshold || document.hidden);
+    };
+    window.addEventListener('scroll', updateScrollCue, { passive: true });
+    window.addEventListener('resize', updateScrollCue);
+    window.addEventListener('pageshow', updateScrollCue);
+    document.addEventListener('visibilitychange', updateScrollCue);
+    updateScrollCue();
+  }
+
   // Small progressive enhancement: pack uneven cards while keeping the DOM in
   // left/right reading order. Without JS, the same cards form a regular grid.
   for (const stack of document.querySelectorAll<HTMLElement>('[data-card-stack]')) {
