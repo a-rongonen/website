@@ -1,3 +1,8 @@
+/* Native anchor scrolling keeps focus and URL behavior, with browser easing. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.cv-page) { scroll-behavior: smooth; }
+}
+
 .cv-page {
   max-width: none;
   margin: 0;
