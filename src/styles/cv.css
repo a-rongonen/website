@@ -69,10 +69,10 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   inset: 0;
   width: 100%;
   height: 100%;
-  /* Tile horizontally and fit the entire strip to the hero height without cropping. */
-  background-repeat: repeat-x;
+  /* Preserve proportions and fill the hero, showing the full height or width. */
+  background-repeat: no-repeat;
   background-position: center bottom;
-  background-size: 1px 100%;
+  background-size: cover;
   opacity: var(--cv-hero-opacity);
   mask-image: var(--cv-hero-mask);
   pointer-events: none;

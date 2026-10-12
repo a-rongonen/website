@@ -20,11 +20,11 @@ export const cvDesign = {
     colorStop: 100, // Percentage down the text where the tinted color arrives.
   },
   hero: {
-    backgroundSrc: '/images/cv-background.png', // 1px strip, repeated horizontally; '' disables it.
+    backgroundSrc: '/images/cv-background-v2.jpg', // Proportional cover image; '' disables it.
     backgroundOpacity: 1, // 0–1; 1 preserves the supplied image colors.
     bottomFade: 0, // Optional image fade in CSS pixels; 0 keeps a sharp lower edge.
     // CSS lengths: rem follows text size; vw follows viewport width; % is relative.
-    // The full strip always scales to the hero height without cropping, and tiles horizontally.
+    // The background covers the hero: full height or width stays visible, depending on aspect ratio.
     desktop: { // Viewports at least 700 CSS px wide.
       minHeight: '100lvh', // Fill the large viewport without resizing as browser bars move.
       foregroundHeight: 0.9, // Fraction of the whole hero height; shrinks to fit clear of text.
