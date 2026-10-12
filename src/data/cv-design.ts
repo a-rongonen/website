@@ -27,24 +27,18 @@ export const cvDesign = {
     // The full strip always scales to the hero height without cropping, and tiles horizontally.
     desktop: { // Viewports at least 700 CSS px wide.
       minHeight: '100lvh', // Fill the large viewport without resizing as browser bars move.
-      foregroundWidth: '100%', // % of the portrait column (mobile: % of content width).
-      foregroundMaxHeight: '28.125rem', // Preserves image proportions; limits its height.
-      foregroundAlign: 'center', // 'flex-start', 'center', or 'flex-end' within its column.
-      foregroundOffsetX: '0%', // Positive moves right; % of the rendered image width.
-      foregroundOffsetY: '0%', // Positive moves down; % of the rendered image height.
-      foregroundScale: 1, // Visual zoom from the bottom center; does not change layout.
+      foregroundHeight: 0.9, // Fraction of the whole hero height; shrinks to fit clear of text.
+      foregroundPositionX: 0.0, // 0 = left, 0.5 = center, 1 = right within available space.
+      foregroundPositionY: 1, // 0 = top, 1 = bottom; positioning always stays clear of text.
       copyPaddingTop: '4rem',
       copyPaddingBottom: '4rem',
-      gap: '2rem', // Space between the title and portrait columns.
+      gap: '0rem', // Space between the title and portrait columns.
     },
     mobile: { // Viewports below 700 CSS px; title above portrait.
       minHeight: '100lvh', // Stable while mobile browser bars expand/collapse; follows rotation.
-      foregroundWidth: '60%',
-      foregroundMaxHeight: '16.25rem',
-      foregroundAlign: 'flex-end',
-      foregroundOffsetX: '0%',
-      foregroundOffsetY: '0%',
-      foregroundScale: 1,
+      foregroundHeight: 0.8,
+      foregroundPositionX: 1,
+      foregroundPositionY: 1,
       copyPaddingTop: '3.5rem',
       copyPaddingBottom: '1.75rem',
       gap: '0rem',
@@ -92,7 +86,10 @@ export function cvDesignStyle(sectionBaseColor: string) {
     --cv-heading-white-stop: ${whiteStop}%;
     --cv-heading-color-stop: ${Math.max(whiteStop, Math.min(100, headings.colorStop))}%;
     ${(['desktop', 'mobile'] as const).map(mode => Object.entries(hero[mode]).map(([key, value]) =>
-      `--cv-hero-${mode}-${key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}: ${value};`
+      `--cv-hero-${mode}-${key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}: ${
+        key.startsWith('foregroundPosition') ? `${unitInterval(Number(value)) * 100}%`
+          : key === 'foregroundHeight' ? unitInterval(Number(value)) : value
+      };`
     ).join('\n')).join('\n')}
     --cv-hero-opacity: ${unitInterval(hero.backgroundOpacity)};
     --cv-hero-mask: ${hero.bottomFade > 0 ? `linear-gradient(#000 max(0px, calc(100% - ${hero.bottomFade}px)), transparent)` : 'none'};`;

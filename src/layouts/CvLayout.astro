@@ -78,6 +78,16 @@ const { content } = Astro.props;
   import { alignSectionText } from '../scripts/cv-section-spacing';
   alignSectionText();
 
+  // The image cannot affect grid sizing, so measuring the actual hero height
+  // also handles enlarged text without a resize feedback loop or scroll work.
+  const heroInner = document.querySelector<HTMLElement>('.hero-inner');
+  if (heroInner) {
+    const observer = new ResizeObserver(([entry]) => {
+      heroInner.style.setProperty('--hero-height', `${entry.contentRect.height}px`);
+    });
+    observer.observe(heroInner);
+  }
+
   const scrollCue = document.querySelector<HTMLElement>('.cv-scroll-cue');
   if (scrollCue) {
     const updateScrollCue = () => {

@@ -53,7 +53,7 @@ export const cvEnglish: CvContent = {
   draft: 'CV / Content coming soon',
   scrollPrompt: 'Scroll down',
   portraitLabel: 'Portrait coming soon',
-  portrait: { src: '/images/cv-image.png', alt: 'Aleksanteri Rongonen', width: 725, height: 1000 },
+  portrait: { src: '/images/cv-image.png', alt: 'Aleksanteri Rongonen', width: 1944, height: 2738 },
   profile: {
     heading: 'Profile',
     text: 'Placeholder text. This space is reserved for the profile introduction. The final content will be added later.',
@@ -77,7 +77,7 @@ export const cvFinnish: CvContent = {
   draft: 'CV / Sisältö tulossa pian',
   scrollPrompt: 'Vieritä alas',
   portraitLabel: 'Kuva tulossa pian',
-  portrait: { src: '/images/cv-image.png', alt: 'Aleksanteri Rongonen', width: 725, height: 1000 },
+  portrait: { src: '/images/cv-image.png', alt: 'Aleksanteri Rongonen', width: 1944, height: 2738 },
   profile: {
     heading: 'Profiili',
     text: 'Paikkamerkkiteksti. Tähän tulee profiilin esittely. Lopullinen sisältö lisätään myöhemmin.',

@@ -43,7 +43,7 @@ Both CV routes pass localized content to `src/layouts/CvLayout.astro`, with shar
 
 Edit the English and Finnish text in `src/data/cv.ts`; its `CvContent` type defines the common content shape. Cards are stored in mobile reading order: first left, first right, second left, second right. A small browser enhancement packs different-height cards into desktop columns; without JavaScript they remain a regular two-column grid. Below 700px all cards use one column in their original reading order.
 
-The hero uses the supplied `public/images/cv-background.png` as a horizontally repeated 1-pixel strip and `public/images/cv-image.png` (725 × 1000) as a transparent foreground portrait. The full background strip scales vertically to exactly match the hero height, with no cropping on mobile or desktop. The portrait sits flush with the bottom by default. Both languages share these settings.
+The hero uses the supplied `public/images/cv-background.png` as a horizontally repeated 1-pixel strip and `public/images/cv-image.png` (1944 × 2738) as a transparent foreground portrait. The full background strip scales vertically to exactly match the hero height, with no cropping on mobile or desktop. The portrait sits flush with the bottom by default. Both languages share these settings.
 
 Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 
@@ -76,16 +76,17 @@ In **`src/data/cv-design.ts` → `cvDesign.hero`**, edit the `desktop` and `mobi
 | Setting in each block | Effect |
 | --- | --- |
 | `minHeight` | Minimum height of the whole hero, including its background. Both desktop and mobile default to `100lvh`, filling the viewport with browser bars retracted and staying stable as those bars move. With bars expanded, the hero can extend below the visible area. Rotation and window resizing still update it. Content can make it taller on short screens or with enlarged text to avoid clipping the title. |
-| `foregroundWidth` | Maximum portrait width: desktop `100%` of its grid column, mobile `60%` of the content width. The height limit may make it narrower. |
-| `foregroundMaxHeight` | Maximum portrait height: desktop `28.125rem`, mobile `16.25rem`. Width and height limits preserve the original proportions. |
-| `foregroundAlign` | Horizontal alignment within the portrait column: `'flex-start'`, `'center'`, or `'flex-end'`. Mobile uses the full content width as its column. |
-| `foregroundOffsetX` | Fine horizontal offset; positive moves right, negative left. `'10%'` moves by 10% of the rendered image's width. |
-| `foregroundOffsetY` | Fine vertical offset; positive moves down (cropping the bottom), negative moves up (leaving a gap). `'0%'` keeps the portrait flush with the bottom. Percentages refer to the rendered image's height. |
-| `foregroundScale` | Visual zoom from the bottom center; `1` is normal, `1.1` is 10% larger. Does not reserve extra layout space; large values can overlap the title or crop at the hero edges. |
+| `foregroundHeight` | Requested image height as a fraction of the **whole hero**: `0.9` means 90%. Defaults: desktop `0.9`, mobile `0.8`. Clamped to 0–1. Image proportions are preserved; width or space below the mobile title can reduce the actual height. Source pixel resolution does not set its displayed size. |
+| `foregroundPositionX` | Horizontal position within available image space: `0` = left, `0.5` = center, `1` = right. Defaults: desktop `0`, mobile `1`. Clamped to 0–1. |
+| `foregroundPositionY` | Vertical position within available image space: `0` = top, `0.5` = center, `1` = bottom. Defaults to `1` to keep the image flush with the hero bottom. Clamped to 0–1. |
 | `copyPaddingTop`, `copyPaddingBottom` | Space above/below the title block. |
 | `gap` | Space between title and portrait: horizontal on desktop, vertical on mobile. |
 
-Change `mobile.minHeight` or `desktop.minHeight` to adjust the hero height; the background always fits its full height automatically. The former `backgroundHeight` crop control has been removed. Set `mobile.foregroundAlign` to `'center'` to center the portrait, or `desktop.foregroundOffsetX` to `'-10%'` to nudge it left. To make the portrait larger without visual overlap, increase both its width and height limits; use scale for finer adjustments.
+Change `mobile.minHeight` or `desktop.minHeight` to adjust the hero height; the background always fits its full height automatically. Set `desktop.foregroundHeight` to `0.9` for a requested height of 90%, or `mobile.foregroundPositionX` to `0.5` to center the portrait. The old width/max-height/scale/offset/alignment controls are replaced by these three controls. The portrait fits within a separate grid cell beside the title on desktop and below it on mobile, so even extreme settings cannot move it over the title. Position controls distribute spare space; they have no visible effect along an axis the image completely fills. Negative text padding and gaps are clamped to zero.
+
+On desktop, the title stays aligned with the content below and takes its content width (up to half the hero's available width). The portrait uses the remaining space out to the right viewport gutter. It is not restricted to the 960px content container or a fixed column fraction. A full-height portrait is possible when that space can accommodate its aspect ratio; narrower windows still reduce its height to protect the title.
+
+A resize observer supplies the actual hero height when text makes it taller than `minHeight`; the out-of-flow image never expands the hero itself. Without JavaScript, the height target uses `minHeight`, while the same fitting and separation rules still apply. On short screens the mobile portrait reserves at least 12rem of layout space so enlarged text can expand the hero without hiding the image. Transparent padding inside the source image counts toward its height.
 
 `rem` follows the root text size, `vw` is a percentage of the viewport width, and `%` follows the reference described above. These are CSS layout units, independent of physical display pixels; browser zoom and text-size preferences still work. The repeating tile itself is intentionally 1 CSS pixel wide. The existing `bottomFade` option remains in CSS pixels and defaults to 0 for a sharp lower edge.
 
@@ -133,6 +134,8 @@ Implementation: `src/components/CvNetwork.astro`, `src/scripts/cv-network.ts`, t
 The rendered-spacing regression is `node tests/cv-spacing.browser.mjs` with the browser environment variables below (default port 8793). It measures painted heading letters and card borders, compares gradient and solid text to catch clipped accents, and checks both languages at desktop/mobile widths and custom shared distances.
 
 The design regression suite is `node tests/cv-design.browser.mjs` (same environment variables below; defaults to preview port 8788). It checks actual interpolated pixel colors in both renderers, image loading, narrow screens, print, forced colors, and no-JavaScript rendering.
+
+The hero regression suite is `node tests/cv-hero.browser.mjs` (same environment variables; default port 8797). It covers both CV languages, responsive layouts, height ratios, extreme positions, identical sizing across source resolutions, text-driven hero growth, and no-JavaScript separation.
 
 The optional browser regression suite is `node tests/cv-network-webgl.browser.mjs` against a running production preview. It uses an externally installed Playwright runtime (no new production dependency). Set `PLAYWRIGHT_MODULE` to its ESM module URL if it is not on Node's module path, `BROWSER_CHANNEL` to an installed channel such as `msedge` if needed, and `CV_PREVIEW_URL` to override the default `http://127.0.0.1:8787`. Run `node tests/cv-network-depth.browser.mjs` with the same browser settings for deterministic overlap pixel checks, including repeated rows and rotation. The main suite checks GPU buffer reuse, pixel-level vertical repetition, repeat controls, shared cameras, mobile toolbar/orientation behavior, reduced motion, optional animation, and GPU failure fallback.
 

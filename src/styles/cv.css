@@ -56,12 +56,9 @@ cv-network {
 cv-network canvas { display: block; width: 100%; height: 100%; }
 .cv-hero {
   --hero-min-height: var(--cv-hero-desktop-min-height);
-  --hero-foreground-width: var(--cv-hero-desktop-foreground-width);
-  --hero-foreground-max-height: var(--cv-hero-desktop-foreground-max-height);
-  --hero-foreground-align: var(--cv-hero-desktop-foreground-align);
-  --hero-foreground-offset-x: var(--cv-hero-desktop-foreground-offset-x);
-  --hero-foreground-offset-y: var(--cv-hero-desktop-foreground-offset-y);
-  --hero-foreground-scale: var(--cv-hero-desktop-foreground-scale);
+  --hero-foreground-height: clamp(0, var(--cv-hero-desktop-foreground-height), 1);
+  --hero-foreground-position-x: clamp(0%, var(--cv-hero-desktop-foreground-position-x), 100%);
+  --hero-foreground-position-y: clamp(0%, var(--cv-hero-desktop-foreground-position-y), 100%);
   --hero-copy-padding-top: var(--cv-hero-desktop-copy-padding-top);
   --hero-copy-padding-bottom: var(--cv-hero-desktop-copy-padding-bottom);
   --hero-gap: var(--cv-hero-desktop-gap);
@@ -80,8 +77,18 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   mask-image: var(--cv-hero-mask);
   pointer-events: none;
 }
-.hero-inner { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: end; gap: var(--hero-gap); min-height: var(--hero-min-height); }
-.hero-copy { align-self: center; padding-block: var(--hero-copy-padding-top) var(--hero-copy-padding-bottom); }
+.hero-inner {
+  /* Keep the title aligned with the content, but let the portrait use the
+     space out to the viewport edge instead of a fraction of the 960px column. */
+  width: auto;
+  margin-left: max(1.5rem, calc((100% - 960px) / 2));
+  margin-right: 1.5rem;
+  display: grid;
+  grid-template-columns: fit-content(50%) minmax(0, 1fr);
+  gap: max(0px, var(--hero-gap));
+  min-height: var(--hero-min-height);
+}
+.hero-copy { min-width: 0; align-self: center; padding-block: max(0px, var(--hero-copy-padding-top)) max(0px, var(--hero-copy-padding-bottom)); }
 .cv-scroll-cue {
   position: absolute;
   z-index: 3;
@@ -119,18 +126,21 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 }
 .cv-eyebrow { margin: 0 0 1.6rem; text-transform: uppercase; letter-spacing: .2em; font-size: .75rem; font-weight: 600; }
 .cv-page h1 { max-width: 11ch; margin: 0; text-transform: uppercase; font-size: clamp(2.4rem, 5.5vw, 4.8rem); line-height: .98; letter-spacing: -.065em; font-weight: 750; overflow-wrap: anywhere; }
-.cv-portrait { position: relative; min-width: 0; align-self: end; display: flex; justify-content: var(--hero-foreground-align); }
+.cv-portrait { position: relative; min-width: 0; min-height: 12rem; align-self: stretch; }
 .cv-portrait img {
+  /* An explicit box scales even low-resolution sources up. Contain preserves
+     proportions, and the separate grid cell keeps every position clear of text. */
+  position: absolute;
   display: block;
-  flex: 0 0 auto;
-  width: auto;
-  height: auto;
-  max-width: var(--hero-foreground-width);
-  max-height: min(var(--hero-foreground-max-height), 100lvh);
-  transform-origin: center bottom;
-  transform: translate(var(--hero-foreground-offset-x), var(--hero-foreground-offset-y)) scale(var(--hero-foreground-scale));
+  left: 0;
+  top: var(--hero-foreground-position-y);
+  width: 100%;
+  height: min(100%, calc(var(--hero-foreground-height) * var(--hero-height, var(--hero-min-height))));
+  object-fit: contain;
+  object-position: var(--hero-foreground-position-x) var(--hero-foreground-position-y);
+  transform: translateY(calc(-1 * var(--hero-foreground-position-y)));
 }
-.portrait-placeholder { display: block; width: 100%; max-height: 400px; fill: #a3bab1; opacity: .65; }
+.portrait-placeholder { opacity: .65; }
 .portrait-label { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); font-size: .7rem; letter-spacing: .07em; white-space: nowrap; background: #213a38; padding: .45rem .75rem; border-radius: 2rem; }
 .cv-section {
   padding-block: max(0px, var(--cv-section-edge-distance));
@@ -208,18 +218,15 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 @media (max-width: 699px) {
   .cv-hero {
     --hero-min-height: var(--cv-hero-mobile-min-height);
-    --hero-foreground-width: var(--cv-hero-mobile-foreground-width);
-    --hero-foreground-max-height: var(--cv-hero-mobile-foreground-max-height);
-    --hero-foreground-align: var(--cv-hero-mobile-foreground-align);
-    --hero-foreground-offset-x: var(--cv-hero-mobile-foreground-offset-x);
-    --hero-foreground-offset-y: var(--cv-hero-mobile-foreground-offset-y);
-    --hero-foreground-scale: var(--cv-hero-mobile-foreground-scale);
+    --hero-foreground-height: clamp(0, var(--cv-hero-mobile-foreground-height), 1);
+    --hero-foreground-position-x: clamp(0%, var(--cv-hero-mobile-foreground-position-x), 100%);
+    --hero-foreground-position-y: clamp(0%, var(--cv-hero-mobile-foreground-position-y), 100%);
     --hero-copy-padding-top: var(--cv-hero-mobile-copy-padding-top);
     --hero-copy-padding-bottom: var(--cv-hero-mobile-copy-padding-bottom);
     --hero-gap: var(--cv-hero-mobile-gap);
   }
   .cv-container { width: min(100% - 2rem, 520px); }
-  .hero-inner { grid-template-columns: 1fr; }
+  .hero-inner { width: min(100% - 2rem, 520px); margin-inline: auto; grid-template-columns: 1fr; grid-template-rows: auto minmax(12rem, 1fr); }
   .cv-scroll-cue { left: max(1rem, calc((100% - 520px) / 2)); }
   .cv-page h1 { font-size: clamp(2.4rem, 10vw, 4.8rem); }
   .cv-eyebrow { font-size: .65rem; margin-bottom: 1rem; }
@@ -248,7 +255,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .cv-page h1, .cv-page h2 { color: #111; background: none; }
   cv-network { display: none; }
   .cv-section { padding-block: 2rem; }
-  .hero-inner { min-height: 0; }
+  .hero-inner { min-height: 0; grid-template-rows: auto; }
   .cv-portrait { display: none; }
   .cv-scroll-cue { display: none; }
   .cv-page h1 { font-size: 2.5rem; }
