@@ -6,5 +6,5 @@ const { card } = Astro.props;
 ---
 <article class="cv-card glass">
   <h3><CvIcon name={card.icon} /><span>{card.title}</span></h3>
-  <p>{card.text}</p>
+  {card.text.split('\n\n').map(paragraph => <p>{paragraph}</p>)}
 </article>

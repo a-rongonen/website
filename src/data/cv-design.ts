@@ -1,6 +1,7 @@
 /** Shared presentation controls for both CV languages. */
 export const cvDesign = {
   sectionEdgeDistance: 'clamp(4rem, 8vw, 6.5rem)', // Shared content inset from either section edge; e.g. '64px'.
+  bulletGap: '1.5rem', // Extra space between bullet items, in addition to normal line height.
   contentColor: '#d1d4d4', // Shared body text, icons, small headings, and table text.
   boxes: {
     defaultColor: '#182225', // Six-digit hex; its lightness controls how dark boxes stay.
@@ -16,7 +17,7 @@ export const cvDesign = {
   headings: {
     tint: 0.8, // 0 = white; 1 = full white-to-section-color gradient.
     whiteMix: 0.25, // Lighten the lower color; useful for dark section palettes.
-    whiteStop: 0, // Percentage down the text where white ends (0–100).
+    whiteStop: 50, // Percentage down the text where white ends (0–100).
     colorStop: 100, // Percentage down the text where the tinted color arrives.
   },
   hero: {
@@ -36,11 +37,11 @@ export const cvDesign = {
     },
     mobile: { // Viewports below 700 CSS px; title above portrait.
       minHeight: '100lvh', // Stable while mobile browser bars expand/collapse; follows rotation.
-      foregroundHeight: 0.8,
+      foregroundHeight: 1.0,
       foregroundPositionX: 1,
       foregroundPositionY: 1,
       copyPaddingTop: '3.5rem',
-      copyPaddingBottom: '1.75rem',
+      copyPaddingBottom: '0.0rem',
       gap: '0rem',
     },
   },
@@ -76,6 +77,7 @@ export function cvDesignStyle(sectionBaseColor: string) {
   const whiteStop = Math.max(0, Math.min(100, headings.whiteStop));
   return `--cv-content-color: ${cvDesign.contentColor};
     --cv-section-edge-distance: ${cvDesign.sectionEdgeDistance};
+    --cv-bullet-gap: ${cvDesign.bulletGap};
     --cv-box-top: ${fill(source.lightness)};
     --cv-box-bottom: ${fill(source.lightness * (1 - unitInterval(boxes.shade)))};
     --cv-box-opacity: ${unitInterval(boxes.opacity) * 100}%;

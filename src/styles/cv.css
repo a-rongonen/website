@@ -115,8 +115,8 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 .cv-scroll-cue.is-paused svg { animation-play-state: paused; }
 .cv-scroll-cue:hover { background: #263839; }
 .cv-scroll-cue:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
-#profile-heading { scroll-margin-top: 1.5rem; }
-#profile-heading:focus-visible { outline-color: var(--cv-content-color); }
+.cv-section, .cv-section h2 { scroll-margin-top: 1.5rem; }
+.cv-section:focus-visible, .cv-section h2:focus-visible { outline-color: var(--cv-content-color); }
 @keyframes cv-scroll-nudge {
   0%, 100% { transform: translateY(-2px); }
   50% { transform: translateY(3px); }
@@ -196,7 +196,14 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 }
 .profile-card { max-width: 760px; margin-inline: auto; padding: clamp(1.6rem, 4vw, 3rem); }
 .cv-page p { margin-top: 0; }
-.profile-card p { margin: 0; font-size: clamp(1.1rem, 2.1vw, 1.35rem); line-height: 1.8; }
+.profile-card p { margin: 0; }
+.cv-intro-split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
+.cv-intro-split { max-width: none; width: 100%; margin: 0; }
+.cv-bullets { margin: 0; padding-left: 1.5em; }
+.cv-bullets li { padding-left: .25em; }
+.cv-bullets li::marker { content: '\2713  '; }
+.cv-bullets li + li { margin-top: max(0px, var(--cv-bullet-gap)); }
+.cv-intro + .history-card, .cv-intro + .cv-cards { margin-top: 1.5rem; }
 .cv-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-items: start; }
 .cv-cards.is-packed { grid-auto-rows: 1px; grid-auto-flow: dense; row-gap: 0; }
 .cv-cards.is-packed > :nth-child(odd) { grid-column: 1; }
@@ -205,7 +212,9 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 .cv-card h3, .history-card caption { margin: 0 0 1.15rem; font-size: 1.3rem; font-weight: 600; line-height: 1.4; }
 .cv-card h3, .history-card caption > span { display: flex; align-items: center; gap: .8rem; }
 .cv-card svg, .history-card svg { flex: 0 0 1.5rem; }
-.cv-card p { margin: 0; line-height: 1.8; font-size: 1.05rem; }
+.cv-card p { margin: 0; }
+.profile-card p, .cv-bullets, .cv-card p { line-height: 1.8; font-size: 1.05rem; }
+.profile-card p + p, .cv-card p + p { margin-top: 1em; }
 .history-card { overflow: hidden; margin-bottom: 1.5rem; }
 .history-card table { width: 100%; border-collapse: collapse; table-layout: fixed; text-align: left; }
 .history-card caption { text-align: left; padding: 2rem 2rem 1.4rem; margin: 0; }
@@ -233,6 +242,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .portrait-label { bottom: 1.25rem; font-size: .6rem; }
   .cv-page h2 { margin-bottom: 2rem; }
   .cv-cards { grid-template-columns: 1fr; }
+  .cv-intro-split { grid-template-columns: 1fr; }
   .history-card caption { padding: 1.5rem 1rem 1rem; }
   .history-card th, .history-card td { padding: .9rem .65rem; font-size: .8rem; }
   .history-card th { font-size: .65rem; letter-spacing: .02em; }

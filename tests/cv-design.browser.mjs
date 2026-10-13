@@ -5,6 +5,10 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || undefined });
 const base = process.env.CV_PREVIEW_URL || 'http://127.0.0.1:8788';
 const rgb = hex => [1,3,5].map(i => parseInt(hex.slice(i,i+2),16));
+async function transitionPairs(page) {
+  const palettes = await page.locator('.cv-section').evaluateAll(sections => sections.map(section => section.dataset.networkSection));
+  return palettes.slice(1).map((current, index) => [palettes[index], current]);
+}
 try {
   for (const fallback of [false,true]) {
     const context = await browser.newContext({viewport:{width:1440,height:1000},deviceScaleFactor:1});
@@ -18,6 +22,24 @@ try {
       await page.goto(base+route);
       await page.waitForFunction(()=>document.querySelector('canvas').width>0);
       await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));
+      assert.deepEqual(await page.locator('.cv-section').evaluateAll(elements => elements.map(e => [e.dataset.sectionId, e.dataset.networkSection])),
+        [['profile', 'profile'], ['skills', 'strengths'], ['history', 'skills']], 'Empty section does not consume a palette slot');
+      assert.equal(await page.locator('.cv-strengths').count(), 0);
+      assert.equal(await page.locator('.cv-profile li').count(), 5);
+      assert.equal(await page.locator('.cv-profile svg, .cv-profile h3').count(), 0);
+      const desktopIntro = await page.locator('.cv-intro-split').evaluate(e => {
+        const [text, list] = [...e.children].map(child => child.getBoundingClientRect());
+        return { separate: text.right < list.left, beside: list.top < text.bottom };
+      });
+      assert(desktopIntro.separate && desktopIntro.beside, 'Profile text and bullets sit side by side');
+      const defaultBulletGap = await page.locator('.cv-profile').evaluate(e => e.style.getPropertyValue('--cv-bullet-gap'));
+      await page.locator('.cv-profile').evaluate(e => e.style.setProperty('--cv-bullet-gap', '48px'));
+      const bulletGaps = await page.locator('.cv-bullets li').evaluateAll(items => items.slice(1).map((item, i) =>
+        item.getBoundingClientRect().top - items[i].getBoundingClientRect().bottom));
+      assert(bulletGaps.every(gap => Math.abs(gap - 48) < 1), 'Bullet gap is configurable independently of line height');
+      await page.locator('.cv-profile').evaluate((e, gap) => e.style.setProperty('--cv-bullet-gap', gap), defaultBulletGap);
+      assert(await page.locator('.cv-bullets li').nth(1).evaluate(e => parseFloat(getComputedStyle(e).marginTop) > 0));
+      assert.equal(await page.locator('.cv-section').last().evaluate(e => getComputedStyle(e, '::after').height), '0px', 'Last visible section has no fade into an empty slot');
       assert.equal(await page.locator('.cv-hero-background').count(),1);
       assert.match(await page.locator('.cv-portrait img').getAttribute('src'), /\.png$/);
       assert(await page.locator('canvas').evaluate((c,f)=>!!c.getContext(f?'2d':'webgl2'),fallback));
@@ -43,7 +65,7 @@ try {
         }));
       });
       assert.equal(heroAlpha,0,'Hero must stay free of the content-section mesh, including its lower edge');
-      for (const [previous,current] of [['profile','strengths'],['strengths','skills'],['skills','history']]) {
+      for (const [previous,current] of await transitionPairs(page)) {
         const y = await page.locator(`[data-network-section="${current}"]`).evaluate(e=>e.getBoundingClientRect().top+scrollY);
         await page.evaluate(y=>scrollTo(0,y-180),y);
         const result = await page.evaluate(async ({previous,current,fade}) => {
@@ -90,6 +112,10 @@ try {
         await page.setViewportSize({width,height:844});
         await page.evaluate(()=>scrollTo(0,0));
         assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+        assert(await page.locator('.cv-intro-split').evaluate(e => {
+          const [text, list] = [...e.children].map(child => child.getBoundingClientRect());
+          return list.top > text.bottom;
+        }), 'Mobile reading order is profile text then strengths');
       }
       if(process.env.CV_SCREENSHOTS && !fallback) {
         await page.screenshot({path:`ignored-files/cv-design-${route.slice(1)}-mobile.png`,fullPage:true});
@@ -110,7 +136,7 @@ try {
   assert(await page.locator('.cv-portrait img').evaluate(i=>i.complete&&i.naturalWidth>0));
   // Background pixels must share the mesh's midpoint at the actual section boundary.
   await page.evaluate(()=>{const style=document.createElement('style');style.textContent='.cv-container { visibility: hidden; } cv-network { display: none; }';document.head.append(style);});
-  for (const [previous,current] of [['profile','strengths'],['strengths','skills'],['skills','history']]) {
+  for (const [previous,current] of await transitionPairs(page)) {
     const boundary=await page.locator('[data-network-section="'+current+'"]').evaluate(e=>e.getBoundingClientRect().top+scrollY);
     await page.evaluate(y=>scrollTo(0,y-180),boundary);
     const top=await page.locator('[data-network-section="'+current+'"]').evaluate(e=>e.getBoundingClientRect().top);

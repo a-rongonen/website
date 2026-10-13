@@ -1,18 +1,22 @@
 ---
 import PageLayout from './PageLayout.astro';
-import CvCard from '../components/CvCard.astro';
-import CvIcon from '../components/CvIcon.astro';
+import CvSection from '../components/CvSection.astro';
 import CvNetwork from '../components/CvNetwork.astro';
 import { cvDesign } from '../data/cv-design';
-import { networkSectionStyle } from '../data/cv-network';
+import { networkSectionStyle, networkContentPalette, type NetworkSection } from '../data/cv-network';
+import { visibleCvSections } from '../data/cv-sections';
 import type { CvContent } from '../data/cv';
 import '../styles/cv.css';
 interface Props { content: CvContent }
 const { content } = Astro.props;
+const sections = visibleCvSections(content.sections);
+const palettes: NetworkSection[] = ['hero', ...sections.map((_, index) => networkContentPalette(index))];
+const firstSection = sections[0];
+const scrollTarget = firstSection && `${firstSection.id}-${firstSection.heading.trim() ? 'heading' : 'section'}`;
 ---
 <PageLayout title={content.title} description={content.description} lang={content.lang} isCv>
   <CvNetwork />
-  <header class="cv-hero cv-network-section" data-network-section="hero" style={networkSectionStyle('hero')}>
+  <header class="cv-hero cv-network-section" data-network-section="hero" style={networkSectionStyle('hero', palettes, 0)}>
     {cvDesign.hero.backgroundSrc && <div class="cv-hero-background" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(cvDesign.hero.backgroundSrc)})` }} />}
     <div class="cv-container hero-inner">
       <div class="hero-copy">
@@ -30,48 +34,16 @@ const { content } = Astro.props;
         )}
       </div>
     </div>
-    <a class="cv-scroll-cue" href="#profile-heading" aria-label={content.scrollPrompt}>
+    {scrollTarget && <a class="cv-scroll-cue" href={`#${scrollTarget}`} aria-label={content.scrollPrompt}>
       <span class="cv-scroll-cue-icon" aria-hidden="true">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="m6 7 6 6 6-6M6 13l6 6 6-6" />
         </svg>
       </span>
-    </a>
+    </a>}
   </header>
 
-  <section class="cv-section cv-profile cv-network-section" data-network-section="profile" style={networkSectionStyle('profile')} aria-labelledby="profile-heading">
-    <div class="cv-container">
-      <h2 id="profile-heading" tabindex="-1">{content.profile.heading}</h2>
-      <div class="glass profile-card"><p>{content.profile.text}</p></div>
-    </div>
-  </section>
-
-  {[{ id: 'strengths' as const, ...content.strengths }, { id: 'skills' as const, ...content.skills }].map(section => (
-    <section class={`cv-section cv-${section.id} cv-network-section`} data-network-section={section.id} style={networkSectionStyle(section.id)} aria-labelledby={`${section.id}-heading`}>
-      <div class="cv-container">
-        <h2 id={`${section.id}-heading`}>{section.heading}</h2>
-        <div class="cv-cards" data-card-stack>
-          {section.cards.map(card => <CvCard card={card} />)}
-        </div>
-      </div>
-    </section>
-  ))}
-
-  <section class="cv-section cv-history cv-network-section" data-network-section="history" style={networkSectionStyle('history')} aria-labelledby="history-heading">
-    <div class="cv-container">
-      <h2 id="history-heading">{content.history.heading}</h2>
-      <div class="glass history-card">
-        <table>
-          <caption><span><CvIcon name="briefcase" /><span class="history-title">{content.history.tableTitle}</span></span></caption>
-          <thead><tr>{content.history.columns.map(column => <th scope="col">{column}</th>)}</tr></thead>
-          <tbody>{content.history.rows.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</tbody>
-        </table>
-      </div>
-      <div class="cv-cards" data-card-stack>
-        {content.history.cards.map(card => <CvCard card={card} />)}
-      </div>
-    </div>
-  </section>
+  {sections.map((section, index) => <CvSection section={section} palettes={palettes} index={index + 1} />)}
 </PageLayout>
 
 <script>

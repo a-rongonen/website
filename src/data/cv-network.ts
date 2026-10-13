@@ -15,7 +15,8 @@ export const cvNetworkConfig = {
     edgeColor: '#000000',
   } satisfies NetworkPalette,
 
-  // Each section inherits defaults; override any of the three colors here.
+  // Content palette slots run in this order, independent of section IDs.
+  // Historical names are kept for existing tuning; unused slots remain available.
   sections: {
     hero: { baseColor: '#ffffff', centerColor: '#ffffff' },
     profile: { baseColor: '#a3e3ff', centerColor: '#031519' },
@@ -57,10 +58,18 @@ export function networkPalette(section: NetworkSection): NetworkPalette {
   return { ...cvNetworkConfig.defaults, ...cvNetworkConfig.sections[section] };
 }
 
+/** Visible sections consume slots; repeat the palette cycle for longer pages. */
+export function networkContentPalette(index: number): NetworkSection {
+  const slots = (Object.keys(cvNetworkConfig.sections) as NetworkSection[]).filter(name => name !== 'hero');
+  return slots[index % slots.length];
+}
+
 /** The hero has a sharp edge; only content sections blend into one another. */
-export function networkTransitionNeighbors(section: NetworkSection) {
-  const sections = Object.keys(cvNetworkConfig.sections) as NetworkSection[];
-  const index = sections.indexOf(section);
+export function networkTransitionNeighbors(
+  section: NetworkSection,
+  sections: readonly NetworkSection[] = Object.keys(cvNetworkConfig.sections) as NetworkSection[],
+  index = sections.indexOf(section),
+) {
   const previous = sections[Math.max(0, index - 1)];
   const next = sections[Math.min(sections.length - 1, index + 1)];
   return {
@@ -70,9 +79,9 @@ export function networkTransitionNeighbors(section: NetworkSection) {
 }
 
 /** The gradient is present even when JavaScript or canvas is unavailable. */
-export function networkSectionStyle(section: NetworkSection) {
+export function networkSectionStyle(section: NetworkSection, sections?: readonly NetworkSection[], index?: number) {
   const palette = networkPalette(section);
-  const neighbors = networkTransitionNeighbors(section);
+  const neighbors = networkTransitionNeighbors(section, sections, index);
   const previous = networkPalette(neighbors.previous);
   const next = networkPalette(neighbors.next);
   const transition = Math.max(0, cvNetworkConfig.sectionTransition);

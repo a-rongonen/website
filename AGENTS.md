@@ -13,6 +13,7 @@
 - Use `/` for the English homepage, `/cv` for the English CV, `/cv-fi` for the Finnish CV, `/en/portfolio` for the English portfolio, and `/en/blog` for the English blog. Only the CV has language alternatives. Do not introduce whole-site language prefixes or a root redirect.
 - The visible site structure is Home → Portfolio / Blog. Keep both CV routes orphaned: no links to them from any page or navigation, no links between them, and no language switcher. Omit alternate-language cross-links and exclude the CVs from any future sitemap.
 - Both CV routes render `src/layouts/CvLayout.astro` with shared styles in `src/styles/cv.css` and localized content in `src/data/cv.ts`. Keep this shared structure and the orphan-page behavior when editing either language.
+- CV body sections are ordered data entries rendered by `CvSection.astro`. Empty entries must produce no section, heading, spacing or palette band; headings alone do not count as content. Palettes follow visible positions, and transitions must use actual visible neighbors in CSS and both canvas renderers. Keep the combined Profile text/strength bullets and the reusable empty final entry; extend the section list rather than hard-coding more layout sections. `cvDesign.bulletGap` controls spacing between bullet items.
 - Preserve these URLs without trailing slashes. Static output uses `build.format: 'file'`; Cloudflare uses `html_handling: 'drop-trailing-slash'` and `not_found_handling: '404-page'`.
 - Keep build-time pathname normalization in `PageLayout.astro`: file-format builds expose `.html` paths, which must not leak into canonical URLs or break current-navigation matching.
 - The `www` 301 redirect is a Cloudflare zone Single Redirect plus a proxied DNS record, separate from Wrangler. Preserve paths, queries, and both HTTP/HTTPS support. README documents the rule. Do not recreate the Worker or GitHub connection when continuing setup.
@@ -27,6 +28,8 @@
 
 - The first launch may use plain “coming soon” placeholders. The user leads content design and will provide CV/portfolio structure, content, and style direction later.
 - Do not invent biographical details, CV sections, project descriptions, content blocks, sample articles, or visual design requirements.
+- Use `ignored-files/cv-and-portfolio-assets/cv-copies.md` as the local guide to CV copy. It links to the owner's source snippets and records translation guidance; read it before adding or revising CV content. Keep the source document link and unused snippets in the ignored notes rather than publishing them.
+- Finnish is the original CV copy language. Translate only the snippets used in the English CV, and record those translations in `cv-copies.md` for reuse. The source includes extra skill snippets for customized CVs; the website's four default skills are **markkinointi, luovuus, tekoäly, oppiminen** (marketing, creativity, AI, learning), in that reading order. Do not add more skill cards just because more snippets are available.
 - Keep HTML semantic, navigation keyboard-accessible, and layouts usable on small screens. Keep each page’s canonical URL and HTML language accurate without adding links to either CV language version.
 - A blog content system, sitemap, RSS, and analytics are later steps, not prerequisites for the placeholder foundation.
 

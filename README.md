@@ -1,6 +1,6 @@
 # rongonen.fi
 
-A static Astro personal website. Both CV pages implement the owner's approved structure with clearly labelled placeholder copy and the supplied portrait. Home, Portfolio, and Blog remain simple placeholders; final content will be provided by the owner.
+A static Astro personal website. Both CV pages use the owner's supplied content and portrait, with Finnish originals and English translations. Home, Portfolio, and Blog remain simple placeholders.
 
 ## Run locally
 
@@ -39,9 +39,21 @@ Only the CV has two language versions; the homepage, portfolio, and blog are Eng
 
 The visible site structure is **Home → Portfolio / Blog**. Keep `/cv` and `/cv-fi` as orphan pages reached by direct URL: no links to either CV from any page or navigation, no links between the CVs, and no language switcher. Omit alternate-language cross-links and exclude both CV routes from any future sitemap. Keep each page’s own canonical URL and correct HTML language.
 
-Both CV routes pass localized content to `src/layouts/CvLayout.astro`, with shared styles in `src/styles/cv.css`. The template provides the name/portrait area, Profile, Strengths, Skills, and Work and studies. Section-colored 3D network backgrounds, dark glass cards, unique SVG icons, and alternating table rows follow the owner's structure and visual direction.
+Both CV routes pass localized content to `src/layouts/CvLayout.astro`, with shared styles in `src/styles/cv.css`. The template provides the name/portrait area followed by an ordered list of content sections. Currently these are Profile (one shared glass box with text on the left and unheaded strengths with check marks on the right), Skills, and Work and studies. The profile columns stack inside the same box in that reading order below 700px. Section-colored 3D network backgrounds, dark glass cards, SVG card icons, and alternating table rows follow the owner's structure and visual direction.
 
-Edit the English and Finnish text in `src/data/cv.ts`; its `CvContent` type defines the common content shape. Cards are stored in mobile reading order: first left, first right, second left, second right. A small browser enhancement packs different-height cards into desktop columns; without JavaScript they remain a regular two-column grid. Below 700px all cards use one column in their original reading order.
+Edit the English and Finnish text in `src/data/cv.ts`; its `CvContent` type defines the common content shape. Separate paragraphs within profile/card text with `\n\n`; the template renders each as a plain-text paragraph. Cards are stored in mobile reading order: first left, first right, second left, second right. The default skill order is Marketing, Creativity, Artificial intelligence, Learning. Work history uses the table; education and languages occupy the two cards below it. A small browser enhancement packs different-height cards into desktop columns; without JavaScript they remain a regular two-column grid. Below 700px all cards use one column in their original reading order.
+
+### Adding, moving and hiding sections
+
+Profile columns align at the top. Profile paragraphs, check-mark strengths and skill-card text share the same `1.05rem` font size and `1.8` line height in `cv.css`.
+
+Each language has a `sections` array in `src/data/cv.ts`. Every entry has a unique, URL-safe `id` and a `heading`, plus any of these optional blocks: `text`, `bullets`, `table` (title, three column labels and rows), and `cards`. `src/components/CvSection.astro` renders the same blocks for any section; there is no fixed section count. Text and bullets share a row when both are present, followed by the table and cards. Reorder array entries to reorder the page. Keep equivalent content/order in both languages.
+
+`visibleCvSections()` filters empty entries at build time. Whitespace-only text/bullets, cards without body text, and fully blank table rows do not count as content; a heading alone does not make a section visible. Empty sections leave no heading, spacing, anchor or background band. The former standalone strengths entry remains at the bottom as `{ id: 'strengths', heading: '' }`. Add content to reuse it, rename its ID/heading to suit that content, or append further entries. This section renderer/filter can also be reused when the portfolio's structure is decided; its current placeholder page is unchanged.
+
+Background palettes follow **visible position**, not content IDs. The existing `profile`, `strengths`, `skills`, `history` keys in `cv-network.ts` now name four reusable color slots in that order. Today Profile uses slot 1, Skills slot 2, Work and studies slot 3, and slot 4 is unused. Additional sections cycle through those slots. CSS and both canvas renderers blend only actual neighboring sections; the hero and the page's lower edge remain sharp. The hero scroll cue targets the first visible section and disappears when all sections are empty.
+
+### Shared presentation controls
 
 The hero uses the supplied `public/images/cv-background-v2.jpg` (2311 × 1491) as a non-repeating background and `public/images/cv-image.png` (1944 × 2738) as a transparent foreground portrait. The background uses proportional `cover` sizing, centered horizontally and bottom-aligned: its full height is visible in a narrower hero, its full width in a wider hero, and the entire image at the same aspect ratio. Excess image area is cropped so the hero always stays filled. The portrait sits flush with the bottom by default. Both languages share these settings.
 
@@ -51,6 +63,7 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 | --- | --- |
 | `sectionEdgeDistance` | Shared distance from either content-section edge to the content. CSS length, e.g. `'64px'` or `'4rem'`; default `'clamp(4rem, 8vw, 6.5rem)'` (responsive 64-104px). |
 | `hero.backgroundSrc` | Public background image path; an empty string disables the image. |
+| `bulletGap` | Extra vertical space between bullet items, separate from their normal line height. CSS length; default `'1.5rem'`. Applies to the combined profile's strengths and any future bullet lists. |
 | `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 1). |
 | `hero.bottomFade` | Optional image fade at the hero bottom, in CSS pixels. Default 0 keeps the image sharp to its lower edge. |
 | `contentColor` | Shared body text, icons, small headings, captions, table headers/cells, and labels. Defaults to the former body text color `#d1d4d4`; use any CSS color, e.g. `#cccccc`. |
@@ -63,7 +76,7 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 | `borders.whiteMix` | Mix white into the colored edge highlight (0–1); default 0.25. |
 | `headings.tint` | Lerp from white text (0) to the vertical white-to-section-color gradient (1); default 0.8. |
 | `headings.whiteMix` | Lighten the gradient's lower color (0–1); default 0.25 keeps dark palettes legible. Use 0 for the pure base color. |
-| `headings.whiteStop`, `colorStop` | Gradient stop positions as percentages down each text box; defaults 0 and 100. Multiline titles share one gradient. |
+| `headings.whiteStop`, `colorStop` | Gradient stop positions as percentages down each text box; defaults 50 and 100. Multiline titles share one gradient. |
 
 One `sectionEdgeDistance` replaces the separate start/end controls in both CV languages. Outer margins and trailing card-stack gaps are removed, exposed first/last text uses font-aware trimming with automatic accent and descender allowance, and color transitions meet at their 50/50 midpoint on the section boundary. This keeps content spacing and the visual color boundary aligned as text wraps and cards change height. Measurements update when text wraps, fonts load, or text changes, with no per-scroll text measurements. Without JavaScript or native text-box trimming, headings keep ordinary readable line spacing. The hero keeps its separate portrait layout and a sharp boundary with Profile; print uses 2rem at both edges.
 
@@ -76,7 +89,7 @@ In **`src/data/cv-design.ts` → `cvDesign.hero`**, edit the `desktop` and `mobi
 | Setting in each block | Effect |
 | --- | --- |
 | `minHeight` | Minimum height of the whole hero, including its background. Both desktop and mobile default to `100lvh`, filling the viewport with browser bars retracted and staying stable as those bars move. With bars expanded, the hero can extend below the visible area. Rotation and window resizing still update it. Content can make it taller on short screens or with enlarged text to avoid clipping the title. |
-| `foregroundHeight` | Requested image height as a fraction of the **whole hero**: `0.9` means 90%. Defaults: desktop `0.9`, mobile `0.8`. Clamped to 0–1. Image proportions are preserved; width or space below the mobile title can reduce the actual height. Source pixel resolution does not set its displayed size. |
+| `foregroundHeight` | Requested image height as a fraction of the **whole hero**: `0.9` means 90%. Defaults: desktop `0.9`, mobile `1.0`. Clamped to 0–1. Image proportions are preserved; width or space below the mobile title can reduce the actual height. Source pixel resolution does not set its displayed size. |
 | `foregroundPositionX` | Horizontal position within available image space: `0` = left, `0.5` = center, `1` = right. Defaults: desktop `0`, mobile `1`. Clamped to 0–1. |
 | `foregroundPositionY` | Vertical position within available image space: `0` = top, `0.5` = center, `1` = bottom. Defaults to `1` to keep the image flush with the hero bottom. Clamped to 0–1. |
 | `copyPaddingTop`, `copyPaddingBottom` | Space above/below the title block. |
@@ -109,7 +122,7 @@ Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run 
 | Setting | Effect |
 | --- | --- |
 | `defaults.baseColor`, `centerColor`, `edgeColor` | Shared node/line color, gradient center, and gradient edges (black by default). |
-| `sections.hero/profile/strengths/skills/history` | Override any of those three colors for each section. Existing base/center overrides take precedence over defaults. The hero is always excluded from the node graph, regardless of its colors; its palette still controls its heading and CSS background. |
+| `sections.hero/profile/strengths/skills/history` | Override any of those three colors for the hero or four ordered content palette slots. Slot names are independent of content IDs. Existing base/center overrides take precedence over defaults. The hero is always excluded from the node graph, regardless of its colors; its palette still controls its heading and CSS background. |
 | `sectionTransition` | Full fade distance in CSS pixels centered on each content-section boundary (the hero is excluded; default 180: 90px on each side). Zero restores hard boundaries. Each half is capped at half its section's height so short sections cannot overlap fades. CSS backgrounds and both mesh renderers share the same midpoint. |
 | `nodeCount` | Nodes in the shared repeating volume; capped at 600. Mobile uses `mobileNodeRatio`. |
 | `scene.width/height/depth` | Scene framing and depth in world units. More depth increases perspective differences; framing stays independent of repeat spacing. |
@@ -125,7 +138,7 @@ Edit **`src/data/cv-network.ts` → `cvNetworkConfig`** and save while `npm run 
 | `mobileBreakpoint`, `mobileNodeRatio`, `maxPixelRatio` | Responsive density and rendering resolution limits. |
 | `seed` | Repeatable arrangement; change for a new network. |
 
-For example, change `sections.skills.centerColor` for its background, `sections.skills.baseColor` for its dots and lines, or add `edgeColor: '#080808'` to that section to replace its black edges with dark gray.
+For example, change `sections.skills.centerColor` for the third visible content slot's background, `sections.skills.baseColor` for its dots and lines, or add `edgeColor: '#080808'` to that slot to replace its black edges with dark gray. This slot currently contains Work and studies.
 
 The canvas uses stable large-viewport height (`100lvh`, with a `100vh` fallback), and the renderer measures that same CSS box. Mobile address-bar expansion therefore does not rescale the camera or stretch the bitmap; normal window resizing and rotation still update it. The GPU uploads node and line geometry once and draws its vertical repeats with instancing. Both renderers paint nodes from far to near across all repeats, so overlapping nodes respect depth. This order is cached during scrolling; enabling optional yaw animation recomputes the order and updates only the small GPU node buffer as the angle changes. Scrolling updates camera and color uniforms instead of rebuilding per-line gradients. Only visible section colors are drawn; all-black-on-black sections are skipped. The renderer coalesces scroll updates and stops when idle or the tab is hidden. Touch devices retain the dark glass tint but omit backdrop blur to avoid repeatedly blurring the animated background. It sits behind the existing content and cannot intercept clicks. Reduced-motion preferences disable parallax and idle animation; a static projection continues across the sections and scrolls with the document. Printing hides the canvas; CSS gradients and all CV content remain available without JavaScript.
 

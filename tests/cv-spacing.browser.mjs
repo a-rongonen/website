@@ -74,7 +74,7 @@ try {
         await verify(page, route + ' JS=' + javaScriptEnabled + ' width=' + width, javaScriptEnabled);
       }
       if (javaScriptEnabled) {
-        await page.locator('.cv-strengths .cv-card p').first().evaluate(element => element.textContent = element.textContent.repeat(3));
+        await page.locator('.cv-skills .cv-card p').first().evaluate(element => element.textContent = element.textContent.repeat(3));
         for (const distance of [48, 112]) {
           await page.locator('.cv-section').evaluateAll((sections, distance) => sections.forEach(section => section.style.setProperty('--cv-section-edge-distance', distance + 'px')), distance);
           for (const width of [390, 1440]) {
