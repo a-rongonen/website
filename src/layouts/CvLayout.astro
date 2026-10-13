@@ -21,7 +21,7 @@ const scrollTarget = firstSection && `${firstSection.id}-${firstSection.heading.
     <div class="cv-container hero-inner">
       <div class="hero-copy">
         <p class="cv-eyebrow">{content.draft}</p>
-        <h1>{content.name}</h1>
+        <h1>{content.name.trim().split(/\s+/).map((word, index) => <>{index > 0 && ' '}<span class="cv-name-word">{word}</span></>)}</h1>
       </div>
       <div class="cv-portrait">
         {content.portrait ? (
@@ -49,6 +49,27 @@ const scrollTarget = firstSection && `${firstSection.id}-${firstSection.heading.
 <script>
   import { alignSectionText } from '../scripts/cv-section-spacing';
   alignSectionText();
+
+  // Keep each name word intact, fitting the actual rendered font to its column.
+  // The heading's own width/font stay stable so fitting cannot shrink its grid track.
+  const name = document.querySelector<HTMLElement>('.hero-copy h1');
+  if (name) {
+    const words = Array.from(name.querySelectorAll<HTMLElement>('.cv-name-word'));
+    const fitName = () => {
+      name.style.setProperty('--cv-name-font-size', '1em');
+      const available = name.getBoundingClientRect().width;
+      const widest = Math.max(...words.map(word => word.getBoundingClientRect().width));
+      const preferred = parseFloat(getComputedStyle(name).fontSize);
+      if (available > 0 && widest > available) {
+        name.style.setProperty('--cv-name-font-size', `${preferred * (available - 1) / widest}px`);
+      }
+    };
+    new ResizeObserver(fitName).observe(name);
+    document.fonts.ready.then(fitName);
+    document.fonts.addEventListener('loadingdone', fitName);
+    window.addEventListener('resize', fitName);
+    fitName();
+  }
 
   // The image cannot affect grid sizing, so measuring the actual hero height
   // also handles enlarged text without a resize feedback loop or scroll work.

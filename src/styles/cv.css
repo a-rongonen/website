@@ -125,7 +125,9 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .cv-scroll-cue svg { animation: none; }
 }
 .cv-eyebrow { margin: 0 0 1.6rem; text-transform: uppercase; letter-spacing: .2em; font-size: .75rem; font-weight: 600; }
-.cv-page h1 { max-width: 11ch; margin: 0; text-transform: uppercase; font-size: clamp(2.4rem, 5.5vw, 4.8rem); line-height: .98; letter-spacing: -.065em; font-weight: 750; overflow-wrap: anywhere; }
+.cv-page h1 { width: 11ch; max-width: 100%; container-type: inline-size; margin: 0; text-transform: uppercase; font-size: clamp(2.4rem, 5.5vw, 4.8rem); line-height: .98; letter-spacing: -.065em; font-weight: 750; overflow-wrap: normal; }
+/* Container-relative fallback also fits narrow screens with JavaScript disabled. */
+.cv-name-word { display: block; width: max-content; white-space: nowrap; font-size: var(--cv-name-font-size, min(1em, 15cqi)); letter-spacing: -.065em; }
 .cv-portrait { position: relative; min-width: 0; min-height: 12rem; align-self: stretch; }
 .cv-portrait img {
   /* An explicit box scales even low-resolution sources up. Contain preserves
@@ -197,11 +199,11 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 .profile-card { max-width: 760px; margin-inline: auto; padding: clamp(1.6rem, 4vw, 3rem); }
 .cv-page p { margin-top: 0; }
 .profile-card p { margin: 0; }
-.cv-intro-split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
+.cv-intro-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--cv-profile-column-gap); row-gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
 .cv-intro-split { max-width: none; width: 100%; margin: 0; }
 .cv-bullets { margin: 0; padding-left: 1.5em; }
 .cv-bullets li { padding-left: .25em; }
-.cv-bullets li::marker { content: '\2713  '; }
+.cv-bullets li::marker { content: '\2713  '; color: var(--cv-checkmark-color); }
 .cv-bullets li + li { margin-top: max(0px, var(--cv-bullet-gap)); }
 .cv-intro + .history-card, .cv-intro + .cv-cards { margin-top: 1.5rem; }
 .cv-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-items: start; }
@@ -272,6 +274,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .cv-page h2 { font-size: 2rem; }
   .glass { color: #333; background: #fff; border-color: #aaa; box-shadow: none; backdrop-filter: none; break-inside: avoid; }
   .cv-page p, .cv-page svg, .history-card th, .history-card td { color: #333; }
+  .cv-bullets li::marker { color: #333; }
   .cv-cards.is-packed { grid-auto-rows: auto; gap: 1rem; }
   .cv-card { grid-row: auto !important; }
 }
@@ -279,6 +282,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 @media (forced-colors: active) {
   .cv-page h1, .cv-page h2 { color: CanvasText; background: none; }
   .glass { border-color: CanvasText; }
+  .cv-bullets li::marker { color: CanvasText; }
   .cv-scroll-cue { color: LinkText; background: Canvas; border: 1px solid LinkText; }
   .cv-scroll-cue-icon { border-color: LinkText; }
   .cv-scroll-cue:focus-visible { outline-color: Highlight; }

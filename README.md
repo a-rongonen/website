@@ -64,6 +64,8 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 | `sectionEdgeDistance` | Shared distance from either content-section edge to the content. CSS length, e.g. `'64px'` or `'4rem'`; default `'clamp(4rem, 8vw, 6.5rem)'` (responsive 64-104px). |
 | `hero.backgroundSrc` | Public background image path; an empty string disables the image. |
 | `bulletGap` | Extra vertical space between bullet items, separate from their normal line height. CSS length; default `'1.5rem'`. Applies to the combined profile's strengths and any future bullet lists. |
+| `profileColumnGap` | Gap between equal-width profile/strengths columns, centered in the box. Percentage of the inner width; default `8` (8%), clamped to 0–50. Mobile keeps its vertical stacking gap. |
+| `checkmarkColor` | Strength/bullet checkmark color, independent of body text. Default light yellow `'#fff2a8'`; print and forced colors use readable solid markers. |
 | `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 1). |
 | `hero.bottomFade` | Optional image fade at the hero bottom, in CSS pixels. Default 0 keeps the image sharp to its lower edge. |
 | `contentColor` | Shared body text, icons, small headings, captions, table headers/cells, and labels. Defaults to the former body text color `#d1d4d4`; use any CSS color, e.g. `#cccccc`. |
@@ -98,6 +100,8 @@ In **`src/data/cv-design.ts` → `cvDesign.hero`**, edit the `desktop` and `mobi
 Change `mobile.minHeight` or `desktop.minHeight` to adjust the hero height; the background automatically covers the resulting aspect ratio. Set `desktop.foregroundHeight` to `0.9` for a requested height of 90%, or `mobile.foregroundPositionX` to `0.5` to center the portrait. The old width/max-height/scale/offset/alignment controls are replaced by these three controls. The portrait fits within a separate grid cell beside the title on desktop and below it on mobile, so even extreme settings cannot move it over the title. Position controls distribute spare space; they have no visible effect along an axis the image completely fills. Negative text padding and gaps are clamped to zero.
 
 On desktop, the title stays aligned with the content below and takes its content width (up to half the hero's available width). The portrait uses the remaining space out to the right viewport gutter. It is not restricted to the 960px content container or a fixed column fraction. A full-height portrait is possible when that space can accommodate its aspect ratio; narrower windows still reduce its height to protect the title.
+
+Each word of the name stays on its own unbroken line. A container-relative font size provides a no-JavaScript fallback; rendered-width measurements fit both words to the available title width after resizing or font loading, without exceeding the preferred responsive size.
 
 A resize observer supplies the actual hero height when text makes it taller than `minHeight`; the out-of-flow image never expands the hero itself. Without JavaScript, the height target uses `minHeight`, while the same fitting and separation rules still apply. On short screens the mobile portrait reserves at least 12rem of layout space so enlarged text can expand the hero without hiding the image. Transparent padding inside the source image counts toward its height.
 
@@ -149,6 +153,8 @@ The rendered-spacing regression is `node tests/cv-spacing.browser.mjs` with the 
 The design regression suite is `node tests/cv-design.browser.mjs` (same environment variables below; defaults to preview port 8788). It checks actual interpolated pixel colors in both renderers, image loading, narrow screens, print, forced colors, and no-JavaScript rendering.
 
 The hero regression suite is `node tests/cv-hero.browser.mjs` (same environment variables; default port 8797). It covers both CV languages, responsive layouts, height ratios, extreme positions, identical sizing across source resolutions, text-driven hero growth, and no-JavaScript separation.
+
+Run `node tests/cv-name-profile.browser.mjs` (same environment variables; default port 8796) for name fitting at 240–1920px with normal/doubled root text size, with and without JavaScript, plus equal profile columns, percentage gaps, and checkmark colors.
 
 The optional browser regression suite is `node tests/cv-network-webgl.browser.mjs` against a running production preview. It uses an externally installed Playwright runtime (no new production dependency). Set `PLAYWRIGHT_MODULE` to its ESM module URL if it is not on Node's module path, `BROWSER_CHANNEL` to an installed channel such as `msedge` if needed, and `CV_PREVIEW_URL` to override the default `http://127.0.0.1:8787`. Run `node tests/cv-network-depth.browser.mjs` with the same browser settings for deterministic overlap pixel checks, including repeated rows and rotation. The main suite checks GPU buffer reuse, pixel-level vertical repetition, repeat controls, shared cameras, mobile toolbar/orientation behavior, reduced motion, optional animation, and GPU failure fallback.
 
