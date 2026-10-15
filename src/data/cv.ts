@@ -35,7 +35,7 @@ export interface CvContent {
 // Owner-supplied Finnish copy, translated for the English CV.
 // See ignored-files/cv-and-portfolio-assets/cv-copies.md for source guidance.
 // Cards stay in reading order: top left, top right, next left, next right.
-// Separate paragraphs with a blank line (\n\n); content is rendered as plain text.
+// Separate paragraphs with a blank line (\n\n); supports inline emphasis and links.
 
 export const cvEnglish: CvContent = {
   lang: 'en',

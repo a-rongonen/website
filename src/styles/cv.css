@@ -198,6 +198,10 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 }
 .profile-card { max-width: 760px; margin-inline: auto; padding: clamp(1.6rem, 4vw, 3rem); }
 .cv-page p { margin-top: 0; }
+.cv-page :is(strong, b, em, i, .inline-link) { color: var(--cv-accent-color, #fff2a8); }
+.cv-page .inline-link { text-decoration: underline; text-decoration-thickness: .075em; text-underline-offset: .18em; overflow-wrap: anywhere; }
+.cv-page .inline-link:hover { text-decoration-thickness: .14em; }
+.cv-page .inline-link:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 2px; }
 .profile-card p { margin: 0; }
 .cv-intro-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--cv-profile-column-gap); row-gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
 .cv-intro-split { max-width: none; width: 100%; margin: 0; }
@@ -275,6 +279,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .glass { color: #333; background: #fff; border-color: #aaa; box-shadow: none; backdrop-filter: none; break-inside: avoid; }
   .cv-page p, .cv-page svg, .history-card th, .history-card td { color: #333; }
   .cv-bullets li::marker { color: #333; }
+  .cv-page :is(strong, b, em, i, .inline-link) { color: #333; }
   .cv-cards.is-packed { grid-auto-rows: auto; gap: 1rem; }
   .cv-card { grid-row: auto !important; }
 }
@@ -283,6 +288,8 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .cv-page h1, .cv-page h2 { color: CanvasText; background: none; }
   .glass { border-color: CanvasText; }
   .cv-bullets li::marker { color: CanvasText; }
+  .cv-page :is(strong, b, em, i) { color: CanvasText; }
+  .cv-page .inline-link, .cv-page .inline-link :is(strong, b, em, i) { color: LinkText; }
   .cv-scroll-cue { color: LinkText; background: Canvas; border: 1px solid LinkText; }
   .cv-scroll-cue-icon { border-color: LinkText; }
   .cv-scroll-cue:focus-visible { outline-color: Highlight; }

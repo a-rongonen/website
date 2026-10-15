@@ -4,9 +4,10 @@ interface Props {
   description: string;
   lang?: 'en' | 'fi';
   isCv?: boolean;
+  isPortfolio?: boolean;
 }
 
-const { title, description, lang = 'en', isCv = false } = Astro.props;
+const { title, description, lang = 'en', isCv = false, isPortfolio = false } = Astro.props;
 // File-format builds expose .html here; public URLs stay extensionless.
 const path = Astro.url.pathname
   .replace(/\/index\.html$/, '/')
@@ -29,9 +30,9 @@ const navigation = [
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
   </head>
-  <body class:list={{ 'cv-page': isCv }}>
+  <body class:list={{ 'cv-page': isCv || isPortfolio, 'portfolio-page': isPortfolio }}>
     <a class="skip-link" href="#main">{lang === 'fi' ? 'Siirry sisältöön' : 'Skip to content'}</a>
-    {!isCv && <header>
+    {!isCv && <header class="site-header">
       <a href="/" lang="en">rongonen.fi</a>
       <nav aria-label={lang === 'fi' ? 'Päänavigaatio (englanniksi)' : 'Main navigation'} lang="en">
         <ul>

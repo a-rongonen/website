@@ -1,0 +1,105 @@
+---
+import type { PortfolioCase } from '../data/portfolio';
+import InlineText from './InlineText.astro';
+import PortfolioMedia from './PortfolioMedia.astro';
+import '../styles/portfolio-cases.css';
+
+interface Props {
+  cases: PortfolioCase[];
+}
+
+const { cases } = Astro.props;
+---
+{cases.map((item, caseIndex) => (
+  <portfolio-case data-case-index={caseIndex + 1}>
+    <section class="glass portfolio-cases-box" aria-labelledby={`case-${caseIndex + 1}-heading`}>
+      <header class="portfolio-case-heading">
+        <p class="portfolio-case-number">Case {caseIndex + 1}</p>
+        <h2 id={`case-${caseIndex + 1}-heading`} data-case-title>{item.title}</h2>
+      </header>
+      <div class="portfolio-case-controls" data-case-controls hidden>
+        <label class="portfolio-case-slider-label">
+          <span class="portfolio-case-sr-only">Content page for {item.title}</span>
+          <span class="portfolio-case-range">
+            <input
+              class="portfolio-case-slider"
+              data-case-slider
+              type="range"
+              min="1"
+              max={item.pages.length}
+              step="1"
+              value="1"
+              aria-valuetext={`Page 1 of ${item.pages.length}`}
+            />
+            <span class="portfolio-case-rail" aria-hidden="true">
+              {item.pages.map((_, pageIndex) => (
+                <span
+                  class="portfolio-case-stop"
+                  data-case-stop={pageIndex + 1}
+                  data-selected={pageIndex === 0 ? 'true' : 'false'}
+                  style={`--case-stop-position: ${item.pages.length > 1 ? pageIndex / (item.pages.length - 1) * 100 : 0}%;`}
+                />
+              ))}
+              <span class="portfolio-case-halo" />
+            </span>
+          </span>
+        </label>
+        <output class="portfolio-case-sr-only" data-case-status aria-live="polite" aria-atomic="true" />
+      </div>
+      {item.pages.map((page, pageIndex) => (
+        <div class="portfolio-case-panel" data-case-panel data-case-page={pageIndex + 1}>
+          <h3 class="portfolio-case-fallback-heading">Page {pageIndex + 1}</h3>
+          <div class="portfolio-case-columns">
+            <div class="portfolio-case-copy">
+              {page.text.split(/\n\s*\n/).filter(paragraph => paragraph.trim()).map(paragraph => (
+                <p><InlineText text={paragraph} /></p>
+              ))}
+            </div>
+            <div class="portfolio-case-media"><PortfolioMedia {...page.media} /></div>
+          </div>
+        </div>
+      ))}
+    </section>
+  </portfolio-case>
+))}
+
+<script>
+  class PortfolioCase extends HTMLElement {
+    connectedCallback() {
+      if (this.dataset.enhanced === 'true') return;
+
+      const panels = Array.from(this.querySelectorAll<HTMLElement>('[data-case-panel]'));
+      const slider = this.querySelector<HTMLInputElement>('[data-case-slider]');
+      const controls = this.querySelector<HTMLElement>('[data-case-controls]');
+      const title = this.querySelector<HTMLElement>('[data-case-title]')?.textContent?.trim() ?? '';
+      const status = this.querySelector<HTMLOutputElement>('[data-case-status]');
+      const stops = Array.from(this.querySelectorAll<HTMLElement>('[data-case-stop]'));
+      if (!panels.length || !slider || !controls || !status) return;
+
+      const selectPage = (value: number, announce = true) => {
+        const selected = Math.max(1, Math.min(panels.length, Math.round(value)));
+        const position = `Page ${selected} of ${panels.length}`;
+        panels.forEach((panel, index) => {
+          panel.hidden = index !== selected - 1;
+          panel.querySelectorAll<HTMLVideoElement>('video').forEach(video => {
+            video.autoplay = !panel.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!video.autoplay) video.pause();
+            else void video.play().catch(() => {});
+          });
+        });
+        stops.forEach((stop, index) => { stop.dataset.selected = String(index === selected - 1); });
+        slider.value = String(selected);
+        slider.setAttribute('aria-valuetext', position);
+        slider.parentElement?.style.setProperty('--case-progress', `${panels.length > 1 ? (selected - 1) / (panels.length - 1) * 100 : 0}%`);
+        if (announce) status.textContent = `${title}: ${position}`;
+      };
+
+      slider.addEventListener('input', () => selectPage(Number(slider.value)));
+      selectPage(Number(slider.value), false);
+      this.dataset.enhanced = 'true';
+      controls.hidden = panels.length < 2;
+    }
+  }
+
+  if (!customElements.get('portfolio-case')) customElements.define('portfolio-case', PortfolioCase);
+</script>

@@ -1,8 +1,71 @@
 ---
 import PageLayout from '../../layouts/PageLayout.astro';
+import CvNetwork from '../../components/CvNetwork.astro';
+import CvSection from '../../components/CvSection.astro';
+import PortfolioMedia from '../../components/PortfolioMedia.astro';
+import PortfolioCases from '../../components/PortfolioCases.astro';
+import InlineText from '../../components/InlineText.astro';
+import { cvEnglish } from '../../data/cv';
+import { visibleCvSections } from '../../data/cv-sections';
+import { networkContentPalette, networkSectionStyle, type NetworkSection } from '../../data/cv-network';
+import { portfolio, portfolioDesign } from '../../data/portfolio';
+import '../../styles/cv.css';
+import '../../styles/portfolio.css';
+
+// The first three CV sections (hero, Profile, Skills) are replaced here.
+// Keep all remaining entries, including the reusable empty final entry.
+const sections = visibleCvSections(cvEnglish.sections.slice(2));
+const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (_, index) => networkContentPalette(index));
 ---
 
-<PageLayout title="Portfolio" description="Portfolio — coming soon.">
-  <h1>Portfolio</h1>
-  <p>Coming soon.</p>
+<PageLayout title={`${portfolio.name} Portfolio`} description={`${portfolio.name} portfolio, featuring game design cases from Panic Lane.`} isPortfolio>
+  <CvNetwork />
+  <header class="portfolio-hero cv-network-section" data-network-section={palettes[0]}
+    style={`${networkSectionStyle(palettes[0], palettes, 0)} --portfolio-title-color: ${portfolioDesign.titleColor};`}>
+    <div class="cv-container portfolio-hero-inner">
+      <h1 class="portfolio-title">
+        <span class="portfolio-owner">{portfolio.name.split(' ').map((word, index) => <>{index > 0 && ' '}<span>{word}</span></>)}</span>
+        <span class="portfolio-title-word">Portfolio</span>
+      </h1>
+      <PortfolioMedia {...portfolio.heroVideo} />
+    </div>
+  </header>
+
+  <section class="cv-section cv-network-section portfolio-unique portfolio-background" data-network-section={palettes[1]}
+    style={networkSectionStyle(palettes[1], palettes, 1)} aria-labelledby="background-heading">
+    <div class="cv-container">
+      <h1 class="portfolio-section-title" id="background-heading">{portfolio.background.heading}</h1>
+      <div class="portfolio-columns">
+        <div class="glass profile-card">
+          {portfolio.background.text.split(/\n\s*\n/).filter(paragraph => paragraph.trim()).map(paragraph => <p><InlineText text={paragraph} /></p>)}
+        </div>
+        <PortfolioMedia {...portfolio.background.video} />
+      </div>
+    </div>
+  </section>
+
+  <section class="cv-section cv-network-section portfolio-unique portfolio-learning" data-network-section={palettes[2]}
+    style={networkSectionStyle(palettes[2], palettes, 2)} aria-labelledby="learning-heading">
+    <div class="cv-container">
+      <h1 class="portfolio-section-title" id="learning-heading">{portfolio.learning.heading.map(line => <span>{line}</span>)}</h1>
+      <div class="portfolio-columns portfolio-learning-columns">
+        <div class="glass profile-card"><ul class="cv-bullets">{portfolio.learning.bullets.map(text => <li><InlineText text={text} /></li>)}</ul></div>
+        <PortfolioMedia {...portfolio.learning.video} />
+      </div>
+    </div>
+  </section>
+
+  <section class="cv-section cv-network-section portfolio-unique portfolio-cases-section" data-network-section={palettes[3]}
+    style={networkSectionStyle(palettes[3], palettes, 3)} aria-labelledby="cases-heading">
+    <div class="cv-container">
+      <h1 class="portfolio-section-title" id="cases-heading"><span>3 game design cases</span></h1>
+      <PortfolioCases cases={portfolio.cases} />
+    </div>
+  </section>
+
+  {sections.map((section, index) => <CvSection section={section} palettes={palettes} index={index + 4} />)}
 </PageLayout>
+
+<script>
+  import '../../scripts/cv-enhancements';
+</script>

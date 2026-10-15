@@ -1,0 +1,13 @@
+---
+import { parseInlineText, type InlineNode } from '../data/inline-text';
+
+interface Props {
+  text?: string;
+  nodes?: InlineNode[];
+}
+const { text = '', nodes = parseInlineText(text) } = Astro.props;
+---
+{nodes.map(node => node.type === 'text' ? node.value
+  : node.type === 'strong' ? <strong><Astro.self nodes={node.children} /></strong>
+  : node.type === 'em' ? <em><Astro.self nodes={node.children} /></em>
+  : <a class="inline-link" href={node.href}><Astro.self nodes={node.children} /></a>)}

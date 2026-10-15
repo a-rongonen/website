@@ -1,0 +1,103 @@
+.portfolio-page .site-header {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 5;
+  width: min(100% - 3rem, 960px);
+  margin-inline: auto;
+  padding-block: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: .85rem;
+}
+.portfolio-page .site-header a { color: #fff; text-underline-offset: .3em; }
+.portfolio-page .site-header nav ul { margin: 0; }
+.portfolio-hero { overflow: hidden; }
+.portfolio-hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2rem, 4vw, 3rem);
+  min-height: 100lvh;
+  padding-block: 7rem 4rem;
+}
+.portfolio-page .portfolio-title {
+  width: 100%;
+  text-align: center;
+  line-height: 1.05;
+  letter-spacing: -.045em;
+  color: #fff;
+  background: none;
+}
+.portfolio-owner { display: block; font-size: inherit; font-size: min(1em, 12.8cqi); text-wrap: balance; }
+.portfolio-owner > span { white-space: nowrap; }
+.portfolio-title-word {
+  display: block;
+  margin-top: .14em;
+  font-size: inherit;
+  font-size: min(1em, 12.8cqi);
+  color: var(--portfolio-title-color);
+}
+.portfolio-media {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--network-base), transparent 65%);
+  border-radius: 1rem;
+  background: #090f16;
+}
+.portfolio-media > :is(video, img) { display: block; width: 100%; height: 100%; object-fit: contain; }
+.portfolio-media-placeholder {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at center, #1b2935, #080d15);
+}
+.portfolio-media-message { display: grid; justify-items: center; gap: .7rem; min-width: 0; max-width: 100%; padding: clamp(.5rem, 3vw, 1.5rem); color: #c2cbd3; text-align: center; font-size: .9rem; overflow-wrap: anywhere; }
+.portfolio-media-message svg { color: inherit; opacity: .65; }
+.portfolio-hero .portfolio-media { max-width: 800px; box-shadow: 0 1rem 3rem #0004; }
+.portfolio-page .portfolio-unique h2 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -.035em;
+  text-transform: none;
+}
+.portfolio-page .portfolio-unique h3 {
+  margin: 0 0 1rem;
+  color: var(--cv-content-color);
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+}
+.portfolio-section-title > span { display: block; }
+.portfolio-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; align-items: start; }
+.portfolio-columns > .profile-card { min-width: 0; width: 100%; padding: clamp(1rem, 4vw, 3rem); overflow-wrap: anywhere; }
+.portfolio-learning-columns .cv-bullets { margin: 0; overflow-wrap: anywhere; }
+.portfolio-page .portfolio-section-title { width: 100%; container-type: normal; margin-bottom: 3rem; text-align: center; text-wrap: balance; }
+.portfolio-page .cv-card h3, .portfolio-page .history-card caption > span { flex-wrap: wrap; }
+.portfolio-page .cv-card h3 > span, .portfolio-page .history-title { min-width: 0; overflow-wrap: anywhere; }
+.portfolio-page .cv-card p { overflow-wrap: anywhere; }
+.portfolio-page .cv-section :is(h1, h2, h3) { overflow-wrap: anywhere; }
+
+@media (max-width: 699px) {
+  .portfolio-page .site-header { width: calc(100% - 2rem); flex-wrap: wrap; gap: .5rem 1rem; font-size: .75rem; }
+  .portfolio-page .site-header nav ul { gap: .5rem .8rem; }
+  .portfolio-hero-inner { padding-block: 7rem 3rem; }
+  .portfolio-columns { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .portfolio-page .history-card th, .portfolio-page .history-card td { padding-inline: clamp(.2rem, 2vw, .65rem); }
+}
+@media print {
+  .portfolio-page .site-header { display: none; }
+  .portfolio-hero-inner { min-height: 0; padding-block: 2rem; }
+  .portfolio-page .portfolio-title, .portfolio-title-word { color: #111; }
+  .portfolio-media-placeholder { background: #fff; border-color: #aaa; }
+  .portfolio-media-message { color: #333; }
+}
+@media (forced-colors: active) {
+  .portfolio-page .portfolio-title, .portfolio-title-word { color: CanvasText; }
+  .portfolio-page .site-header a { color: LinkText; }
+  .portfolio-media { border-color: CanvasText; }
+}

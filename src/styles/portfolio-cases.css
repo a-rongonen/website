@@ -1,0 +1,135 @@
+portfolio-case { display: block; }
+portfolio-case + portfolio-case { margin-top: clamp(2rem, 5vw, 4rem); }
+portfolio-case [hidden] { display: none !important; }
+.portfolio-case-heading, .portfolio-case-fallback-heading { text-align: center; }
+.portfolio-page .portfolio-case-number { margin: 0 0 .65rem; font-size: .95rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
+.portfolio-page .portfolio-unique .portfolio-case-heading h2 {
+  margin: 0 0 1.5rem;
+  /* Gradient paint must cover lowercase descenders outside a tight line box. */
+  padding-block: .05em .15em;
+  line-height: 1.25;
+}
+.portfolio-cases-box { padding: clamp(12px, 4vw, 3rem); }
+.portfolio-case-controls { width: min(100%, 24rem); margin: 0 auto 2.5rem; text-align: center; }
+.portfolio-case-slider-label { display: block; padding-inline: clamp(4px, 2vw, 1rem); }
+.portfolio-case-range {
+  --case-thumb-size: 1.65rem;
+  --case-track-height: .45rem;
+  display: block;
+  position: relative;
+}
+/* The rail matches native thumb travel, including its radius at both endpoints. */
+.portfolio-case-rail {
+  position: absolute;
+  inset-inline: calc(var(--case-thumb-size) / 2);
+  top: 50%;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.portfolio-case-stop, .portfolio-case-halo {
+  position: absolute;
+  top: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.portfolio-case-stop {
+  left: var(--case-stop-position);
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #c3c6cc;
+  background: #7b7b7b;
+}
+.portfolio-case-stop[data-selected='true'] { visibility: hidden; }
+/* A real element also animates in browsers that cannot animate native thumbs. */
+.portfolio-case-halo {
+  left: var(--case-progress, 0%);
+  width: var(--case-thumb-size);
+  height: var(--case-thumb-size);
+  animation: portfolio-case-glow 2s ease-in-out infinite;
+}
+.portfolio-case-slider {
+  display: block;
+  width: 100%;
+  height: 3rem;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  color: var(--cv-accent-color);
+  cursor: grab;
+}
+.portfolio-case-slider:active { cursor: grabbing; }
+.portfolio-case-slider::-webkit-slider-runnable-track {
+  height: var(--case-track-height);
+  border: 0;
+  border-radius: 1rem;
+  background: linear-gradient(to right, var(--cv-accent-color) var(--case-progress, 0%), #ffffff38 var(--case-progress, 0%));
+  box-shadow: inset 0 0 0 1px #ffffff66;
+}
+.portfolio-case-slider::-moz-range-track {
+  height: var(--case-track-height);
+  border: 0;
+  border-radius: 1rem;
+  background: #ffffff38;
+  box-shadow: inset 0 0 0 1px #ffffff66;
+}
+.portfolio-case-slider::-moz-range-progress { height: var(--case-track-height); border-radius: 1rem; background: var(--cv-accent-color); }
+.portfolio-case-slider::-webkit-slider-thumb {
+  box-sizing: border-box;
+  width: var(--case-thumb-size);
+  height: var(--case-thumb-size);
+  margin-top: calc((var(--case-track-height) - var(--case-thumb-size)) / 2);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--cv-accent-color);
+  box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--cv-accent-color) 16%, transparent), 0 0 1rem color-mix(in srgb, var(--cv-accent-color) 55%, transparent);
+}
+.portfolio-case-slider::-moz-range-thumb {
+  box-sizing: border-box;
+  width: var(--case-thumb-size);
+  height: var(--case-thumb-size);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--cv-accent-color);
+  box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--cv-accent-color) 16%, transparent), 0 0 1rem color-mix(in srgb, var(--cv-accent-color) 55%, transparent);
+}
+.portfolio-case-slider:focus-visible { outline: 2px solid var(--cv-accent-color); outline-offset: 4px; border-radius: .25rem; }
+.portfolio-case-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
+.portfolio-case-copy, .portfolio-case-media { min-width: 0; overflow-wrap: anywhere; }
+.portfolio-page .portfolio-case-copy p { margin: 0; font-size: 1.05rem; line-height: 1.8; }
+.portfolio-page .portfolio-case-copy p + p { margin-top: 1em; }
+portfolio-case[data-enhanced='true'] .portfolio-case-fallback-heading { display: none; }
+portfolio-case:not([data-enhanced='true']) .portfolio-case-panel + .portfolio-case-panel { margin-top: 3rem; padding-top: 3rem; border-top: 1px solid #ffffff40; }
+.portfolio-case-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@keyframes portfolio-case-glow {
+  0%, 100% { box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--cv-accent-color) 14%, transparent), 0 0 .6rem color-mix(in srgb, var(--cv-accent-color) 35%, transparent); }
+  50% { box-shadow: 0 0 0 .45rem color-mix(in srgb, var(--cv-accent-color) 12%, transparent), 0 0 1.5rem color-mix(in srgb, var(--cv-accent-color) 70%, transparent); }
+}
+@media (max-width: 700px) {
+  .portfolio-case-columns { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-case-halo { animation: none; }
+}
+@media (forced-colors: active) {
+  .portfolio-case-halo { display: none; }
+  .portfolio-case-stop { background: GrayText; border-color: CanvasText; }
+  .portfolio-case-slider::-webkit-slider-runnable-track { background: Canvas; border: 1px solid CanvasText; box-shadow: none; }
+  .portfolio-case-slider::-moz-range-track { background: Canvas; border: 1px solid CanvasText; box-shadow: none; }
+  .portfolio-case-slider::-moz-range-progress { background: Highlight; }
+  .portfolio-case-slider::-webkit-slider-thumb { background: Highlight; border-color: CanvasText; box-shadow: none; }
+  .portfolio-case-slider::-moz-range-thumb { background: Highlight; border-color: CanvasText; box-shadow: none; }
+  .portfolio-case-slider:focus-visible { outline-color: Highlight; }
+}
+@media print {
+  portfolio-case .portfolio-case-controls { display: none !important; }
+  portfolio-case .portfolio-case-panel[hidden], portfolio-case[data-enhanced='true'] .portfolio-case-fallback-heading { display: block !important; }
+  .portfolio-case-panel { break-inside: avoid; }
+  portfolio-case .portfolio-case-panel + .portfolio-case-panel { margin-top: 2rem; }
+  .portfolio-cases-box { padding: 0; }
+}

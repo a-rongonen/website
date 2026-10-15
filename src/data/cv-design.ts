@@ -1,9 +1,9 @@
-/** Shared presentation controls for both CV languages. */
+/** Shared presentation controls for both CV languages and the portfolio. */
 export const cvDesign = {
   sectionEdgeDistance: 'clamp(4rem, 8vw, 6.5rem)', // Shared content inset from either section edge; e.g. '64px'.
   bulletGap: '1.5rem', // Extra space between bullet items, in addition to normal line height.
   profileColumnGap: 8, // Percentage of the profile box's inner width, centered between equal columns.
-  checkmarkColor: '#fff2a8', // Light yellow; independent of the bullet text color.
+  accentColor: '#fff2a8', // Shared by bold/italic copy, underlined links, and checkmarks.
   contentColor: '#d1d4d4', // Shared body text, icons, small headings, and table text.
   boxes: {
     defaultColor: '#182225', // Six-digit hex; its lightness controls how dark boxes stay.
@@ -81,7 +81,8 @@ export function cvDesignStyle(sectionBaseColor: string) {
     --cv-section-edge-distance: ${cvDesign.sectionEdgeDistance};
     --cv-bullet-gap: ${cvDesign.bulletGap};
     --cv-profile-column-gap: ${Math.max(0, Math.min(50, cvDesign.profileColumnGap))}%;
-    --cv-checkmark-color: ${cvDesign.checkmarkColor};
+    --cv-accent-color: ${cvDesign.accentColor};
+    --cv-checkmark-color: var(--cv-accent-color);
     --cv-box-top: ${fill(source.lightness)};
     --cv-box-bottom: ${fill(source.lightness * (1 - unitInterval(boxes.shade)))};
     --cv-box-opacity: ${unitInterval(boxes.opacity) * 100}%;

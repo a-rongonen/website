@@ -1,6 +1,7 @@
 ---
 import CvCard from './CvCard.astro';
 import CvIcon from './CvIcon.astro';
+import InlineText from './InlineText.astro';
 import type { visibleCvSections } from '../data/cv-sections';
 import { networkSectionStyle, type NetworkSection } from '../data/cv-network';
 
@@ -17,19 +18,19 @@ const headingId = `${section.id}-heading`;
   data-network-section={palettes[index]} style={networkSectionStyle(palettes[index], palettes, index)}
   aria-labelledby={section.heading.trim() ? headingId : undefined}>
   <div class="cv-container">
-    {section.heading.trim() && <h2 id={headingId} tabindex="-1">{section.heading}</h2>}
+    {section.heading.trim() && <h2 id={headingId} tabindex="-1"><InlineText text={section.heading} /></h2>}
     {(section.text || section.bullets.length > 0) && (
       <div class:list={['cv-intro', 'glass', 'profile-card', { 'cv-intro-split': section.text && section.bullets.length > 0 }]}>
-        {section.text && <div class="profile-copy">{section.text.split('\n\n').map(paragraph => <p>{paragraph}</p>)}</div>}
-        {section.bullets.length > 0 && <ul class="cv-bullets">{section.bullets.map(text => <li>{text}</li>)}</ul>}
+        {section.text && <div class="profile-copy">{section.text.split('\n\n').map(paragraph => <p><InlineText text={paragraph} /></p>)}</div>}
+        {section.bullets.length > 0 && <ul class="cv-bullets">{section.bullets.map(text => <li><InlineText text={text} /></li>)}</ul>}
       </div>
     )}
     {section.table && section.table.rows.length > 0 && (
       <div class="glass history-card">
         <table>
-          <caption><span><CvIcon name="briefcase" /><span class="history-title">{section.table.title}</span></span></caption>
-          <thead><tr>{section.table.columns.map(column => <th scope="col">{column}</th>)}</tr></thead>
-          <tbody>{section.table.rows.map(row => <tr>{row.map(cell => <td>{cell}</td>)}</tr>)}</tbody>
+          <caption><span><CvIcon name="briefcase" /><span class="history-title"><InlineText text={section.table.title} /></span></span></caption>
+          <thead><tr>{section.table.columns.map(column => <th scope="col"><InlineText text={column} /></th>)}</tr></thead>
+          <tbody>{section.table.rows.map(row => <tr>{row.map(cell => <td><InlineText text={cell} /></td>)}</tr>)}</tbody>
         </table>
       </div>
     )}
