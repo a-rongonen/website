@@ -26,6 +26,7 @@
 
 ## Content and design
 
+- If an asset needs compression or re-encoding, tell the owner the required size/format and let them do it. The owner wants to fine-tune the quality/compression trade-off; do not compress or re-encode assets yourself unless explicitly asked.
 - The first launch may use plain “coming soon” placeholders. The user leads content design and will provide CV/portfolio structure, content, and style direction later.
 - Do not invent biographical details, CV sections, project descriptions, content blocks, sample articles, or visual design requirements.
 - Use `ignored-files/cv-and-portfolio-assets/cv-copies.md` as the local guide to CV copy. It links to the owner's source snippets and records translation guidance; read it before adding or revising CV content. Keep the source document link and unused snippets in the ignored notes rather than publishing them.

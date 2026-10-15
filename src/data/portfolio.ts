@@ -23,7 +23,7 @@ export const portfolioDesign = {
 
 export const portfolio = {
   name: "Aleksanteri's",
-  heroVideo: { src: '', label: 'Portfolio video coming soon' } satisfies PortfolioMedia,
+  heroVideo: { src: '/videos/portfolio-demo-reel.mp4', label: 'Portfolio demo reel' } satisfies PortfolioMedia,
   background: {
     heading: 'background',
     text: 'Background text coming soon.',

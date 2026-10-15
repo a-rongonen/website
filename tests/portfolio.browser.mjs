@@ -129,8 +129,19 @@ try {
   await page.locator('portfolio-case[data-enhanced="true"]').last().waitFor();
   await page.evaluate(() => document.fonts.ready);
 
-  assert.equal(await page.locator('.portfolio-hero .portfolio-media-placeholder').count(), 1, 'Missing hero video has a labelled placeholder');
-  assert.match(await page.locator('.portfolio-hero .portfolio-media').textContent(), /video coming soon/i);
+  const heroVideo = page.locator('.portfolio-hero video');
+  assert.equal(await heroVideo.getAttribute('src'), '/videos/portfolio-demo-reel.mp4');
+  assert.equal(await heroVideo.getAttribute('aria-label'), 'Portfolio demo reel');
+  await page.waitForFunction(() => {
+    const video = document.querySelector('.portfolio-hero video');
+    return video && !video.paused && video.currentTime > 0 && video.videoWidth > 0 && video.getVideoPlaybackQuality().totalVideoFrames > 0;
+  });
+  assert.deepEqual(await heroVideo.evaluate(video => [video.autoplay, video.loop, video.muted, video.playsInline, video.controls]),
+    [true, true, true, true, true], 'Hero autoplays muted inline with looping and controls');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await settled(page);
+  assert.equal(await heroVideo.evaluate(video => video.paused && !video.autoplay), true, 'Reduced motion pauses hero autoplay');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   assert.equal(await page.locator('.portfolio-hero .cv-hero-background').count(), 0, 'Portfolio opening has no static CV background image');
   assert.equal(await page.locator('.portfolio-hero').getAttribute('data-network-section'), 'profile', 'Opening uses the first content palette and participates in the network');
   assert.equal(await page.locator('.portfolio-background h1').textContent(), 'background');
