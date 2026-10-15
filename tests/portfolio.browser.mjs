@@ -88,7 +88,13 @@ async function sliderStops(widget, selected) {
       return { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 };
     };
     const slider = element.querySelector('[data-case-slider]');
+    const range = element.querySelector('.portfolio-case-range');
+    const track = getComputedStyle(range, '::before');
+    const rangeBounds = range.getBoundingClientRect();
     return {
+      trackLeft: rangeBounds.left + parseFloat(track.left),
+      trackRight: rangeBounds.right - parseFloat(track.right),
+      accent: getComputedStyle(slider).color,
       slider: rect(slider),
       halo: rect(element.querySelector('.portfolio-case-halo')),
       stops: [...element.querySelectorAll('[data-case-stop]')].map(stop => ({
@@ -102,9 +108,16 @@ async function sliderStops(widget, selected) {
   assert(Math.abs(result.halo.y - result.slider.y) < 1, 'Glowing handle lies on the draggable line');
   assert(Math.abs(result.halo.x - result.stops[selected - 1].x) < 1, 'Glowing handle aligns with the selected stop');
   assert(Math.abs(result.stops[1].x - (result.stops[0].x + result.stops[2].x) / 2) < 1, 'The middle stop is centered');
-  for (const stop of result.stops.filter(stop => stop.visible)) {
+  assert(Math.abs(result.trackLeft - result.stops[0].x) < 1, 'Track starts at the first circle center');
+  assert(Math.abs(result.trackRight - result.stops[2].x) < 1, 'Track ends at the last circle center');
+  for (const [index, stop] of result.stops.entries()) {
+    if (!stop.visible) continue;
+    if (index < selected - 1) {
+      assert.equal(stop.color, result.accent, 'Passed circles use the yellow accent');
+      continue;
+    }
     const channels = stop.color.match(/[\d.]+/g).slice(0, 3).map(Number);
-    assert(Math.max(...channels) - Math.min(...channels) <= 10, 'Inactive stops are gray');
+    assert(Math.max(...channels) - Math.min(...channels) <= 10, 'Upcoming circles are gray');
   }
 }
 
@@ -180,6 +193,7 @@ try {
   await selectedPage(firstWidget, 3);
   await slider.press('Home');
   await selectedPage(firstWidget, 1);
+  await sliderStops(firstWidget, 1);
   await slider.press('ArrowRight');
   await selectedPage(firstWidget, 2);
 

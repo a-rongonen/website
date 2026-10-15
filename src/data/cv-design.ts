@@ -21,6 +21,15 @@ export const cvDesign = {
     whiteMix: 0.25, // Lighten the lower color; useful for dark section palettes.
     whiteStop: 50, // Percentage down the text where white ends (0–100).
     colorStop: 100, // Percentage down the text where the tinted color arrives.
+    backdrop: { // Soft gradient behind headings directly over the node background.
+      color: '#000000',
+      opacity: .40, // 0–1; 1 gives an opaque center, 0 disables the effect.
+      paddingX: 70, // % of combined text width added on EACH side; 50 doubles total width.
+      paddingY: 70, // % of combined text height above AND below, including all wrapped rows.
+      solidStop: 45, // 0–100%; solid center ends here, then fades to transparent.
+      offsetX: 0, // % of combined text width.
+      offsetY: 0, // % of combined text height.
+    },
   },
   hero: {
     backgroundSrc: '/images/cv-background-v2.jpg', // Proportional cover image; '' disables it.

@@ -1,5 +1,7 @@
 import { alignSectionText } from './cv-section-spacing';
+import { startHeadingBackdrops } from './heading-backdrops';
 alignSectionText();
+startHeadingBackdrops();
 
 // Keep each name word intact, fitting the actual rendered font to its column.
 // The heading's own width/font stay stable so fitting cannot shrink its grid track.

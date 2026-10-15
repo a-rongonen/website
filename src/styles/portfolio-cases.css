@@ -18,7 +18,20 @@ portfolio-case [hidden] { display: none !important; }
   display: block;
   position: relative;
 }
-/* The rail matches native thumb travel, including its radius at both endpoints. */
+/* Paint only between endpoint centers, matching the native thumb's travel. */
+.portfolio-case-range::before {
+  content: '';
+  position: absolute;
+  inset-inline: calc(var(--case-thumb-size) / 2);
+  top: 50%;
+  transform: translateY(-50%);
+  height: var(--case-track-height);
+  border-radius: 1rem;
+  background: linear-gradient(to right, var(--cv-accent-color) var(--case-progress, 0%), #ffffff38 var(--case-progress, 0%));
+  box-shadow: inset 0 0 0 1px #ffffff66;
+  pointer-events: none;
+}
+/* The dots and halo share the same endpoint centers as the visible track. */
 .portfolio-case-rail {
   position: absolute;
   inset-inline: calc(var(--case-thumb-size) / 2);
@@ -42,6 +55,7 @@ portfolio-case [hidden] { display: none !important; }
   background: #7b7b7b;
 }
 .portfolio-case-stop[data-selected='true'] { visibility: hidden; }
+.portfolio-case-stop[data-passed='true'] { background: var(--cv-accent-color); border-color: var(--cv-accent-color); }
 /* A real element also animates in browsers that cannot animate native thumbs. */
 .portfolio-case-halo {
   left: var(--case-progress, 0%);
@@ -50,6 +64,7 @@ portfolio-case [hidden] { display: none !important; }
   animation: portfolio-case-glow 2s ease-in-out infinite;
 }
 .portfolio-case-slider {
+  position: relative;
   display: block;
   width: 100%;
   height: 3rem;
@@ -66,17 +81,15 @@ portfolio-case [hidden] { display: none !important; }
   height: var(--case-track-height);
   border: 0;
   border-radius: 1rem;
-  background: linear-gradient(to right, var(--cv-accent-color) var(--case-progress, 0%), #ffffff38 var(--case-progress, 0%));
-  box-shadow: inset 0 0 0 1px #ffffff66;
+  background: transparent;
 }
 .portfolio-case-slider::-moz-range-track {
   height: var(--case-track-height);
   border: 0;
   border-radius: 1rem;
-  background: #ffffff38;
-  box-shadow: inset 0 0 0 1px #ffffff66;
+  background: transparent;
 }
-.portfolio-case-slider::-moz-range-progress { height: var(--case-track-height); border-radius: 1rem; background: var(--cv-accent-color); }
+.portfolio-case-slider::-moz-range-progress { background: transparent; }
 .portfolio-case-slider::-webkit-slider-thumb {
   box-sizing: border-box;
   width: var(--case-thumb-size);
@@ -119,9 +132,8 @@ portfolio-case:not([data-enhanced='true']) .portfolio-case-panel + .portfolio-ca
 @media (forced-colors: active) {
   .portfolio-case-halo { display: none; }
   .portfolio-case-stop { background: GrayText; border-color: CanvasText; }
-  .portfolio-case-slider::-webkit-slider-runnable-track { background: Canvas; border: 1px solid CanvasText; box-shadow: none; }
-  .portfolio-case-slider::-moz-range-track { background: Canvas; border: 1px solid CanvasText; box-shadow: none; }
-  .portfolio-case-slider::-moz-range-progress { background: Highlight; }
+  .portfolio-case-stop[data-passed='true'] { background: Highlight; border-color: Highlight; forced-color-adjust: none; }
+  .portfolio-case-range::before { background: Canvas; border: 1px solid CanvasText; box-shadow: none; }
   .portfolio-case-slider::-webkit-slider-thumb { background: Highlight; border-color: CanvasText; box-shadow: none; }
   .portfolio-case-slider::-moz-range-thumb { background: Highlight; border-color: CanvasText; box-shadow: none; }
   .portfolio-case-slider:focus-visible { outline-color: Highlight; }

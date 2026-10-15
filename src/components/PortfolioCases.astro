@@ -87,7 +87,10 @@ const { cases } = Astro.props;
             else void video.play().catch(() => {});
           });
         });
-        stops.forEach((stop, index) => { stop.dataset.selected = String(index === selected - 1); });
+        stops.forEach((stop, index) => {
+          stop.dataset.selected = String(index === selected - 1);
+          stop.dataset.passed = String(index < selected - 1);
+        });
         slider.value = String(selected);
         slider.setAttribute('aria-valuetext', position);
         slider.parentElement?.style.setProperty('--case-progress', `${panels.length > 1 ? (selected - 1) / (panels.length - 1) * 100 : 0}%`);
