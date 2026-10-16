@@ -14,6 +14,8 @@
 .portfolio-page .site-header a { color: #fff; text-underline-offset: .3em; }
 .portfolio-page .site-header nav ul { margin: 0; }
 .portfolio-hero { overflow: hidden; }
+/* Match the weight of the CV section headings. */
+.cv-page.portfolio-page h1 { font-weight: 700; }
 .portfolio-hero-inner {
   display: flex;
   flex-direction: column;
