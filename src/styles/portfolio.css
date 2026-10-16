@@ -38,8 +38,8 @@
 .portfolio-title-word {
   display: block;
   margin-top: .14em;
-  font-size: inherit;
-  font-size: min(1em, 12.8cqi);
+  font-size: calc(1em * var(--portfolio-title-scale, 1.5));
+  font-size: calc(min(1em, 12.8cqi) * var(--portfolio-title-scale, 1.5));
   color: var(--portfolio-title-color);
 }
 .portfolio-media {

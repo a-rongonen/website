@@ -19,6 +19,7 @@ const placeholderPages = () => Array.from({ length: 3 }, (_, index) => ({
 
 export const portfolioDesign = {
   titleColor: '#fff2a8', // The PORTFOLIO word only; independent of the shared inline accent.
+  titleScale: 1.5, // The PORTFOLIO word only; 1 = original size, 1.5 = 50% larger.
 };
 
 export const portfolio = {

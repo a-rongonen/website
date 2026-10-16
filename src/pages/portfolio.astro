@@ -21,7 +21,7 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
 <PageLayout title={`${portfolio.name} Portfolio`} description={`${portfolio.name} portfolio, featuring game design cases from Panic Lane.`} isPortfolio>
   <CvNetwork />
   <header class="portfolio-hero cv-network-section" data-network-section={palettes[0]}
-    style={`${networkSectionStyle(palettes[0], palettes, 0)} --portfolio-title-color: ${portfolioDesign.titleColor};`}>
+    style={`${networkSectionStyle(palettes[0], palettes, 0)} --portfolio-title-color: ${portfolioDesign.titleColor}; --portfolio-title-scale: ${portfolioDesign.titleScale};`}>
     <div class="cv-container portfolio-hero-inner">
       <h1 class="portfolio-title">
         <span class="portfolio-owner">{portfolio.name.split(' ').map((word, index) => <>{index > 0 && ' '}<span>{word}</span></>)}</span>
