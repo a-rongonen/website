@@ -95,21 +95,21 @@ try {
     }
   }
 
-  // Prove this is sensitive to the reported bug, rather than just checking CSS values.
+  // Prove this detects clipped ink with the current font, not just CSS values.
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.evaluate(() => document.documentElement.style.fontSize = '16px');
   const firstHeading = headings.first();
   assert.equal(await firstHeading.textContent(), 'Shattering Platforms');
-  const oldStyle = await page.addStyleTag({
-    content: '.portfolio-page .portfolio-unique .portfolio-case-heading h2 { line-height: 1.15 !important; padding-block: 0 !important; }',
+  const clippedStyle = await page.addStyleTag({
+    content: '.portfolio-page .portfolio-unique .portfolio-case-heading h2 { line-height: .75 !important; padding-block: 0 !important; }',
   });
   let clipped;
   try {
     clipped = await comparePaint(firstHeading);
     assert(clipped.solid.bottom - clipped.gradient.bottom > 1,
-      'The old line box must reproduce missing descender pixels: ' + JSON.stringify(clipped));
+      'The deliberately tight line box must reproduce missing descender pixels: ' + JSON.stringify(clipped));
   } finally {
-    await oldStyle.evaluate(element => element.remove());
+    await clippedStyle.evaluate(element => element.remove());
   }
   assertUnclipped(await comparePaint(firstHeading), 'Restored heading after negative control');
   assert.deepEqual(errors, []);

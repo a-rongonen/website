@@ -4,7 +4,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || undefined });
 const base = process.env.CV_PREVIEW_URL || 'http://127.0.0.1:8796';
 const portfolioUrl = base + '/portfolio';
-const pageHeadings = ['The problem', 'The solution', 'The result'];
+const pageHeadings = ['The Problem', 'The Solution', 'The Result'];
 const errors = [];
 const geometryErrors = [];
 const trackErrors = page => page.on('pageerror', error => errors.push(error.message));
@@ -45,7 +45,7 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
   const label = JSON.stringify({ width, fontSize, javaScriptEnabled, ...result });
   assert.equal(result.overflow, false, 'No horizontal scrolling: ' + label);
   assert(result.separateTitleRow && result.titleBeforeMedia && result.mediaCentered, 'Centered title then media: ' + label);
-  assert.deepEqual(result.ranges.map(range => range.text), ["Aleksanteri's", 'Portfolio']);
+  assert.deepEqual(result.ranges.map(range => range.text), ["Aleksanteri's", 'PORTFOLIO']);
   assert(result.ranges.every(range => range.lines === 1 && range.fits), 'Whole title words fit: ' + label);
   assert(width < 700 ? result.learningStacked : result.learningBeside, 'Learning layout follows reading order: ' + label);
   assert(width < 700 ? result.backgroundStacked : result.backgroundBeside, 'Background text/video layout follows reading order: ' + label);
@@ -147,7 +147,7 @@ try {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   assert.equal(await page.locator('.portfolio-hero .cv-hero-background').count(), 0, 'Portfolio opening has no static CV background image');
   assert.equal(await page.locator('.portfolio-hero').getAttribute('data-network-section'), 'profile', 'Opening uses the first content palette and participates in the network');
-  assert.equal(await page.locator('.portfolio-background h1').textContent(), 'background');
+  assert.equal(await page.locator('.portfolio-background h1').textContent(), 'Background');
   assert.match(await page.locator('.portfolio-background .profile-card').textContent(), /exciting career as a marketing manager/);
   assert.deepEqual(await page.locator('.portfolio-background em').allTextContents(), ['design games.', 'a lot.']);
   assert.equal(await page.locator('.portfolio-background .profile-card a').count(), 0, 'Background copy keeps the viewer on the page');
@@ -184,7 +184,7 @@ try {
   }, null, { timeout: 30000 });
   assert.equal(await page.locator('.portfolio-background + .portfolio-learning').count(), 1, 'Background precedes Panic Lane');
   const widgets = page.locator('portfolio-case');
-  const titles = ['Shattering Platforms', 'A New Drifting Mechanic', 'Driving on a Pipe'];
+  const titles = ['Shattering Platforms', 'A New Drifting Mechanic', 'Driving On A Pipe'];
   assert.equal(await widgets.count(), 3, 'Each case has its own widget');
   assert.equal(await widgets.locator('[data-case-panel]').count(), 9, 'Each case has three content pages');
   assert.equal(await widgets.getByRole('button').count(), 0, 'Numbered buttons are removed');

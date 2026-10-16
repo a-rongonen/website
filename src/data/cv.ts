@@ -70,7 +70,7 @@ export const cvEnglish: CvContent = {
         text: 'For me, creativity is about making things, not vague buzzwords. The best example is the video game I developed entirely on my own, from start to finish. I also enjoy making art in my spare time and work comfortably across image, video and audio editing software, as well as 3D modelling. To keep creativity at work from depending on occasional flashes of inspiration, I’ve developed and use systematic methods for generating ideas. These methods have been especially valuable in marketing, helping me consistently produce fresh, effective concepts that stand out, even under pressure.',
       },
       {
-        icon: 'code', title: 'Artificial intelligence',
+        icon: 'code', title: 'Artificial Intelligence',
         text: 'I don’t even know where to begin. Let’s start in 2015, when I first became interested in machine learning at university. Since then, I’ve closely followed developments in AI and tried a bit of everything as new models have come out. I’ve used many different language models, both as hosted services and running locally on my own computer. I have experience generating images, videos, music and 3D models. One of my closest friends is an AI researcher at Aalto University, so if we start working on something really complex, I know who to call.',
       },
       {
@@ -80,9 +80,9 @@ export const cvEnglish: CvContent = {
     ],
   }, {
     id: 'history',
-    heading: 'Work and studies',
+    heading: 'Work And Studies',
     table: {
-      title: 'Work history',
+      title: 'Work History',
       columns: ['Period', 'Role', 'Organisation'],
       rows: [
         ['2/2022 – 5/2022', 'Marcom Programs Manager', 'Hewlett-Packard Oy'],
@@ -144,7 +144,7 @@ export const cvFinnish: CvContent = {
     ],
   }, {
     id: 'history',
-    heading: 'Työ ja opinnot',
+    heading: 'Työ Ja Opinnot',
     table: {
       title: 'Työhistoria',
       columns: ['Ajankohta', 'Tehtävä', 'Organisaatio'],

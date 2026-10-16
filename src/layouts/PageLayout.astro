@@ -29,6 +29,7 @@ const navigation = [
     <title>{title} | rongonen.fi</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    <link rel="preload" href="/fonts/kanit/Kanit-SemiBold.ttf" as="font" type="font/ttf" crossorigin />
   </head>
   <body class:list={{ 'cv-page': isCv || isPortfolio, 'portfolio-page': isPortfolio }}>
     <a class="skip-link" href="#main">{lang === 'fi' ? 'Siirry sisältöön' : 'Skip to content'}</a>
@@ -49,6 +50,20 @@ const navigation = [
 </html>
 
 <style is:global>
+  @font-face {
+    font-family: 'Kanit';
+    src: url('/fonts/kanit/Kanit-SemiBold.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+  }
+
+  h1, h2, h3, h4, h5, h6, caption, th {
+    font-family: 'Kanit', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -.01em;
+  }
+
   body {
     max-width: 48rem;
     margin: 0 auto;

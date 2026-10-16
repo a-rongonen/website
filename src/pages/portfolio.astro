@@ -25,7 +25,7 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
     <div class="cv-container portfolio-hero-inner">
       <h1 class="portfolio-title">
         <span class="portfolio-owner">{portfolio.name.split(' ').map((word, index) => <>{index > 0 && ' '}<span>{word}</span></>)}</span>
-        <span class="portfolio-title-word">Portfolio</span>
+        <span class="portfolio-title-word">PORTFOLIO</span>
       </h1>
       <PortfolioMedia {...portfolio.heroVideo} controls={false} />
     </div>
@@ -60,7 +60,7 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
   <section class="cv-section cv-network-section portfolio-unique portfolio-cases-section" data-network-section={palettes[3]}
     style={networkSectionStyle(palettes[3], palettes, 3)} aria-labelledby="cases-heading">
     <div class="cv-container">
-      <h1 class="portfolio-section-title" id="cases-heading"><span>3 game design cases</span></h1>
+      <h1 class="portfolio-section-title" id="cases-heading"><span>3 Game Design Cases</span></h1>
       <PortfolioCases cases={portfolio.cases} />
     </div>
   </section>
