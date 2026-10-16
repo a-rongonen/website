@@ -149,7 +149,7 @@ try {
   assert.equal(await page.locator('.portfolio-hero').getAttribute('data-network-section'), 'profile', 'Opening uses the first content palette and participates in the network');
   assert.equal(await page.locator('.portfolio-background h1').textContent(), 'background');
   assert.match(await page.locator('.portfolio-background .profile-card').textContent(), /exciting career as a marketing manager/);
-  assert.deepEqual(await page.locator('.portfolio-background strong').allTextContents(), ['design games.', 'a lot.']);
+  assert.deepEqual(await page.locator('.portfolio-background em').allTextContents(), ['design games.', 'a lot.']);
   assert.equal(await page.locator('.portfolio-background .profile-card a').count(), 0, 'Background copy keeps the viewer on the page');
   const embed = page.locator('.portfolio-background iframe');
   const embedUrl = new URL(await embed.getAttribute('src'));
@@ -158,8 +158,12 @@ try {
   assert.equal(embedUrl.searchParams.get('start'), '6441');
   assert.equal(embedUrl.searchParams.get('end'), '6555');
   assert(await embed.getAttribute('title'), 'Embedded video has an accessible title');
-  assert.equal(await page.locator('.portfolio-learning li').count(), 5);
-  assert.equal(await page.locator('.portfolio-learning li strong').textContent(), 'between the worlds');
+  assert.equal(await page.locator('.portfolio-learning li').count(), 0);
+  assert.equal(await page.locator('.portfolio-learning .profile-card p').count(), 2);
+  assert.match(await page.locator('.portfolio-learning .profile-card p').first().textContent(), /Panic Lane is my UE learning project/);
+  assert.equal(await page.locator('.portfolio-learning .profile-card em').textContent(), 'between the biomes');
+  assert.equal(await page.locator('.portfolio-learning-columns > .portfolio-media:first-child + .profile-card').count(), 1,
+    'Panic Lane video precedes the paragraph card in desktop and mobile reading order');
   const trailer = page.locator('.portfolio-learning video');
   assert.equal(await trailer.getAttribute('src'), '/videos/panic-lane-portfolio-trailer.mp4');
   assert.equal(await trailer.evaluate(video => video.controls), false, 'Trailer starts with controls hidden');
@@ -297,20 +301,18 @@ try {
       const result = {
         colors: [...fixture.children].map(element => getComputedStyle(element).color),
         underline: getComputedStyle(fixture.querySelector('a')).textDecorationLine,
-        marker: getComputedStyle(section.querySelector('li'), '::marker').color,
-        markerContent: getComputedStyle(section.querySelector('li'), '::marker').content,
-        listStyle: getComputedStyle(section.querySelector('li')).listStyleType,
+        marker: section.querySelector('li') && getComputedStyle(section.querySelector('li'), '::marker').color,
+        markerContent: section.querySelector('li') && getComputedStyle(section.querySelector('li'), '::marker').content,
       };
       fixture.remove();
       section.style.removeProperty('--cv-accent-color');
       return result;
     });
     assert(result.colors.every(color => color === 'rgb(170, 187, 204)'), `${route}: shared bold/italic/link accent`);
-    assert.equal(result.marker, 'rgb(170, 187, 204)', `${route}: list markers use the same accent`);
     if (route === '/portfolio') {
-      assert.equal(result.markerContent, 'normal', 'Portfolio uses the native list marker');
-      assert.equal(result.listStyle, 'disc', 'Portfolio uses regular bullet points');
+      assert.equal(result.marker, null, 'Panic Lane uses paragraphs without list markers');
     } else {
+      assert.equal(result.marker, 'rgb(170, 187, 204)', `${route}: list markers use the same accent`);
       assert(result.markerContent.includes('✓'), `${route}: CV checkmarks remain unchanged`);
     }
     assert.match(result.underline, /underline/, `${route}: links retain underlining`);

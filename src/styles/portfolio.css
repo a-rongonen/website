@@ -80,10 +80,6 @@
 .portfolio-section-title > span { display: block; }
 .portfolio-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; align-items: start; }
 .portfolio-columns > .profile-card { min-width: 0; width: 100%; padding: clamp(1rem, 4vw, 3rem); overflow-wrap: anywhere; }
-.portfolio-learning-columns .cv-bullets { margin: 0; overflow-wrap: anywhere; }
-/* Reuse list spacing and accent while keeping CV checkmarks as the default. */
-.portfolio-bullets { list-style-type: disc; }
-.cv-bullets.portfolio-bullets li::marker { content: normal; }
 .portfolio-page .portfolio-section-title { width: 100%; container-type: normal; margin-bottom: 3rem; text-align: center; text-wrap: balance; }
 .portfolio-page .cv-card h3, .portfolio-page .history-card caption > span { flex-wrap: wrap; }
 .portfolio-page .cv-card h3 > span, .portfolio-page .history-title { min-width: 0; overflow-wrap: anywhere; }

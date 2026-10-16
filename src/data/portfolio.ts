@@ -24,7 +24,7 @@ export const portfolio = {
   },
   "background": {
     "heading": "background",
-    "text": "I’ve had an exciting career as a marketing manager. But now it’s time to do what I really love: **design games.**\n\nFor the past three-ish years I’ve been learning Unreal Engine.\nI have learned **a lot.** Watch my 15 seconds of fame in Unreal Fest!",
+    "text": "I’ve had an exciting career as a marketing manager. But now it’s time to do what I really love: *design games.*\n\nFor the past three-ish years I’ve been learning Unreal Engine.\nI have learned *a lot.* Watch my 15 seconds of fame in Unreal Fest!",
     "video": {
       "kind": "youtube",
       "src": "https://www.youtube-nocookie.com/embed/4w0PWcRwyOc?start=6441&end=6555&playsinline=1&rel=0",
@@ -35,17 +35,11 @@ export const portfolio = {
     "heading": [
       "Panic Lane"
     ],
-    "bullets": [
-      "My learning project Panic Lane got \"a bit\" out of hand",
-      "It's driving game where the goal is to reach the finish line alive",
-      "40+ challenging tracks across 4 worlds/biomes",
-      "Each world has its own set of mechanics",
-      "Sometimes the player teleports instantly **between the worlds**, requiring quick adaptation to changing mechanics"
-    ],
     "video": {
       "src": "/videos/panic-lane-portfolio-trailer.mp4",
       "label": "Panic Lane portfolio trailer"
-    }
+    },
+    "text": "Panic Lane is my UE learning project that got 'a bit' out of hand. It's a driving game where the goal is to reach the finish line alive.\n\nThe game has 40+ tracks across 4 biomes. Occasional teleportation *between the biomes* requires quick reactions to changing mechanics."
   },
   "cases": [
     {
@@ -90,7 +84,7 @@ export const portfolio = {
         },
         {
           "heading": "The solution",
-          "text": "I added special walls between the platforms that are shattered **only** if the player hits them **sideways** with a spike on the car. In order to make “aiming” at the walls relatively easy, I added a lot of counter steering.\n\nThe shattered wall also gives a boost that accelerates the car to a fixed, manageable velocity. The boost vector is calculated by taking into account both car’s direction and the walls location, automatically pushing the car in “right” direction so that it stays on the track. This way the player can **fully concentrate on only touching the wall sideways** and everything else can be forgotten.",
+          "text": "I added special walls between the platforms that are shattered *only* if the player hits them *sideways* with a spike on the car. In order to make “aiming” at the walls relatively easy, I added a lot of counter steering.\n\nThe shattered wall also gives a boost that accelerates the car to a fixed, manageable velocity. The boost vector is calculated by taking into account both car’s direction and the walls location, automatically pushing the car in “right” direction so that it stays on the track. This way the player can *fully concentrate on only touching the wall sideways* and everything else can be forgotten.",
           "media": {
             "src": "",
             "label": "A New Drifting Mechanic: solution media coming soon"
@@ -111,7 +105,7 @@ export const portfolio = {
       "pages": [
         {
           "heading": "The problem",
-          "text": "One of the pipe types in the game is not magnetic, which made driving on it very challenging. Because the pipe twists and turns, it is important to keep the wheels touching the ground. However, even slight “jump” might ruin the run because you can’t turn while in air, and these tiny jumps are **visually unnoticeable.** This gives an illusion that “the car just doesn’t turn” on a track that is already in danger to become frustratingly difficult.",
+          "text": "One of the pipe types in the game is not magnetic, which made driving on it very challenging. Because the pipe twists and turns, it is important to keep the wheels touching the ground. However, even slight “jump” might ruin the run because you can’t turn while in air, and these tiny jumps are *visually unnoticeable.* This gives an illusion that “the car just doesn’t turn” on a track that is already in danger to become frustratingly difficult.",
           "media": {
             "src": "",
             "label": "Driving on a Pipe: problem media coming soon"
@@ -140,6 +134,6 @@ export const portfolio = {
   name: string;
   heroVideo: PortfolioMedia;
   background: { heading: string; text: string; video: PortfolioMedia };
-  learning: { heading: string[]; bullets: string[]; video: PortfolioMedia };
+  learning: { heading: string[]; text: string; video: PortfolioMedia };
   cases: PortfolioCase[];
 };
