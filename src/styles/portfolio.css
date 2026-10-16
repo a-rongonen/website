@@ -50,6 +50,7 @@
   background: #090f16;
 }
 .portfolio-media > :is(video, img) { display: block; width: 100%; height: 100%; object-fit: contain; }
+.portfolio-media > video:not([controls]) { pointer-events: none; }
 .portfolio-media-placeholder {
   display: grid;
   place-items: center;

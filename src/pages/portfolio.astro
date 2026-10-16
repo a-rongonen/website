@@ -27,7 +27,7 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
         <span class="portfolio-owner">{portfolio.name.split(' ').map((word, index) => <>{index > 0 && ' '}<span>{word}</span></>)}</span>
         <span class="portfolio-title-word">Portfolio</span>
       </h1>
-      <PortfolioMedia {...portfolio.heroVideo} />
+      <PortfolioMedia {...portfolio.heroVideo} controls={false} />
     </div>
   </header>
 

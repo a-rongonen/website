@@ -137,7 +137,8 @@ try {
     return video && !video.paused && video.currentTime > 0 && video.videoWidth > 0 && video.getVideoPlaybackQuality().totalVideoFrames > 0;
   });
   assert.deepEqual(await heroVideo.evaluate(video => [video.autoplay, video.loop, video.muted, video.playsInline, video.controls]),
-    [true, true, true, true, true], 'Hero autoplays muted inline with looping and controls');
+    [true, true, true, true, false], 'Hero autoplays muted inline with looping and no controls');
+  assert.equal(await heroVideo.evaluate(video => getComputedStyle(video).pointerEvents), 'none', 'Hero ignores pointer interaction');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await settled(page);
   assert.equal(await heroVideo.evaluate(video => video.paused && !video.autoplay), true, 'Reduced motion pauses hero autoplay');

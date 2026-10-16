@@ -1,13 +1,17 @@
 ---
 import type { PortfolioMedia } from '../data/portfolio';
-interface Props extends PortfolioMedia {}
-const { src, poster, label, kind = 'video' } = Astro.props;
+interface Props extends PortfolioMedia {
+  controls?: boolean;
+}
+const { src, poster, label, kind = 'video', controls = true } = Astro.props;
 ---
 <div class:list={['portfolio-media', { 'portfolio-media-placeholder': !src }]}>
   {src ? kind === 'image' ? (
     <img src={src} alt={label} loading="lazy" />
   ) : (
-    <video src={src} poster={poster} aria-label={label} loop muted playsinline controls preload="metadata" data-portfolio-video />
+    <video src={src} poster={poster} aria-label={label} loop muted playsinline controls={controls}
+      disablepictureinpicture={!controls} disableRemotePlayback={!controls} tabindex={controls ? undefined : -1}
+      preload="metadata" data-portfolio-video />
   ) : (
     <div class="portfolio-media-message">
       <svg aria-hidden="true" viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.25">
@@ -20,7 +24,7 @@ const { src, poster, label, kind = 'video' } = Astro.props;
 </div>
 
 <script>
-  // Autoplay only when motion is welcome. Controls and looping work without JS.
+  // Autoplay only when motion is welcome. Other videos retain native controls.
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   for (const video of document.querySelectorAll<HTMLVideoElement>('[data-portfolio-video]')) {
     const updateMotion = () => {
