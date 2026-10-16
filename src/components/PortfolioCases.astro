@@ -48,9 +48,9 @@ const { cases } = Astro.props;
       </div>
       {item.pages.map((page, pageIndex) => (
         <div class="portfolio-case-panel" data-case-panel data-case-page={pageIndex + 1}>
-          <h3 class="portfolio-case-fallback-heading">Page {pageIndex + 1}</h3>
           <div class="portfolio-case-columns">
             <div class="portfolio-case-copy">
+              <h3 class="portfolio-case-page-heading">{page.heading}</h3>
               {page.text.split(/\n\s*\n/).filter(paragraph => paragraph.trim()).map(paragraph => (
                 <p><InlineText text={paragraph} /></p>
               ))}

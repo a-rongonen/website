@@ -51,8 +51,10 @@
   border-radius: 1rem;
   background: #090f16;
 }
-.portfolio-media > :is(video, img) { display: block; width: 100%; height: 100%; object-fit: contain; }
-.portfolio-media > video:not([controls]) { pointer-events: none; }
+.portfolio-media > :is(video, img, iframe) { display: block; width: 100%; height: 100%; object-fit: contain; border: 0; }
+.portfolio-media:has(> iframe) { min-height: 200px; }
+.portfolio-media > video:not([controls]):not([data-reveal-controls]) { pointer-events: none; }
+.portfolio-media:focus-within { outline: 2px solid var(--cv-accent-color); outline-offset: 4px; }
 .portfolio-media-placeholder {
   display: grid;
   place-items: center;
@@ -79,6 +81,9 @@
 .portfolio-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; align-items: start; }
 .portfolio-columns > .profile-card { min-width: 0; width: 100%; padding: clamp(1rem, 4vw, 3rem); overflow-wrap: anywhere; }
 .portfolio-learning-columns .cv-bullets { margin: 0; overflow-wrap: anywhere; }
+/* Reuse list spacing and accent while keeping CV checkmarks as the default. */
+.portfolio-bullets { list-style-type: disc; }
+.cv-bullets.portfolio-bullets li::marker { content: normal; }
 .portfolio-page .portfolio-section-title { width: 100%; container-type: normal; margin-bottom: 3rem; text-align: center; text-wrap: balance; }
 .portfolio-page .cv-card h3, .portfolio-page .history-card caption > span { flex-wrap: wrap; }
 .portfolio-page .cv-card h3 > span, .portfolio-page .history-title { min-width: 0; overflow-wrap: anywhere; }

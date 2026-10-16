@@ -2,15 +2,19 @@
 import type { PortfolioMedia } from '../data/portfolio';
 interface Props extends PortfolioMedia {
   controls?: boolean;
+  controlsOnInteraction?: boolean;
 }
-const { src, poster, label, kind = 'video', controls = true } = Astro.props;
+const { src, poster, label, kind = 'video', controls = true, controlsOnInteraction = false } = Astro.props;
 ---
 <div class:list={['portfolio-media', { 'portfolio-media-placeholder': !src }]}>
   {src ? kind === 'image' ? (
     <img src={src} alt={label} loading="lazy" />
+  ) : kind === 'youtube' ? (
+    <iframe src={src} title={label} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen />
   ) : (
     <video src={src} poster={poster} aria-label={label} loop muted playsinline controls={controls}
-      disablepictureinpicture={!controls} disableRemotePlayback={!controls} tabindex={controls ? undefined : -1}
+      disablepictureinpicture={!controls} disableRemotePlayback={!controls} tabindex={controls ? controlsOnInteraction ? 0 : undefined : -1}
+      data-reveal-controls={controls && controlsOnInteraction || undefined}
       preload="metadata" data-portfolio-video />
   ) : (
     <div class="portfolio-media-message">
@@ -27,6 +31,22 @@ const { src, poster, label, kind = 'video', controls = true } = Astro.props;
   // Autoplay only when motion is welcome. Other videos retain native controls.
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   for (const video of document.querySelectorAll<HTMLVideoElement>('[data-portfolio-video]')) {
+    if (video.hasAttribute('data-reveal-controls')) {
+      // Keep native controls as the no-JavaScript fallback. Touch users can tap
+      // to reveal them; keyboard users get the full native controls on focus.
+      video.controls = false;
+      video.addEventListener('pointerenter', event => {
+        if (event.pointerType !== 'touch') video.controls = true;
+      });
+      video.addEventListener('pointerleave', () => {
+        if (document.activeElement !== video) video.controls = false;
+      });
+      video.addEventListener('pointerdown', () => { video.controls = true; });
+      video.addEventListener('focus', () => { video.controls = true; });
+      video.addEventListener('blur', () => {
+        if (!video.matches(':hover')) video.controls = false;
+      });
+    }
     const updateMotion = () => {
       video.autoplay = !reducedMotion.matches && !video.closest('[hidden]');
       if (!video.autoplay) video.pause();

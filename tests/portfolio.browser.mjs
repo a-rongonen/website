@@ -4,6 +4,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || undefined });
 const base = process.env.CV_PREVIEW_URL || 'http://127.0.0.1:8796';
 const portfolioUrl = base + '/portfolio';
+const pageHeadings = ['The problem', 'The solution', 'The result'];
 const errors = [];
 const geometryErrors = [];
 const trackErrors = page => page.on('pageerror', error => errors.push(error.message));
@@ -60,8 +61,9 @@ async function selectedPage(widget, index, announce = true) {
   assert.equal(await slider.inputValue(), String(index));
   assert.equal(await slider.getAttribute('aria-valuetext'), description);
   assert(await widget.locator('[data-case-title]').isVisible(), `${title}: the case title stays visible`);
-  assert.match(await panels.nth(index - 1).locator('.portfolio-case-copy').textContent(), new RegExp(`Page ${index} content coming soon`));
-  assert.match(await panels.nth(index - 1).locator('.portfolio-case-media').textContent(), new RegExp(`Page ${index} media coming soon`));
+  assert.equal(await panels.nth(index - 1).locator('h3').textContent(), pageHeadings[index - 1]);
+  assert((await panels.nth(index - 1).locator('.portfolio-case-copy p').first().textContent()).length > 100, 'Supplied case copy is present');
+  assert.match(await panels.nth(index - 1).locator('.portfolio-case-media').textContent(), /media coming soon/);
   if (announce) assert.equal(await widget.locator('[data-case-status]').textContent(), `${title}: ${description}`);
 }
 
@@ -73,10 +75,10 @@ async function allPagesReadable(page, mode) {
     assert.equal(await widget.locator('[data-case-panel]').count(), 3);
     for (const [index, panel] of (await widget.locator('[data-case-panel]').all()).entries()) {
       assert(await panel.isVisible(), `${mode}: every content page is readable`);
-      const heading = panel.locator('.portfolio-case-fallback-heading');
+      const heading = panel.locator('.portfolio-case-page-heading');
       assert(await heading.isVisible(), `${mode}: every page has a fallback heading`);
       assert.equal(await heading.evaluate(element => element.tagName), 'H3');
-      assert.equal(await heading.textContent(), `Page ${index + 1}`);
+      assert.equal(await heading.textContent(), pageHeadings[index]);
     }
   }
 }
@@ -146,7 +148,36 @@ try {
   assert.equal(await page.locator('.portfolio-hero .cv-hero-background').count(), 0, 'Portfolio opening has no static CV background image');
   assert.equal(await page.locator('.portfolio-hero').getAttribute('data-network-section'), 'profile', 'Opening uses the first content palette and participates in the network');
   assert.equal(await page.locator('.portfolio-background h1').textContent(), 'background');
-  assert.match(await page.locator('.portfolio-background .profile-card').textContent(), /Background text coming soon/);
+  assert.match(await page.locator('.portfolio-background .profile-card').textContent(), /exciting career as a marketing manager/);
+  assert.deepEqual(await page.locator('.portfolio-background strong').allTextContents(), ['design games.', 'a lot.']);
+  assert.equal(await page.locator('.portfolio-background .profile-card a').count(), 0, 'Background copy keeps the viewer on the page');
+  const embed = page.locator('.portfolio-background iframe');
+  const embedUrl = new URL(await embed.getAttribute('src'));
+  assert.equal(embedUrl.hostname, 'www.youtube-nocookie.com');
+  assert.equal(embedUrl.pathname, '/embed/4w0PWcRwyOc');
+  assert.equal(embedUrl.searchParams.get('start'), '6441');
+  assert.equal(embedUrl.searchParams.get('end'), '6555');
+  assert(await embed.getAttribute('title'), 'Embedded video has an accessible title');
+  assert.equal(await page.locator('.portfolio-learning li').count(), 5);
+  assert.equal(await page.locator('.portfolio-learning li strong').textContent(), 'between the worlds');
+  const trailer = page.locator('.portfolio-learning video');
+  assert.equal(await trailer.getAttribute('src'), '/videos/panic-lane-portfolio-trailer.mp4');
+  assert.equal(await trailer.evaluate(video => video.controls), false, 'Trailer starts with controls hidden');
+  await trailer.hover();
+  assert.equal(await trailer.evaluate(video => video.controls), true, 'Hover reveals native controls');
+  await page.mouse.move(0, 0);
+  assert.equal(await trailer.evaluate(video => video.controls), false, 'Leaving hides idle controls');
+  await trailer.focus();
+  assert.equal(await trailer.evaluate(video => video.controls), true, 'Keyboard focus reveals native controls');
+  await trailer.evaluate(video => video.pause());
+  assert(await trailer.evaluate(video => video.paused), 'Trailer remains user controllable');
+  await trailer.evaluate(video => video.blur());
+  assert.equal(await trailer.evaluate(video => video.controls), false);
+  await trailer.evaluate(video => video.play());
+  await page.waitForFunction(() => {
+    const video = document.querySelector('.portfolio-learning video');
+    return video.readyState >= 2 && video.videoWidth > 0 && video.getVideoPlaybackQuality().totalVideoFrames > 0;
+  }, null, { timeout: 30000 });
   assert.equal(await page.locator('.portfolio-background + .portfolio-learning').count(), 1, 'Background precedes Panic Lane');
   const widgets = page.locator('portfolio-case');
   const titles = ['Shattering Platforms', 'A New Drifting Mechanic', 'Driving on a Pipe'];
@@ -159,7 +190,7 @@ try {
   for (const widget of await widgets.all()) {
     assert.equal(await widget.locator('.portfolio-cases-box h2[data-case-title]').count(), 1, 'Case H2 lives inside its widget box');
     assert.equal(await widget.locator('[data-case-panel]').count(), 3);
-    assert.equal(await widget.locator('.portfolio-case-fallback-heading:visible').count(), 0, 'Enhanced pages do not duplicate headings');
+    assert.equal(await widget.locator('.portfolio-case-page-heading:visible').count(), 1, 'The selected problem/solution/result heading is visible');
     await selectedPage(widget, 1, false);
   }
   assert.equal(await page.locator('.portfolio-learning h1.portfolio-section-title').textContent(), 'Panic Lane');
@@ -267,13 +298,21 @@ try {
         colors: [...fixture.children].map(element => getComputedStyle(element).color),
         underline: getComputedStyle(fixture.querySelector('a')).textDecorationLine,
         marker: getComputedStyle(section.querySelector('li'), '::marker').color,
+        markerContent: getComputedStyle(section.querySelector('li'), '::marker').content,
+        listStyle: getComputedStyle(section.querySelector('li')).listStyleType,
       };
       fixture.remove();
       section.style.removeProperty('--cv-accent-color');
       return result;
     });
     assert(result.colors.every(color => color === 'rgb(170, 187, 204)'), `${route}: shared bold/italic/link accent`);
-    assert.equal(result.marker, 'rgb(170, 187, 204)', `${route}: checkmarks use the same accent`);
+    assert.equal(result.marker, 'rgb(170, 187, 204)', `${route}: list markers use the same accent`);
+    if (route === '/portfolio') {
+      assert.equal(result.markerContent, 'normal', 'Portfolio uses the native list marker');
+      assert.equal(result.listStyle, 'disc', 'Portfolio uses regular bullet points');
+    } else {
+      assert(result.markerContent.includes('✓'), `${route}: CV checkmarks remain unchanged`);
+    }
     assert.match(result.underline, /underline/, `${route}: links retain underlining`);
   }
 
@@ -321,6 +360,7 @@ try {
   const fallback = await noJs.newPage();
   trackErrors(fallback);
   await fallback.goto(portfolioUrl);
+  assert(await fallback.locator('.portfolio-learning video').evaluate(video => video.controls), 'Trailer keeps usable native controls without JavaScript');
   await allPagesReadable(fallback, 'No JavaScript');
   for (const width of [240, 390, 700, 1440]) {
     for (const fontSize of [16, 32]) {
@@ -329,6 +369,14 @@ try {
     }
   }
   await noJs.close();
+  const touch = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+  const touchPage = await touch.newPage();
+  await touchPage.goto(portfolioUrl);
+  const touchTrailer = touchPage.locator('.portfolio-learning video');
+  assert.equal(await touchTrailer.evaluate(video => video.controls), false, 'Touch controls start hidden');
+  await touchTrailer.tap();
+  assert.equal(await touchTrailer.evaluate(video => video.controls), true, 'Touch reveals usable native controls');
+  await touch.close();
   assert.deepEqual(errors, [], 'No browser errors');
   assert.deepEqual(geometryErrors, [], 'Responsive layouts');
   console.log('Portfolio responsive title/media, independent case pages, keyboard/pointer interactions, accessibility fallbacks, shared accents and route metadata PASS');

@@ -49,8 +49,8 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
     <div class="cv-container">
       <h1 class="portfolio-section-title" id="learning-heading">{portfolio.learning.heading.map(line => <span>{line}</span>)}</h1>
       <div class="portfolio-columns portfolio-learning-columns">
-        <div class="glass profile-card"><ul class="cv-bullets">{portfolio.learning.bullets.map(text => <li><InlineText text={text} /></li>)}</ul></div>
-        <PortfolioMedia {...portfolio.learning.video} />
+        <div class="glass profile-card"><ul class="cv-bullets portfolio-bullets">{portfolio.learning.bullets.map(text => <li><InlineText text={text} /></li>)}</ul></div>
+        <PortfolioMedia {...portfolio.learning.video} controlsOnInteraction />
       </div>
     </div>
   </section>

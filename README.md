@@ -1,6 +1,6 @@
 # rongonen.fi
 
-A static Astro personal website. Both CV pages use the owner's supplied content and portrait, with Finnish originals and English translations. The portfolio has its initial layout and interactive cases with text/media placeholders. Home and Blog remain simple placeholders.
+A static Astro personal website. Both CV pages use the owner's supplied content and portrait, with Finnish originals and English translations. The portfolio includes the owner's background, Panic Lane trailer, and three interactive game design cases; case media remains pending. Home and Blog remain simple placeholders.
 
 ## Run locally
 
@@ -59,7 +59,13 @@ Each language has a `sections` array in `src/data/cv.ts`. Every entry has a uniq
 
 Edit unique copy and media in `src/data/portfolio.ts`. `portfolioDesign.titleColor` controls only the word “Portfolio” (default light yellow `#fff2a8`). `portfolioDesign.titleScale` controls that word's font size relative to the name above it: `1.5` (default) makes it 50% larger; `1` restores equal sizing. The opening reads “Aleksanteri's Portfolio”; both lines shrink responsively for narrow screens or enlarged text. “Portfolio” always has its own line. Shared `cvDesign.accentColor` controls bold/italic text, links and checkmarks on all three pages. Portfolio heading styles live in `src/styles/portfolio.css`; H1s match the CV section heading weight of 700, and the retained CV section keeps its existing heading styles.
 
-The hero plays `public/videos/portfolio-demo-reel.mp4` without playback controls, pointer interaction, picture-in-picture or remote-playback UI. Other portfolio videos retain native controls. Empty media `src` values render labelled placeholders. To add a video, put the file in `public/` and set its root-relative `src`, accessible `label`, and optional `poster`. Videos use muted playback, inline playback and looping; autoplay is enabled when reduced motion is off. Case media can also use `kind: 'image'`. Hidden page videos pause and disable autoplay. The supplied case titles are Shattering Platforms, A New Drifting Mechanic, and Driving on a Pipe. Each case has its own `pages` array; edit each page's `text` and `media` separately. The three pages per case and five learning-project bullets remain placeholders.
+The hero plays `public/videos/portfolio-demo-reel.mp4` without playback controls, pointer interaction, picture-in-picture or remote-playback UI. The Panic Lane section plays `public/videos/panic-lane-portfolio-trailer.mp4` with native controls initially hidden, revealed on hover, keyboard focus or touch through `controlsOnInteraction`. Controls hide on pointer exit or blur when the video is neither hovered nor focused; browsers manage fading during touch playback. Without JavaScript, native controls remain available. Local videos use muted inline looping playback; autoplay is enabled when reduced motion is off. Hidden case videos pause and disable autoplay.
+
+The background uses a lazy-loaded, user-initiated YouTube privacy-enhanced embed (`kind: 'youtube'`) for the supplied Unreal Fest clip, with `start=6441` (1:47:21) and `end=6555` (1:49:15). Unreal Fest is plain text so visitors watch the adjacent embedded video. These times are absolute seconds from the video's beginning; see [YouTube's player parameters](https://developers.google.com/youtube/player_parameters#end).
+
+The Panic Lane list adds the `portfolio-bullets` class to the shared `cv-bullets` styling for regular disc markers. Both CV languages keep their checkmarks; spacing and accent color remain shared.
+
+Empty media `src` values render labelled placeholders. To add a video, put the file in `public/` and set its root-relative `src`, accessible `label`, and optional `poster`. Case media can also use `kind: 'image'`. The case titles are Shattering Platforms, A New Drifting Mechanic, and Driving on a Pipe. Each case's `pages` array contains the supplied Problem, Solution and Result copy; edit each page's `heading`, `text` and `media` separately. All nine case media slots remain labelled placeholders until the owner supplies them.
 
 The hero MP4 has fast-start metadata at the beginning, so playback can begin while the rest downloads. This does not require HTTP byte-range support (the local Cloudflare preview currently returns a full `200` response to range requests). `preload="metadata"` is a hint; autoplay takes precedence and the browser chooses how much to buffer, potentially downloading the whole video. This is progressive playback, not adaptive-bitrate streaming. Keep each file below Cloudflare Workers Static Assets' 25 MiB limit (26,214,400 bytes). For future exports, prefer H.264 MP4 with fast-start metadata at the beginning. The owner handles compression/re-encoding to choose the quality trade-off; request a replacement rather than modifying the encoding automatically. Moving metadata for fast start does not alter the encoded audio/video quality.
 
@@ -137,7 +143,7 @@ The localized `portrait` entries in `src/data/cv.ts` select the foreground file,
 - `public/` contains assets copied directly to the public website. Never place private material there.
 - `ignored-files/` holds local planning notes and is excluded from Git. The implementation plan records the agreed scope; `operations-handover.md` records machine-specific access, deployment identifiers, verification, and troubleshooting lessons. These files are not included in a fresh clone. Older context documents contain superseded proposals. No credentials belong there.
 
-There is no portfolio content model, blog publishing system, sitemap, RSS, or analytics yet. Those will be added when their content and design are agreed. Do not add sample experience or projects to fill the placeholders.
+Portfolio content lives in the typed data described above. There is no blog publishing system, sitemap, RSS, or analytics yet. Those will be added when their content and design are agreed. Do not add sample experience or projects to fill the placeholders.
 
 ## CV network background
 
