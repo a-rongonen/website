@@ -32,10 +32,12 @@ Before publishing a change, run `npm run check` and `npm run build`. A local pre
 | `/` | English | `src/pages/index.astro` |
 | `/cv` | English | `src/pages/cv.astro` |
 | `/cv-fi` | Finnish | `src/pages/cv-fi.astro` |
-| `/en/portfolio` | English | `src/pages/en/portfolio.astro` |
-| `/en/blog` | English | `src/pages/en/blog.astro` |
+| `/portfolio` | English | `src/pages/portfolio.astro` |
+| `/blog` | English | `src/pages/blog.astro` |
 
 Only the CV has two language versions; the homepage, portfolio, and blog are English. The homepage stays at `/` without a language redirect.
+
+Portfolio and Blog use no language prefix. `public/_redirects` permanently redirects the former `/en/portfolio` and `/en/blog` URLs to `/portfolio` and `/blog` on Cloudflare.
 
 The visible site structure is **Home → Portfolio / Blog**. Keep `/cv` and `/cv-fi` as orphan pages reached by direct URL: no links to either CV from any page or navigation, no links between the CVs, and no language switcher. Omit alternate-language cross-links and exclude both CV routes from any future sitemap. Keep each page’s own canonical URL and correct HTML language.
 
@@ -53,7 +55,7 @@ Each language has a `sections` array in `src/data/cv.ts`. Every entry has a uniq
 
 ### Portfolio
 
-`src/pages/en/portfolio.astro` replaces the CV hero, Profile and Skills with four unique sections: a centered title/video, a background text/video row, a Panic Lane H1 with a bullet/video row, and three game design cases shown in stacked boxes. Text/video rows stack in reading order below 700px. Work and studies and any later CV entries reuse the English CV data/components. Main site navigation remains available; there are no links to either CV. Every portfolio section, including the opening, uses the shared gradient/network background with palettes and transitions following visible position. The CV hero image is used only on the CVs.
+`src/pages/portfolio.astro` replaces the CV hero, Profile and Skills with four unique sections: a centered title/video, a background text/video row, a Panic Lane H1 with a bullet/video row, and three game design cases shown in stacked boxes. Text/video rows stack in reading order below 700px. Work and studies and any later CV entries reuse the English CV data/components. Main site navigation remains available; there are no links to either CV. Every portfolio section, including the opening, uses the shared gradient/network background with palettes and transitions following visible position. The CV hero image is used only on the CVs.
 
 Edit unique copy and media in `src/data/portfolio.ts`. `portfolioDesign.titleColor` controls only the word “Portfolio” (default light yellow `#fff2a8`). The opening reads “Aleksanteri's Portfolio”; both lines use the section H1 font size, shrinking together when needed to fit narrow screens or enlarged text. “Portfolio” always has its own line. Shared `cvDesign.accentColor` controls bold/italic text, links and checkmarks on all three pages. Portfolio H2/H3 styles live in `src/styles/portfolio.css`; the retained CV section keeps its existing heading styles.
 
@@ -187,7 +189,7 @@ The site uses **Cloudflare Workers Static Assets**, Worker `website`, with sourc
 - Worker dashboard: [website on Cloudflare](https://dash.cloudflare.com/e42f3d2616075ff3e985c02dedbcfcbe/workers/services/view/website/production)
 - Production branch: `main`. This repository is connected to Workers Builds; check its Builds tab after each push. A successful Git push does not itself confirm a successful deployment.
 
-The build produces `index.html` plus individual HTML files such as `cv.html` and `en/blog.html`. Wrangler serves `./dist`, with `assets.html_handling: 'drop-trailing-slash'` and `assets.not_found_handling: '404-page'`. This preserves the requested URLs and serves the custom 404 with an HTTP 404 status. No Astro Cloudflare adapter or server rendering is required.
+The build produces `index.html` plus individual HTML files such as `cv.html` and `blog.html`. Wrangler serves `./dist`, with `assets.html_handling: 'drop-trailing-slash'` and `assets.not_found_handling: '404-page'`. This preserves the requested URLs and serves the custom 404 with an HTTP 404 status. No Astro Cloudflare adapter or server rendering is required.
 
 Use **Node 24.12.0** in Cloudflare too, through `.node-version` or the `NODE_VERSION` build variable. Workers Builds uses production branch `main`, repository root, build command `npm run check && npm run build`, and deploy command `npx wrangler deploy`. The Worker name must match `website` in `wrangler.jsonc`. Branch preview URLs are disabled for the initial setup.
 

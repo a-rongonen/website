@@ -1,16 +1,16 @@
 ---
-import PageLayout from '../../layouts/PageLayout.astro';
-import CvNetwork from '../../components/CvNetwork.astro';
-import CvSection from '../../components/CvSection.astro';
-import PortfolioMedia from '../../components/PortfolioMedia.astro';
-import PortfolioCases from '../../components/PortfolioCases.astro';
-import InlineText from '../../components/InlineText.astro';
-import { cvEnglish } from '../../data/cv';
-import { visibleCvSections } from '../../data/cv-sections';
-import { networkContentPalette, networkSectionStyle, type NetworkSection } from '../../data/cv-network';
-import { portfolio, portfolioDesign } from '../../data/portfolio';
-import '../../styles/cv.css';
-import '../../styles/portfolio.css';
+import PageLayout from '../layouts/PageLayout.astro';
+import CvNetwork from '../components/CvNetwork.astro';
+import CvSection from '../components/CvSection.astro';
+import PortfolioMedia from '../components/PortfolioMedia.astro';
+import PortfolioCases from '../components/PortfolioCases.astro';
+import InlineText from '../components/InlineText.astro';
+import { cvEnglish } from '../data/cv';
+import { visibleCvSections } from '../data/cv-sections';
+import { networkContentPalette, networkSectionStyle, type NetworkSection } from '../data/cv-network';
+import { portfolio, portfolioDesign } from '../data/portfolio';
+import '../styles/cv.css';
+import '../styles/portfolio.css';
 
 // The first three CV sections (hero, Profile, Skills) are replaced here.
 // Keep all remaining entries, including the reusable empty final entry.
@@ -67,5 +67,5 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
 </PageLayout>
 
 <script>
-  import '../../scripts/cv-enhancements';
+  import '../scripts/cv-enhancements';
 </script>

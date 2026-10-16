@@ -30,8 +30,8 @@ test('links preserve parenthesized URLs and support emphasized labels', () => {
   assert.deepEqual(parseInlineText(`[**Bold** and *italic*](${href}).`), [
     link(href, strong(text('Bold')), text(' and '), em(text('italic'))), text('.'),
   ]);
-  assert.deepEqual(parseInlineText('**[Read more](/en/portfolio)**'), [strong(link('/en/portfolio', text('Read more')))]);
-  for (const url of ['/en/portfolio', '../project', '#case-1', 'http://example.com', 'mailto:person@example.com', 'tel:+358123']) {
+  assert.deepEqual(parseInlineText('**[Read more](/portfolio)**'), [strong(link('/portfolio', text('Read more')))]);
+  for (const url of ['/portfolio', '../project', '#case-1', 'http://example.com', 'mailto:person@example.com', 'tel:+358123']) {
     assert.deepEqual(parseInlineText(`[Read](${url})`), [link(url, text('Read'))], url);
   }
 });
@@ -54,7 +54,7 @@ test('unsafe URL schemes, controls and raw HTML remain inert text', () => {
   }
   const html = '<script>alert(1)</script><img src=x onerror="alert(1)">&lt;b&gt;';
   assert.deepEqual(parseInlineText(html), [text(html)]);
-  assert.deepEqual(parseInlineText(`[${html}](/en/portfolio)`), [link('/en/portfolio', text(html))]);
+  assert.deepEqual(parseInlineText(`[${html}](/portfolio)`), [link('/portfolio', text(html))]);
 });
 
 test('incomplete or whitespace-delimited markup falls back to plain copy', () => {

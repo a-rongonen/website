@@ -77,7 +77,7 @@ function assertUnclipped(result, label) {
 }
 
 try {
-  await page.goto(base + '/en/portfolio');
+  await page.goto(base + '/portfolio');
   await page.evaluate(() => document.fonts.ready);
   await page.addStyleTag({ content: contrastPaint });
   const headings = page.locator('.portfolio-case-heading h2');

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || undefined });
 const base = process.env.CV_PREVIEW_URL || 'http://127.0.0.1:8796';
-const portfolioUrl = base + '/en/portfolio';
+const portfolioUrl = base + '/portfolio';
 const errors = [];
 const geometryErrors = [];
 const trackErrors = page => page.on('pageerror', error => errors.push(error.message));
@@ -250,7 +250,7 @@ try {
   }
 
   // Inject only formatting fixtures; actual source parsing has a separate unit suite.
-  for (const [route, sectionSelector] of [['/cv', '.cv-profile'], ['/cv-fi', '.cv-profile'], ['/en/portfolio', '.portfolio-learning']]) {
+  for (const [route, sectionSelector] of [['/cv', '.cv-profile'], ['/cv-fi', '.cv-profile'], ['/portfolio', '.portfolio-learning']]) {
     await page.goto(base + route);
     const result = await page.locator(sectionSelector).evaluate(section => {
       section.style.setProperty('--cv-accent-color', '#aabbcc');
@@ -276,13 +276,13 @@ try {
     assert.match(result.underline, /underline/, `${route}: links retain underlining`);
   }
 
-  for (const [route, lang] of [['/', 'en'], ['/en/portfolio', 'en'], ['/en/blog', 'en'], ['/cv', 'en'], ['/cv-fi', 'fi']]) {
+  for (const [route, lang] of [['/', 'en'], ['/portfolio', 'en'], ['/blog', 'en'], ['/cv', 'en'], ['/cv-fi', 'fi']]) {
     const response = await page.goto(base + route);
     assert.equal(response.status(), 200, route);
     assert.equal(await page.locator('html').getAttribute('lang'), lang);
     assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), `https://rongonen.fi${route}`);
     assert.equal(await page.locator('a[href="/cv"], a[href="/cv-fi"], link[rel="alternate"][hreflang]').count(), 0, `${route}: CVs stay orphaned`);
-    if (route === '/en/portfolio') {
+    if (route === '/portfolio') {
       assert.match(await page.title(), /Aleksanteri's Portfolio/);
       assert.match(await page.locator('meta[name="description"]').getAttribute('content'), /Panic Lane/);
       assert.equal(await page.getByRole('navigation').getByRole('link', { name: 'Portfolio' }).getAttribute('aria-current'), 'page');
