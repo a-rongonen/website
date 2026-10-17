@@ -153,6 +153,18 @@ The localized `portrait` entries in `src/data/cv.ts` select the foreground file,
 
 Portfolio content lives in the typed data described above. There is no blog publishing system, sitemap, RSS, or analytics yet. Those will be added when their content and design are agreed. Do not add sample experience or projects to fill the placeholders.
 
+## Performance requirements for future additions
+
+New content and effects should preserve demand loading, stable layout and smooth scrolling. The corresponding agent requirements are in `AGENTS.md` under **Media loading and scrolling performance**.
+
+For portfolio media, reuse `PortfolioMedia.astro`, `PortfolioFeature.astro` and the existing `portfolio-media.ts` controller. Only the opening reel is eager; other sources stay in inert templates until selected content is within 150px of the viewport. A hidden slider or tab must not fetch its media just because its parent section is visible. On other routes, eagerly load only assets needed for the opening viewport and defer the rest. Browser lazy-loading/preload hints alone are insufficient to guarantee request isolation. Keep loaded elements for revisits.
+
+Record natural image/video dimensions and reserve responsive frame sizes, including embed minimum heights, before starting requests. Downloads, image decoding and player initialization should leave surrounding card and page heights unchanged. Local videos autoplay only in selected, onscreen content while the tab is visible and motion is welcome. Pause them when hidden; preserve deliberate user pauses, accessible native controls and no-JS/print access. Test rapid selection while a video is still buffering as well as ordinary playback.
+
+Use shared visibility observers and cached geometry. Keep layout measurements out of scroll handlers; batch necessary rendering through a single pending animation frame. Prefer opacity/transform animation, pause decorative effects offscreen and in hidden tabs, and respect reduced motion. Preserve the chosen visual design while investigating performance: identify expensive work with a trace before altering the effect.
+
+After relevant implementation changes, run `npm run check`, `npm run build` and the affected browser suites against the built preview. Media/case changes require both `tests/portfolio-loading.browser.mjs` and `tests/portfolio.browser.mjs`; extend or adapt their checks for new components/routes. Verify cold requests, hidden-slide isolation, layout with blocked and completed media responses at desktop/mobile widths, viewport/user/reduced-motion playback, rapid switching, keyboard/touch controls and no-JS/print fallbacks. For animation/rendering/scroll changes, compare before/after traces with the same viewport, DPR, throttling and scroll sequence, closing other test browsers first. Report paint/layout/main-thread work separately from frame timings and physical-device results. Keep local profiling scripts/results in `ignored-files/`, and let the owner choose any asset compression or re-encoding.
+
 ## CV network background
 
 Both CV languages share a lightweight WebGL2 renderer that projects real 3D nodes and connections, with a Canvas2D fallback when WebGL is unavailable or its context is lost. There is no new runtime dependency. One continuous mesh and camera span the entire CV. Section masks change only its colors: a line crossing a boundary stays connected and gradually changes color through the same fade as the background. Perspective makes nearby nodes move faster than distant nodes during scrolling. The mesh repeats vertically with connections between neighboring repeats, so it covers any CV length without restarting at headings.
