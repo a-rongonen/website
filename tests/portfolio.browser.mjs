@@ -63,7 +63,7 @@ async function selectedPage(widget, index, announce = true) {
   assert(await widget.locator('[data-case-title]').isVisible(), `${title}: the case title stays visible`);
   assert.equal(await panels.nth(index - 1).locator('h3').textContent(), pageHeadings[index - 1]);
   assert((await panels.nth(index - 1).locator('.portfolio-case-copy p').first().textContent()).length > 100, 'Supplied case copy is present');
-  assert.match(await panels.nth(index - 1).locator('.portfolio-case-media').textContent(), /media coming soon/);
+  assert.equal(await panels.nth(index - 1).locator('.portfolio-case-media img, .portfolio-case-media video').count(), 1, 'Supplied case media is present');
   if (announce) assert.equal(await widget.locator('[data-case-status]').textContent(), `${title}: ${description}`);
 }
 
@@ -332,30 +332,51 @@ try {
   }
   await context.close();
 
-  // Simulate supplied case videos before page scripts initialize. No remote media needed.
+  // Verify autoplay transfer using the supplied case videos.
   const mediaContext = await browser.newContext({ reducedMotion: 'no-preference' });
   const mediaPage = await mediaContext.newPage();
   trackErrors(mediaPage);
-  await mediaPage.route(portfolioUrl, async route => {
-    const response = await route.fetch();
-    const body = (await response.text()).replaceAll('<div class="portfolio-case-media">',
-      '<div class="portfolio-case-media"><video data-portfolio-video loop muted playsinline controls></video>');
-    await route.fulfill({ response, body });
-  });
   await mediaPage.goto(portfolioUrl);
   await mediaPage.locator('portfolio-case[data-enhanced="true"]').last().waitFor();
   const videoAutoplay = () => mediaPage.locator('[data-case-panel] video').evaluateAll(videos => videos.map(video => video.autoplay));
-  assert.deepEqual(await videoAutoplay(), [true, false, false, true, false, false, true, false, false], 'Each case autoplays only its visible content page');
+  assert.deepEqual(await videoAutoplay(), [false, true, false, false], 'Each case autoplays only its visible content page');
   await mediaPage.getByRole('slider').first().press('End');
-  assert.deepEqual(await videoAutoplay(), [false, false, true, true, false, false, true, false, false], 'Changing a content page only transfers autoplay within its own case');
-  await mediaPage.getByRole('slider').last().press('ArrowRight');
-  assert.deepEqual(await videoAutoplay(), [false, false, true, true, false, false, false, true, false], 'The third case controls its videos independently');
+  assert.deepEqual(await videoAutoplay(), [true, true, false, false], 'Changing a content page only transfers autoplay within its own case');
+  await mediaPage.getByRole('slider').last().press('End');
+  assert.deepEqual(await videoAutoplay(), [true, true, false, true], 'The third case controls its videos independently');
   await mediaPage.emulateMedia({ reducedMotion: 'reduce' });
   await settled(mediaPage);
-  assert.deepEqual(await videoAutoplay(), Array(9).fill(false), 'Reduced motion disables autoplay in every case');
+  assert.deepEqual(await videoAutoplay(), Array(4).fill(false), 'Reduced motion disables autoplay in every case');
   await mediaPage.emulateMedia({ reducedMotion: 'no-preference' });
   await settled(mediaPage);
-  assert.deepEqual(await videoAutoplay(), [false, false, true, true, false, false, false, true, false], 'Restoring motion only autoplays the selected page in each case');
+  assert.deepEqual(await videoAutoplay(), [true, true, false, true], 'Restoring motion only autoplays the selected page in each case');
+  for (const [caseIndex, slide] of [[0, 3], [1, 1], [1, 3], [2, 3]]) {
+    const widget = mediaPage.locator('portfolio-case').nth(caseIndex);
+    const slider = widget.getByRole('slider');
+    await slider.press(slide === 1 ? 'Home' : 'End');
+    const video = widget.locator('[data-case-panel]:not([hidden]) video');
+    await video.scrollIntoViewIfNeeded();
+    await mediaPage.mouse.move(0, 0);
+    await video.evaluate(v => v.blur());
+    await mediaPage.waitForFunction(([c, n]) => {
+      const v = document.querySelectorAll('portfolio-case')[c].querySelector('[data-case-page="' + n + '"] video');
+      return !v.paused && v.currentTime > 0 && v.videoWidth > 0 && v.getVideoPlaybackQuality().totalVideoFrames > 0;
+    }, [caseIndex, slide]);
+    assert.deepEqual(await video.evaluate(v => [v.loop, v.muted, v.playsInline, v.controls]), [true, true, true, false]);
+    await video.hover();
+    assert(await video.evaluate(v => v.controls), 'Case video hover reveals controls');
+    await mediaPage.mouse.move(0, 0);
+    await video.focus();
+    assert(await video.evaluate(v => v.controls), 'Case video focus reveals controls');
+    await video.evaluate(v => v.pause());
+    assert(await video.evaluate(v => v.paused), 'Case video can be paused');
+    await video.evaluate(v => v.blur());
+  }
+  for (const image of await mediaPage.locator('portfolio-case img').all()) {
+    await image.evaluate(img => img.loading = 'eager');
+    await image.evaluate(img => img.decode());
+    assert(await image.evaluate(img => img.naturalWidth > 0), 'Case image decodes');
+  }
   await mediaContext.close();
 
   const noJs = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 1000 } });
