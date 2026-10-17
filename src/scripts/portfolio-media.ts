@@ -1,0 +1,182 @@
+export {};
+
+// Sources stay inside inert templates until the selected content approaches the
+// viewport. The browser's lazy-loading hints alone can fetch far below the fold.
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const print = matchMedia('print');
+const lead = 150;
+
+interface MediaState {
+  host: HTMLElement;
+  inViewport: boolean;
+  video?: HTMLVideoElement;
+  userPaused: boolean;
+  automaticPause: boolean;
+  playPending: boolean;
+  playInterrupted: boolean;
+}
+
+const states = new Map<HTMLElement, MediaState>();
+
+function selected(host: HTMLElement) {
+  if (host.closest('[hidden]')) return false;
+  // Also guard the interval before the case custom element has upgraded.
+  const panel = host.closest<HTMLElement>('[data-case-panel]');
+  const slider = host.closest('portfolio-case')?.querySelector<HTMLInputElement>('[data-case-slider]');
+  return !panel || panel.dataset.casePage === (slider?.value || '1');
+}
+
+function pause(state: MediaState) {
+  const video = state.video;
+  if (video && !video.paused) {
+    if (state.playPending) state.playInterrupted = true;
+    // pause events are queued; keep this flag until that event is delivered.
+    state.automaticPause = true;
+    video.pause();
+  }
+}
+
+function updatePlayback(state: MediaState) {
+  const video = state.video;
+  if (!video) return;
+  const visible = state.inViewport && selected(state.host) && !document.hidden && !print.matches;
+  video.autoplay = visible && !reducedMotion.matches && !state.userPaused;
+  if (!video.autoplay) pause(state);
+  else if (video.paused && !state.playPending) {
+    state.playPending = true;
+    void video.play().catch(() => {}).finally(() => {
+      state.playPending = false;
+      // A rapid away/back slide change can interrupt play before it settles,
+      // without changing the final intersection. Reconcile that change once;
+      // rejected autoplay on its own must not start an endless retry loop.
+      if (state.playInterrupted) {
+        state.playInterrupted = false;
+        updatePlayback(state);
+      }
+    });
+  }
+}
+
+function prepareVideo(state: MediaState, video: HTMLVideoElement) {
+  state.video = video;
+  video.preload = 'metadata';
+  if (video.hasAttribute('data-reveal-controls')) {
+    video.controls = false;
+    video.addEventListener('pointerenter', event => {
+      if (event.pointerType !== 'touch') video.controls = true;
+    });
+    video.addEventListener('pointerleave', () => {
+      if (document.activeElement !== video) video.controls = false;
+    });
+    video.addEventListener('pointerdown', () => { video.controls = true; });
+    video.addEventListener('focus', () => { video.controls = true; });
+    video.addEventListener('blur', () => {
+      if (!video.matches(':hover')) video.controls = false;
+    });
+  }
+  video.addEventListener('pause', () => {
+    if (state.automaticPause) state.automaticPause = false;
+    else {
+      state.userPaused = true;
+      video.autoplay = false;
+    }
+  });
+  video.addEventListener('play', () => {
+    state.userPaused = false;
+    // Native controls still allow deliberate playback with reduced motion.
+    if (!state.inViewport || !selected(state.host) || document.hidden || print.matches) pause(state);
+  });
+}
+
+function load(state: MediaState, printing = false) {
+  const { host } = state;
+  const template = host.querySelector<HTMLTemplateElement>('template[data-media-template]');
+  if (template) {
+    if (printing && !template.content.querySelector('img')) return;
+    if (!printing && !selected(host)) return;
+    const fragment = template.content.cloneNode(true) as DocumentFragment;
+    const image = fragment.querySelector('img');
+    // The observer already supplies the loading distance. Don't let a second
+    // browser heuristic postpone a selected slide or an image needed in print.
+    if (image) image.loading = 'eager';
+    const frame = fragment.querySelector('iframe');
+    if (frame) frame.loading = 'eager';
+    const video = fragment.querySelector('video');
+    if (video) {
+      prepareVideo(state, video);
+    }
+    template.replaceWith(fragment);
+  } else if (!state.video) {
+    const video = host.querySelector('video');
+    if (video) prepareVideo(state, video);
+  }
+  host.dataset.mediaLoaded = 'true';
+  loadObserver.unobserve(host);
+  updatePlayback(state);
+}
+
+const loadObserver = new IntersectionObserver(entries => {
+  for (const entry of entries) {
+    const state = states.get(entry.target as HTMLElement);
+    if (state && entry.isIntersecting && !document.hidden) load(state, print.matches);
+  }
+}, { rootMargin: `${lead}px 0px` });
+
+const playbackObserver = new IntersectionObserver(entries => {
+  for (const entry of entries) {
+    const state = states.get(entry.target as HTMLElement);
+    if (!state) continue;
+    state.inViewport = entry.isIntersecting && entry.intersectionRect.height > 0 && entry.intersectionRect.width > 0;
+    updatePlayback(state);
+  }
+}, { threshold: [0, 0.001] });
+
+for (const host of document.querySelectorAll<HTMLElement>('[data-portfolio-media]')) {
+  const state: MediaState = { host, inViewport: false, userPaused: false, automaticPause: false, playPending: false, playInterrupted: false };
+  states.set(host, state);
+  loadObserver.observe(host);
+  playbackObserver.observe(host);
+  if (host.hasAttribute('data-media-eager')) load(state);
+}
+
+// Only explicit page selection needs a synchronous geometry check. Scrolling
+// uses the two shared observers, without layout reads in a scroll handler.
+function refresh(state: MediaState) {
+  if (selected(state.host) && !document.hidden) {
+    const rect = state.host.getBoundingClientRect();
+    state.inViewport = rect.height > 0 && rect.width > 0 && rect.bottom > 0 && rect.top < innerHeight;
+    if (rect.bottom > -lead && rect.top < innerHeight + lead) load(state);
+  } else state.inViewport = false;
+  updatePlayback(state);
+}
+
+document.addEventListener('portfolio:pagechange', event => {
+  for (const state of states.values()) {
+    if (event.target instanceof Element && event.target.contains(state.host)) refresh(state);
+  }
+});
+document.addEventListener('visibilitychange', () => {
+  for (const state of states.values()) {
+    if (document.hidden) updatePlayback(state);
+    else refresh(state);
+  }
+});
+reducedMotion.addEventListener('change', () => {
+  for (const state of states.values()) updatePlayback(state);
+});
+
+function preparePrint() {
+  for (const state of states.values()) {
+    pause(state);
+    // Print CSS exposes all case panels. Only still images need fetching.
+    if (state.host.querySelector('template[data-media-template]')) load(state, true);
+  }
+}
+window.addEventListener('beforeprint', preparePrint);
+print.addEventListener('change', () => {
+  if (print.matches) preparePrint();
+  else for (const state of states.values()) refresh(state);
+});
+window.addEventListener('pageshow', () => {
+  for (const state of states.values()) refresh(state);
+});

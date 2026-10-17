@@ -60,7 +60,27 @@ portfolio-case [hidden] { display: none !important; }
   left: var(--case-progress, 0%);
   width: var(--case-thumb-size);
   height: var(--case-thumb-size);
-  animation: portfolio-case-glow 2s ease-in-out infinite;
+}
+/* Crossfade two static shadows so pulsing never repaints a box-shadow.
+   Offscreen cases keep their glow frozen until the observer makes them visible. */
+.portfolio-case-halo::before, .portfolio-case-halo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  animation: portfolio-case-glow 2s ease-in-out infinite paused;
+}
+.portfolio-case-halo::before {
+  box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--cv-accent-color) 14%, transparent), 0 0 .6rem color-mix(in srgb, var(--cv-accent-color) 35%, transparent);
+}
+.portfolio-case-halo::after {
+  opacity: 0;
+  box-shadow: 0 0 0 .45rem color-mix(in srgb, var(--cv-accent-color) 12%, transparent), 0 0 1.5rem color-mix(in srgb, var(--cv-accent-color) 70%, transparent);
+  animation-delay: -1s;
+}
+portfolio-case[data-case-in-view='true'] .portfolio-case-halo::before,
+portfolio-case[data-case-in-view='true'] .portfolio-case-halo::after {
+  animation-play-state: running;
 }
 .portfolio-case-slider {
   position: relative;
@@ -119,14 +139,14 @@ portfolio-case [hidden] { display: none !important; }
 portfolio-case:not([data-enhanced='true']) .portfolio-case-panel + .portfolio-case-panel { margin-top: 3rem; padding-top: 3rem; border-top: 1px solid #ffffff40; }
 .portfolio-case-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 @keyframes portfolio-case-glow {
-  0%, 100% { box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--cv-accent-color) 14%, transparent), 0 0 .6rem color-mix(in srgb, var(--cv-accent-color) 35%, transparent); }
-  50% { box-shadow: 0 0 0 .45rem color-mix(in srgb, var(--cv-accent-color) 12%, transparent), 0 0 1.5rem color-mix(in srgb, var(--cv-accent-color) 70%, transparent); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 @media (max-width: 700px) {
   .portfolio-case-columns { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .portfolio-case-halo { animation: none; }
+  .portfolio-case-halo::before, .portfolio-case-halo::after { animation: none; }
 }
 @media (forced-colors: active) {
   .portfolio-page .portfolio-unique .portfolio-case-page-heading { color: CanvasText; }

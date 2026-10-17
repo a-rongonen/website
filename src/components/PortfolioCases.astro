@@ -64,8 +64,30 @@ const { cases } = Astro.props;
 ))}
 
 <script>
+  // Keep decorative compositor animations idle outside the viewport and while
+  // the document is hidden. One observer serves every independent case.
+  const caseVisibility = new Map<HTMLElement, boolean>();
+  const updateCaseVisibility = (element: HTMLElement, visible: boolean) => {
+    element.dataset.caseInView = String(visible && !document.hidden);
+  };
+  const caseObserver = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      const element = entry.target as HTMLElement;
+      if (!caseVisibility.has(element)) continue;
+      const visible = entry.isIntersecting;
+      caseVisibility.set(element, visible);
+      updateCaseVisibility(element, visible);
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    for (const [element, visible] of caseVisibility) updateCaseVisibility(element, visible);
+  });
+
   class PortfolioCase extends HTMLElement {
     connectedCallback() {
+      caseVisibility.set(this, false);
+      updateCaseVisibility(this, false);
+      caseObserver.observe(this);
       if (this.dataset.enhanced === 'true') return;
 
       const panels = Array.from(this.querySelectorAll<HTMLElement>('[data-case-panel]'));
@@ -81,11 +103,6 @@ const { cases } = Astro.props;
         const position = `Page ${selected} of ${panels.length}`;
         panels.forEach((panel, index) => {
           panel.hidden = index !== selected - 1;
-          panel.querySelectorAll<HTMLVideoElement>('video').forEach(video => {
-            video.autoplay = !panel.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (!video.autoplay) video.pause();
-            else void video.play().catch(() => {});
-          });
         });
         stops.forEach((stop, index) => {
           stop.dataset.selected = String(index === selected - 1);
@@ -95,12 +112,19 @@ const { cases } = Astro.props;
         slider.setAttribute('aria-valuetext', position);
         slider.parentElement?.style.setProperty('--case-progress', `${panels.length > 1 ? (selected - 1) / (panels.length - 1) * 100 : 0}%`);
         if (announce) status.textContent = `${title}: ${position}`;
+        this.dispatchEvent(new Event('portfolio:pagechange', { bubbles: true }));
       };
 
       slider.addEventListener('input', () => selectPage(Number(slider.value)));
       selectPage(Number(slider.value), false);
       this.dataset.enhanced = 'true';
       controls.hidden = panels.length < 2;
+    }
+
+    disconnectedCallback() {
+      caseObserver.unobserve(this);
+      caseVisibility.delete(this);
+      delete this.dataset.caseInView;
     }
   }
 

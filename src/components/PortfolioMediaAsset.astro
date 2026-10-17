@@ -1,0 +1,21 @@
+---
+import type { PortfolioMedia } from '../data/portfolio';
+
+interface Props extends PortfolioMedia {
+  controls?: boolean;
+  controlsOnInteraction?: boolean;
+  eager?: boolean;
+}
+
+const { src, poster, label, width, height, kind = 'video', controls = true, controlsOnInteraction = false, eager = false } = Astro.props;
+---
+{kind === 'image' ? (
+  <img src={src} alt={label} width={width} height={height} loading="lazy" decoding="async" />
+) : kind === 'youtube' ? (
+  <iframe src={src} title={label} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen />
+) : (
+  <video src={src} poster={poster} width={width} height={height} aria-label={label} loop muted playsinline controls={controls}
+    disablepictureinpicture={!controls} disableRemotePlayback={!controls} tabindex={controls ? controlsOnInteraction ? 0 : undefined : -1}
+    data-reveal-controls={controls && controlsOnInteraction || undefined}
+    preload={eager ? 'metadata' : 'none'} data-portfolio-video />
+)}
