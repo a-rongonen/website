@@ -47,7 +47,7 @@ export const portfolio = {
       "pages": [
         {
           "heading": "The Problem",
-          "text": "Platforms that shatter under the car were too unforgiving. If a platform shattered and started falling, the car would crash into the side of the next platform and it would be game over. Thus this obstacle type felt “binary” and there was a lack of “hanging by a thread” vibes.",
+          "text": "Platforms that shatter under the car were too unforgiving. If a platform shattered and started falling, the car would crash into the side of the next platform and it would be game over. Thus this obstacle type felt “binary” and there was a lack of “hanging by a thread” vibes.\n\n*Drag/click on the slider!* 👆",
           "media": {
             "src": "/images/falling platform.png",
             "kind": "image",
@@ -79,7 +79,7 @@ export const portfolio = {
       "pages": [
         {
           "heading": "The Problem",
-          "text": "On icy slippery platforms, some of the test players did not drift all, although that was the point. Moreover, it was good tactic for beating the track. There was a need to make drifting obligatory but also make it easy enough so inexperienced players are not overwhelmed.",
+          "text": "On icy slippery platforms, some of the test players did not drift all, although that was the point. Moreover, it was good tactic for beating the track. There was a need to make drifting obligatory but also make it easy enough so inexperienced players are not overwhelmed.\n\n*Drag/click on the slider!* 👆",
           "media": {
             "src": "/videos/careful-driving-demo.mp4",
             "kind": "video",
@@ -111,7 +111,7 @@ export const portfolio = {
       "pages": [
         {
           "heading": "The Problem",
-          "text": "One of the pipe types in the game is not magnetic, which made driving on it very challenging. Because the pipe twists and turns, it is important to keep the wheels touching the ground. However, even slight “jump” might ruin the run because you can’t turn while in air, and these tiny jumps are *visually unnoticeable.* This gives an illusion that “the car just doesn’t turn” on a track that is already in danger to become frustratingly difficult.",
+          "text": "One of the pipe types in the game is not magnetic, which made driving on it very challenging. Because the pipe twists and turns, it is important to keep the wheels touching the ground. However, even slight “jump” might ruin the run because you can’t turn while in air, and these tiny jumps are *visually unnoticeable.* This gives an illusion that “the car just doesn’t turn” on a track that is already in danger to become frustratingly difficult.\n\n*Drag/click on the slider!* 👆",
           "media": {
             "src": "/images/pipe micro jump.png",
             "kind": "image",
