@@ -1,6 +1,5 @@
 ---
 import CvIcon from './CvIcon.astro';
-import BoxNoise from './BoxNoise.astro';
 import InlineText from './InlineText.astro';
 import type { CvCard } from '../data/cv';
 interface Props { card: CvCard }
@@ -9,5 +8,4 @@ const { card } = Astro.props;
 <article class="cv-card glass">
   <h3><CvIcon name={card.icon} /><span><InlineText text={card.title} /></span></h3>
   {card.text.split('\n\n').map(paragraph => <p><InlineText text={paragraph} /></p>)}
-  <BoxNoise />
 </article>

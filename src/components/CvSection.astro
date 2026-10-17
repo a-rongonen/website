@@ -1,6 +1,5 @@
 ---
 import CvCard from './CvCard.astro';
-import BoxNoise from './BoxNoise.astro';
 import CvIcon from './CvIcon.astro';
 import InlineText from './InlineText.astro';
 import type { visibleCvSections } from '../data/cv-sections';
@@ -24,7 +23,6 @@ const headingId = `${section.id}-heading`;
       <div class:list={['cv-intro', 'glass', 'profile-card', { 'cv-intro-split': section.text && section.bullets.length > 0 }]}>
         {section.text && <div class="profile-copy">{section.text.split('\n\n').map(paragraph => <p><InlineText text={paragraph} /></p>)}</div>}
         {section.bullets.length > 0 && <ul class="cv-bullets">{section.bullets.map(text => <li><InlineText text={text} /></li>)}</ul>}
-        <BoxNoise />
       </div>
     )}
     {section.table && section.table.rows.length > 0 && (
@@ -34,7 +32,6 @@ const headingId = `${section.id}-heading`;
           <thead><tr>{section.table.columns.map(column => <th scope="col"><InlineText text={column} /></th>)}</tr></thead>
           <tbody>{section.table.rows.map(row => <tr>{row.map(cell => <td><InlineText text={cell} /></td>)}</tr>)}</tbody>
         </table>
-        <BoxNoise />
       </div>
     )}
     {section.cards.length > 0 && <div class="cv-cards" data-card-stack>{section.cards.map(card => <CvCard card={card} />)}</div>}

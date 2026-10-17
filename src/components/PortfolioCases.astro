@@ -2,7 +2,6 @@
 import type { PortfolioCase } from '../data/portfolio';
 import InlineText from './InlineText.astro';
 import PortfolioMedia from './PortfolioMedia.astro';
-import BoxNoise from './BoxNoise.astro';
 import '../styles/portfolio-cases.css';
 
 interface Props {
@@ -60,7 +59,6 @@ const { cases } = Astro.props;
           </div>
         </div>
       ))}
-      <BoxNoise />
     </section>
   </portfolio-case>
 ))}

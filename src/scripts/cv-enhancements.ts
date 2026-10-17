@@ -1,41 +1,7 @@
 import { alignSectionText } from './cv-section-spacing';
 import { startHeadingBackdrops } from './heading-backdrops';
-import { boxNoiseTilePixels, cvDesign } from '../data/cv-design';
 alignSectionText();
 startHeadingBackdrops();
-
-// Boxes scroll with the page. Offset the repeating texture inside each box so
-// its apparent screen travel matches the configured fraction of page travel.
-if (cvDesign.boxes.noise.mix > 0 && cvDesign.boxes.noise.contrast > 0 && cvDesign.boxes.noise.scrollMovement !== 1 && document.querySelector('.glass')) {
-  const tileSize = boxNoiseTilePixels * Math.max(0.25, Math.min(4, cvDesign.boxes.noise.scale));
-  const movement = Math.max(0, Math.min(2, cvDesign.boxes.noise.scrollMovement));
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const reducedTransparency = window.matchMedia('(prefers-reduced-transparency: reduce)');
-  const textureMoves = () => !reducedMotion.matches && !reducedTransparency.matches;
-  let noiseFrame = 0;
-  const updateNoise = () => {
-    noiseFrame = 0;
-    if (!textureMoves()) return;
-    const offset = window.scrollY * (1 - movement);
-    const wrapped = ((offset % tileSize) + tileSize) % tileSize;
-    document.documentElement.style.setProperty('--cv-noise-scroll-shift', `${wrapped}px`);
-  };
-  const scheduleNoise = () => {
-    if (!noiseFrame && textureMoves()) noiseFrame = requestAnimationFrame(updateNoise);
-  };
-  window.addEventListener('scroll', scheduleNoise, { passive: true });
-  window.addEventListener('pageshow', scheduleNoise);
-  const onPreferenceChange = () => {
-    if (!textureMoves()) {
-      cancelAnimationFrame(noiseFrame);
-      noiseFrame = 0;
-      document.documentElement.style.removeProperty('--cv-noise-scroll-shift');
-    } else scheduleNoise();
-  };
-  reducedMotion.addEventListener('change', onPreferenceChange);
-  reducedTransparency.addEventListener('change', onPreferenceChange);
-  scheduleNoise();
-}
 
 // Keep each name word intact, fitting the actual rendered font to its column.
 // The heading's own width/font stay stable so fitting cannot shrink its grid track.
