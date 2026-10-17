@@ -9,7 +9,6 @@ portfolio-case [hidden] { display: none !important; }
   padding-block: .05em .15em;
   line-height: 1.25;
 }
-.portfolio-cases-box { padding: clamp(12px, 4vw, 3rem); }
 .portfolio-case-controls { width: min(100%, 24rem); margin: 0 auto 2.5rem; text-align: center; }
 .portfolio-case-slider-label { display: block; padding-inline: clamp(4px, 2vw, 1rem); }
 .portfolio-case-range {
@@ -145,5 +144,4 @@ portfolio-case:not([data-enhanced='true']) .portfolio-case-panel + .portfolio-ca
   portfolio-case .portfolio-case-panel[hidden] { display: block !important; }
   .portfolio-case-panel { break-inside: avoid; }
   portfolio-case .portfolio-case-panel + .portfolio-case-panel { margin-top: 2rem; }
-  .portfolio-cases-box { padding: 0; }
 }

@@ -4,7 +4,7 @@ import CvNetwork from '../components/CvNetwork.astro';
 import CvSection from '../components/CvSection.astro';
 import PortfolioMedia from '../components/PortfolioMedia.astro';
 import PortfolioCases from '../components/PortfolioCases.astro';
-import InlineText from '../components/InlineText.astro';
+import PortfolioFeature from '../components/PortfolioFeature.astro';
 import { cvEnglish } from '../data/cv';
 import { visibleCvSections } from '../data/cv-sections';
 import { networkContentPalette, networkSectionStyle, type NetworkSection } from '../data/cv-network';
@@ -35,12 +35,7 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
     style={networkSectionStyle(palettes[1], palettes, 1)} aria-labelledby="background-heading">
     <div class="cv-container">
       <h1 class="portfolio-section-title" id="background-heading">{portfolio.background.heading}</h1>
-      <div class="portfolio-columns">
-        <div class="glass profile-card">
-          {portfolio.background.text.split(/\n\s*\n/).filter(paragraph => paragraph.trim()).map(paragraph => <p><InlineText text={paragraph} /></p>)}
-        </div>
-        <PortfolioMedia {...portfolio.background.video} />
-      </div>
+      <PortfolioFeature media={portfolio.background.video} text={portfolio.background.text} />
     </div>
   </section>
 
@@ -48,12 +43,7 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
     style={networkSectionStyle(palettes[2], palettes, 2)} aria-labelledby="learning-heading">
     <div class="cv-container">
       <h1 class="portfolio-section-title" id="learning-heading">{portfolio.learning.heading.map(line => <span>{line}</span>)}</h1>
-      <div class="portfolio-columns portfolio-learning-columns">
-        <PortfolioMedia {...portfolio.learning.video} controlsOnInteraction />
-        <div class="glass profile-card">
-          {portfolio.learning.text.split(/\n\s*\n/).filter(paragraph => paragraph.trim()).map(paragraph => <p><InlineText text={paragraph} /></p>)}
-        </div>
-      </div>
+      <PortfolioFeature media={portfolio.learning.video} text={portfolio.learning.text} controlsOnInteraction />
     </div>
   </section>
 

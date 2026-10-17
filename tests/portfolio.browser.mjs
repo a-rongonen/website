@@ -20,8 +20,19 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
     const owner = bounds('.portfolio-owner');
     const word = bounds('.portfolio-title-word');
     const media = bounds('.portfolio-hero .portfolio-media');
-    const learning = [...document.querySelector('.portfolio-learning-columns').children].map(element => element.getBoundingClientRect());
-    const background = [...document.querySelector('.portfolio-background .portfolio-columns').children].map(element => element.getBoundingClientRect());
+    const learning = [...document.querySelector('.portfolio-learning .portfolio-feature-card').children].map(element => element.getBoundingClientRect());
+    const background = [...document.querySelector('.portfolio-background .portfolio-feature-card').children].map(element => element.getBoundingClientRect());
+    const container = bounds('.portfolio-background .cv-container');
+    const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const formerCardWidth = innerWidth < 700 ? container.width : (container.width - 2 * rootSize) / 2;
+    const formerPadding = Math.min(3 * rootSize, Math.max(rootSize, innerWidth * .04));
+    const expectedCopyWidth = formerCardWidth - 2 * formerPadding - 2;
+    const caseBox = document.querySelector('.portfolio-cases-box');
+    const caseBounds = caseBox.getBoundingClientRect();
+    const caseStyle = getComputedStyle(caseBox);
+    const featureCards = [...document.querySelectorAll('.portfolio-feature-card')];
+    const hero = bounds('.portfolio-hero');
+    const heroPadding = parseFloat(getComputedStyle(document.querySelector('.portfolio-hero-inner')).paddingTop);
     const ranges = [...document.querySelectorAll('.portfolio-owner > span, .portfolio-title-word')].map(element => {
       const range = document.createRange();
       range.selectNodeContents(element);
@@ -36,9 +47,27 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
       titleBeforeMedia: media.top >= title.bottom,
       mediaCentered: Math.abs(media.left + media.width / 2 - innerWidth / 2) < 1,
       learningStacked: learning[1].top >= learning[0].bottom,
-      learningBeside: learning[1].left >= learning[0].right && Math.abs(learning[1].top - learning[0].top) < 1,
       backgroundStacked: background[1].top >= background[0].bottom,
-      backgroundBeside: background[1].left >= background[0].right && Math.abs(background[1].top - background[0].top) < 1,
+      sectionsCentered: [...learning, ...background].every(rect => Math.abs(rect.left + rect.width / 2 - innerWidth / 2) < 1),
+      copyWidthsPreserved: featureCards.every(card => Math.abs(card.querySelector('.portfolio-feature-copy p').getBoundingClientRect().width - expectedCopyWidth) < 1),
+      outerCardsMatchCases: featureCards.every(card => {
+        const rect = card.getBoundingClientRect();
+        const style = getComputedStyle(card);
+        return Math.abs(rect.width - caseBounds.width) < 1 && Math.abs(rect.left - caseBounds.left) < 1 &&
+          ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderRadius'].every(property => style[property] === caseStyle[property]);
+      }),
+      videosFillPaddedCards: featureCards.every(card => {
+        const rect = card.getBoundingClientRect();
+        const video = card.querySelector('.portfolio-media').getBoundingClientRect();
+        const inset = parseFloat(getComputedStyle(card).paddingLeft) + parseFloat(getComputedStyle(card).borderLeftWidth);
+        return Math.abs(video.left - rect.left - inset) < 1 && Math.abs(rect.right - video.right - inset) < 1 && Math.abs(video.top - rect.top - inset) < 1;
+      }),
+      copyHasNoBox: featureCards.every(card => {
+        const style = getComputedStyle(card.querySelector('.portfolio-feature-copy'));
+        return style.backgroundImage === 'none' && style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.boxShadow === 'none' && parseFloat(style.borderWidth) === 0;
+      }),
+      heroCenter: (title.top + media.bottom) / 2 - hero.top,
+      expectedMobileHeroCenter: Math.max(innerHeight * .35, heroPadding + (media.bottom - title.top) / 2),
       ranges,
     };
   });
@@ -47,8 +76,10 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
   assert(result.separateTitleRow && result.titleBeforeMedia && result.mediaCentered, 'Centered title then media: ' + label);
   assert.deepEqual(result.ranges.map(range => range.text), ["Aleksanteri's", 'PORTFOLIO']);
   assert(result.ranges.every(range => range.lines === 1 && range.fits), 'Whole title words fit: ' + label);
-  assert(width < 700 ? result.learningStacked : result.learningBeside, 'Learning layout follows reading order: ' + label);
-  assert(width < 700 ? result.backgroundStacked : result.backgroundBeside, 'Background text/video layout follows reading order: ' + label);
+  assert(result.learningStacked && result.backgroundStacked, 'Both section videos sit above their text cards: ' + label);
+  assert(result.sectionsCentered && result.copyWidthsPreserved && result.copyHasNoBox, 'Centered invisible copy retains its former text width: ' + label);
+  assert(result.outerCardsMatchCases && result.videosFillPaddedCards, 'Feature cards match case boxes and maximize video size within shared padding: ' + label);
+  if (width < 700) assert(Math.abs(result.heroCenter - result.expectedMobileHeroCenter) < 1, 'Mobile hero targets 35% with header clearance: ' + label);
 }
 
 async function selectedPage(widget, index, announce = true) {
@@ -162,8 +193,8 @@ try {
   assert.equal(await page.locator('.portfolio-learning .profile-card p').count(), 2);
   assert.match(await page.locator('.portfolio-learning .profile-card p').first().textContent(), /Panic Lane is my UE learning project/);
   assert.equal(await page.locator('.portfolio-learning .profile-card em').textContent(), 'between the biomes');
-  assert.equal(await page.locator('.portfolio-learning-columns > .portfolio-media:first-child + .profile-card').count(), 1,
-    'Panic Lane video precedes the paragraph card in desktop and mobile reading order');
+  assert.equal(await page.locator('.portfolio-feature-card > .portfolio-media:first-child + .profile-card').count(), 2,
+    'Both section videos precede their paragraph cards in desktop and mobile reading order');
   const trailer = page.locator('.portfolio-learning video');
   assert.equal(await trailer.getAttribute('src'), '/videos/panic-lane-portfolio-trailer.mp4');
   assert.equal(await trailer.evaluate(video => video.controls), false, 'Trailer starts with controls hidden');

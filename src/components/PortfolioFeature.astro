@@ -1,0 +1,23 @@
+---
+import type { PortfolioMedia as Media } from '../data/portfolio';
+import PortfolioMedia from './PortfolioMedia.astro';
+import InlineText from './InlineText.astro';
+
+interface Props {
+  media: Media;
+  text: string;
+  controlsOnInteraction?: boolean;
+}
+
+const { media, text, controlsOnInteraction = false } = Astro.props;
+---
+<div class="portfolio-feature">
+  <div class="glass portfolio-box portfolio-feature-card">
+    <PortfolioMedia {...media} controlsOnInteraction={controlsOnInteraction} />
+    <div class="profile-card portfolio-feature-copy">
+      {text.split(/\n\s*\n/).filter(paragraph => paragraph.trim()).map(paragraph => (
+        <p><InlineText text={paragraph} /></p>
+      ))}
+    </div>
+  </div>
+</div>

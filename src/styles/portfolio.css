@@ -78,8 +78,18 @@
 
 }
 .portfolio-section-title > span { display: block; }
-.portfolio-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; align-items: start; }
-.portfolio-columns > .profile-card { min-width: 0; width: 100%; padding: clamp(1rem, 4vw, 3rem); overflow-wrap: anywhere; }
+.portfolio-box { padding: clamp(12px, 4vw, 3rem); }
+.portfolio-feature { container-type: inline-size; }
+.portfolio-feature-card { display: grid; justify-items: center; gap: 2rem; }
+.portfolio-feature-copy.profile-card {
+  /* Retain the former card's text area, excluding its padding and 1px borders. */
+  --former-copy-padding: clamp(1rem, 4vw, 3rem);
+  width: calc((100cqi - 2rem) / 2 - 2 * var(--former-copy-padding) - 2px);
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
 .portfolio-page .portfolio-section-title { width: 100%; container-type: normal; margin-bottom: 3rem; text-align: center; text-wrap: balance; }
 .portfolio-page .cv-card h3, .portfolio-page .history-card caption > span { flex-wrap: wrap; }
 .portfolio-page .cv-card h3 > span, .portfolio-page .history-title { min-width: 0; overflow-wrap: anywhere; }
@@ -89,11 +99,14 @@
 @media (max-width: 699px) {
   .portfolio-page .site-header { width: calc(100% - 2rem); flex-wrap: wrap; gap: .5rem 1rem; font-size: .75rem; }
   .portfolio-page .site-header nav ul { gap: .5rem .8rem; }
-  .portfolio-hero-inner { padding-block: 7rem 3rem; }
-  .portfolio-columns { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  /* Center the title/video group at 35lvh; retain header clearance on short screens. */
+  .portfolio-hero-inner { padding-block: 7rem calc(7rem + 30lvh); }
+  .portfolio-feature-card { gap: 1.5rem; }
+  .portfolio-feature-copy.profile-card { width: calc(100cqi - 2 * var(--former-copy-padding) - 2px); }
   .portfolio-page .history-card th, .portfolio-page .history-card td { padding-inline: clamp(.2rem, 2vw, .65rem); }
 }
 @media print {
+  .portfolio-box { padding: 0; }
   .portfolio-page .site-header { display: none; }
   .portfolio-hero-inner { min-height: 0; padding-block: 2rem; }
   .portfolio-page .portfolio-title, .portfolio-title-word { color: #111; }
