@@ -6,11 +6,11 @@ export const cvDesign = {
   accentColor: '#fff2a8', // Shared by bold/italic copy, underlined links, and checkmarks.
   contentColor: '#d1d4d4', // Shared body text, icons, small headings, and table text.
   boxes: {
-    defaultColor: '#182225', // Six-digit hex; its lightness controls how dark boxes stay.
-    tint: 0.75, // 0 = default color; 1 = section hue/saturation at the same dark lightness.
-    saturationLimit: 0.4, // 0-1; cap the section tint so bright themes stay restrained.
-    shade: 0.25, // 0-1; darken the second gradient stop by this fraction.
-    opacity: 0.92, // 0-1; glass fill opacity.
+    defaultColor: '#1b2629', // Six-digit hex; its lightness controls how dark boxes stay.
+    tint: 1.0, // 0 = default color; 1 = section hue/saturation at the same dark lightness.
+    saturationLimit: 0.5, // 0-1; cap the section tint so bright themes stay restrained.
+    shade: 0.6, // 0-1; darken the second gradient stop by this fraction.
+    opacity: 0.93, // 0-1; glass fill opacity.
   },
   borders: {
     tint: 0.8, // 0 = original gray glass edges; 1 = section-colored edges.

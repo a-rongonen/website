@@ -95,11 +95,11 @@ Edit **`src/data/cv-design.ts` → `cvDesign`** for both languages:
 | `hero.backgroundOpacity` | Image visibility from 0 to 1 (default 1). |
 | `hero.bottomFade` | Optional image fade at the hero bottom, in CSS pixels. Default 0 keeps the image sharp to its lower edge. |
 | `contentColor` | Shared body text, icons, small headings, captions, table headers/cells, and labels. Defaults to the former body text color `#d1d4d4`; use any CSS color, e.g. `#cccccc`. |
-| `boxes.defaultColor` | Six-digit hex for the untinted fill (default `#182225`). Its HSL lightness sets the darkness for every section. |
-| `boxes.tint` | 0 uses the default fill; 1 adopts the section hue and capped saturation while preserving the default color's lightness. Default 0.75. Gray themes desaturate the fill. |
-| `boxes.saturationLimit` | Maximum theme saturation (0-1; default 0.4), keeping vivid base colors restrained. |
-| `boxes.shade` | Fraction to darken the lower fill-gradient stop (0-1; default 0.25). |
-| `boxes.opacity` | Fill opacity (0-1; default 0.92). Reduced-transparency mode uses an opaque tinted fill. |
+| `boxes.defaultColor` | Six-digit hex for the untinted fill (current value `#1b2629`). Its HSL lightness sets the darkness for every section. |
+| `boxes.tint` | 0 uses the default fill; 1 adopts the section hue and capped saturation while preserving the default color's lightness. Current value 1. Gray themes desaturate the fill. |
+| `boxes.saturationLimit` | Maximum theme saturation (0-1; current value 0.5), keeping vivid base colors restrained. |
+| `boxes.shade` | Fraction to darken the lower fill-gradient stop (0-1; current value 0.6). |
+| `boxes.opacity` | Fill opacity (0-1; current value 0.93). Reduced-transparency mode uses an opaque tinted fill. |
 | `borders.tint` | Lerp from the original gray edges (0) to section-colored edges (1); default 0.8. |
 | `borders.whiteMix` | Mix white into the colored edge highlight (0–1); default 0.25. |
 | `headings.tint` | Lerp from white text (0) to the vertical white-to-section-color gradient (1); default 0.8. |
