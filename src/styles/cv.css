@@ -181,18 +181,47 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   --edge-tinted: color-mix(in srgb, var(--network-base), white var(--cv-border-white));
   --edge-bright: color-mix(in srgb, #d9e6e6, var(--edge-tinted) var(--cv-border-tint));
   --edge-muted: color-mix(in srgb, #8fa5ae, var(--edge-tinted) var(--cv-border-tint));
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  overflow: clip;
   border: 1px solid transparent;
   border-radius: 1.25rem;
   background: linear-gradient(130deg,
-      color-mix(in srgb, var(--cv-box-top) var(--cv-box-opacity), transparent),
-      color-mix(in srgb, var(--cv-box-bottom) var(--cv-box-opacity), transparent)) padding-box,
+      var(--cv-box-top), var(--cv-box-bottom)) padding-box,
     linear-gradient(135deg,
-      color-mix(in srgb, var(--edge-bright) 40%, transparent),
-      color-mix(in srgb, var(--edge-muted) 5%, transparent) 35%, #00000080 60%,
-      color-mix(in srgb, var(--edge-bright) 24%, transparent)) border-box;
+      color-mix(in srgb, var(--edge-bright) 40%, var(--cv-box-top)),
+      color-mix(in srgb, var(--edge-muted) 5%, var(--cv-box-top)) 35%,
+      color-mix(in srgb, #000 50%, var(--cv-box-bottom)) 60%,
+      color-mix(in srgb, var(--edge-bright) 24%, var(--cv-box-bottom))) border-box;
   box-shadow: 0 18px 45px #08101824, inset 0 1px 0 #ffffff08;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+}
+/* A whole themed noise surface fades over the regular opaque box. The inner
+   preblurred tile moves on scroll and controls pattern contrast separately. */
+.glass > :not(.box-noise) { position: relative; z-index: 1; }
+.box-noise {
+  display: var(--cv-noise-display);
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+  background-color: var(--cv-noise-color);
+  opacity: var(--cv-noise-mix);
+}
+.box-noise-pattern {
+  display: var(--cv-noise-pattern-display);
+  position: absolute;
+  inset: calc(-1 * var(--cv-noise-tile-size)) 0 0;
+  background-color: var(--cv-noise-color);
+  background-image: var(--cv-noise-image);
+  /* White parts keep the section color; dark parts shade it toward black. */
+  background-blend-mode: multiply;
+  background-repeat: repeat;
+  background-size: var(--cv-noise-tile-size) var(--cv-noise-tile-size);
+  opacity: var(--cv-noise-contrast);
+  transform: translate3d(0, var(--cv-noise-scroll-shift, 0px), 0);
 }
 /* Only the name and section headings receive the gradient. */
 @supports (background-clip: text) {
@@ -263,14 +292,12 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .history-card th { font-size: .65rem; letter-spacing: .02em; }
 }
 
-/* Re-blurring a scrolling network is expensive on mobile GPUs. The existing
-   opaque glass tint supplies contrast without that extra compositing pass. */
-@media (hover: none) and (pointer: coarse) {
-  .glass { backdrop-filter: none; -webkit-backdrop-filter: none; }
+@media (prefers-reduced-motion: reduce) {
+  .box-noise-pattern { transform: none; }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .glass { background: var(--cv-box-top); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .box-noise { display: none; }
 }
 
 @media print {
@@ -285,7 +312,8 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
   .cv-scroll-cue { display: none; }
   .cv-page h1 { font-size: 2.5rem; }
   .cv-page h2 { font-size: 2rem; }
-  .glass { color: #333; background: #fff; border-color: #aaa; box-shadow: none; backdrop-filter: none; break-inside: avoid; }
+  .glass { color: #333; background: #fff; border-color: #aaa; box-shadow: none; break-inside: avoid; }
+  .box-noise { display: none; }
   .cv-page p, .cv-page svg, .history-card th, .history-card td { color: #333; }
   .cv-bullets li::marker { color: #333; }
   .cv-page :is(strong, b, em, i, .inline-link) { color: #333; }
@@ -296,6 +324,7 @@ cv-network canvas { display: block; width: 100%; height: 100%; }
 @media (forced-colors: active) {
   .cv-page h1, .cv-page h2 { color: CanvasText; background: none; }
   .glass { border-color: CanvasText; }
+  .box-noise { display: none; }
   .cv-bullets li::marker { color: CanvasText; }
   .cv-page :is(strong, b, em, i) { color: CanvasText; }
   .cv-page .inline-link, .cv-page .inline-link :is(strong, b, em, i) { color: LinkText; }

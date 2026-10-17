@@ -1,4 +1,6 @@
 /** Shared presentation controls for both CV languages and the portfolio. */
+export const boxNoiseTilePixels = 512;
+
 export const cvDesign = {
   sectionEdgeDistance: 'clamp(4rem, 8vw, 6.5rem)', // Shared content inset from either section edge; e.g. '64px'.
   bulletGap: '1.5rem', // Extra space between bullet items, in addition to normal line height.
@@ -10,7 +12,15 @@ export const cvDesign = {
     tint: 0.75, // 0 = default color; 1 = section hue/saturation at the same dark lightness.
     saturationLimit: 0.4, // 0-1; cap the section tint so bright themes stay restrained.
     shade: 0.25, // 0-1; darken the second gradient stop by this fraction.
-    opacity: 0.92, // 0-1; glass fill opacity.
+    noise: {
+      mix: 0.7, // 0 = regular opaque box; 1 = noise surface completely replaces its fill.
+      contrast: 1.0, // 0-1; light/dark variation within the noise surface.
+      bias: -0.99, // -1 to 1; shifts the themed noise's upper color toward black/white. 0 = section base.
+      noiseBias: -0.3, // -1 to 1; positive grows theme islands, negative grows black islands; nearest 0.1.
+      scale: 1.7, // 0.25-4; size multiplier for the seamless 512px texture tile.
+      blur: 5, // Integer 0-6; selects a preblurred tile. No blur runs in the browser.
+      scrollMovement: 1.5, // 0 = fixed on screen, 1 = follows boxes, 2 = twice the scroll speed.
+    },
   },
   borders: {
     tint: 0.8, // 0 = original gray glass edges; 1 = section-colored edges.
@@ -77,6 +87,12 @@ export function cvDesignStyle(sectionBaseColor: string) {
   const source = hsl(boxes.defaultColor), theme = hsl(sectionBaseColor);
   const tint = unitInterval(boxes.tint);
   const saturation = Math.min(theme.saturation, unitInterval(boxes.saturationLimit));
+  const noiseBias = Math.max(-1, Math.min(1, boxes.noise.bias));
+  const clampedIslandBias = Math.max(-1, Math.min(1, boxes.noise.noiseBias));
+  const islandBiasStep = Math.sign(clampedIslandBias) * Math.round(Math.abs(clampedIslandBias) * 10);
+  const islandBiasSuffix = islandBiasStep === 0 ? '' : `-bias-${islandBiasStep > 0 ? 'p' : 'm'}${Math.abs(islandBiasStep)}`;
+  const noiseMix = unitInterval(boxes.noise.mix);
+  const noiseContrast = unitInterval(boxes.noise.contrast);
   const fill = (lightness: number) => {
     const original = `hsl(${source.hue} ${source.saturation * 100}% ${lightness * 100}%)`;
     const tinted = `hsl(${theme.hue} ${saturation * 100}% ${lightness * 100}%)`;
@@ -94,7 +110,13 @@ export function cvDesignStyle(sectionBaseColor: string) {
     --cv-checkmark-color: var(--cv-accent-color);
     --cv-box-top: ${fill(source.lightness)};
     --cv-box-bottom: ${fill(source.lightness * (1 - unitInterval(boxes.shade)))};
-    --cv-box-opacity: ${unitInterval(boxes.opacity) * 100}%;
+    --cv-noise-mix: ${noiseMix};
+    --cv-noise-contrast: ${noiseContrast};
+    --cv-noise-color: ${noiseBias === 0 ? 'var(--network-base)' : `color-mix(in srgb, var(--network-base), ${noiseBias > 0 ? 'white' : 'black'} ${Math.abs(noiseBias) * 100}%)`};
+    --cv-noise-tile-size: ${boxNoiseTilePixels * Math.max(0.25, Math.min(4, boxes.noise.scale))}px;
+    --cv-noise-display: ${noiseMix > 0 ? 'block' : 'none'};
+    --cv-noise-pattern-display: ${noiseMix > 0 && noiseContrast > 0 ? 'block' : 'none'};
+    --cv-noise-image: ${noiseMix > 0 && noiseContrast > 0 ? `url('/images/box-noise/noise-${Math.max(0, Math.min(6, Math.round(boxes.noise.blur)))}${islandBiasSuffix}.png')` : 'none'};
     --cv-border-tint: ${unitInterval(borders.tint) * 100}%;
     --cv-border-white: ${unitInterval(borders.whiteMix) * 100}%;
     --cv-heading-tint: ${unitInterval(headings.tint) * 100}%;

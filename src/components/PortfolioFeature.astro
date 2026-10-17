@@ -1,6 +1,7 @@
 ---
 import type { PortfolioMedia as Media } from '../data/portfolio';
 import PortfolioMedia from './PortfolioMedia.astro';
+import BoxNoise from './BoxNoise.astro';
 import InlineText from './InlineText.astro';
 
 interface Props {
@@ -19,5 +20,6 @@ const { media, text, controlsOnInteraction = false } = Astro.props;
         <p><InlineText text={paragraph} /></p>
       ))}
     </div>
+    <BoxNoise />
   </div>
 </div>
