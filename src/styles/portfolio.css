@@ -62,7 +62,7 @@
 }
 .portfolio-media-message { display: grid; justify-items: center; gap: .7rem; min-width: 0; max-width: 100%; padding: clamp(.5rem, 3vw, 1.5rem); color: #c2cbd3; text-align: center; font-size: .9rem; overflow-wrap: anywhere; }
 .portfolio-media-message svg { color: inherit; opacity: .65; }
-.portfolio-hero .portfolio-media { max-width: 800px; box-shadow: 0 1rem 3rem #0004; }
+.portfolio-hero .portfolio-media { box-shadow: 0 1rem 3rem #0004; }
 .portfolio-page .portfolio-unique h2 {
   font-size: clamp(1.8rem, 4vw, 3rem);
   line-height: 1.15;

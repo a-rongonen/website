@@ -46,6 +46,7 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
       separateTitleRow: word.top >= owner.bottom - 1,
       titleBeforeMedia: media.top >= title.bottom,
       mediaCentered: Math.abs(media.left + media.width / 2 - innerWidth / 2) < 1,
+      heroMediaMatchesBoxes: Math.abs(media.width - caseBounds.width) < 1 && Math.abs(media.left - caseBounds.left) < 1,
       learningStacked: learning[1].top >= learning[0].bottom,
       backgroundStacked: background[1].top >= background[0].bottom,
       sectionsCentered: [...learning, ...background].every(rect => Math.abs(rect.left + rect.width / 2 - innerWidth / 2) < 1),
@@ -74,6 +75,7 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
   const label = JSON.stringify({ width, fontSize, javaScriptEnabled, ...result });
   assert.equal(result.overflow, false, 'No horizontal scrolling: ' + label);
   assert(result.separateTitleRow && result.titleBeforeMedia && result.mediaCentered, 'Centered title then media: ' + label);
+  assert(result.heroMediaMatchesBoxes, 'Hero video matches the large section boxes: ' + label);
   assert.deepEqual(result.ranges.map(range => range.text), ["Aleksanteri's", 'PORTFOLIO']);
   assert(result.ranges.every(range => range.lines === 1 && range.fits), 'Whole title words fit: ' + label);
   assert(result.learningStacked && result.backgroundStacked, 'Both section videos sit above their text cards: ' + label);
