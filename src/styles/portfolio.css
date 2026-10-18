@@ -105,8 +105,8 @@
 @media (max-width: 699px) {
   .portfolio-page .site-header { width: calc(100% - 2rem); flex-wrap: wrap; gap: .5rem 1rem; font-size: .75rem; }
   .portfolio-page .site-header nav ul { gap: .5rem .8rem; }
-  /* Center the title/video group at 35lvh; retain header clearance on short screens. */
-  .portfolio-hero-inner { padding-block: 7rem calc(7rem + 30lvh); }
+  /* Center the title/video group at 40lvh; retain header clearance on short screens. */
+  .portfolio-hero-inner { padding-block: 7rem calc(7rem + 20lvh); }
   .portfolio-feature-card { gap: 1.5rem; }
   .portfolio-feature-copy.profile-card { width: calc(100cqi - 2 * var(--former-copy-padding) - 2px); }
   .portfolio-page .history-card th, .portfolio-page .history-card td { padding-inline: clamp(.2rem, 2vw, .65rem); }
