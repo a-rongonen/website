@@ -4,12 +4,12 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || undefined });
 const base = process.env.CV_PREVIEW_URL || 'http://127.0.0.1:8805';
 const errors = [];
-const count = 6;
+const count = 5;
 const settled = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
-async function ready(page) {
+async function ready(page, { blockEmbeds = true } = {}) {
   page.on('pageerror', error => errors.push(error.message));
-  await page.route('https://www.youtube-nocookie.com/**', route => route.abort());
+  if (blockEmbeds) await page.route('https://www.youtube-nocookie.com/**', route => route.abort());
   await page.goto(base + '/portfolio', { waitUntil: 'domcontentloaded' });
   await page.locator('portfolio-carousel[data-enhanced="true"]').waitFor({ state: 'attached' });
   await page.evaluate(() => document.fonts.ready);
@@ -102,8 +102,18 @@ async function dimensions(widget) {
   });
 }
 
-function stable(before, after, label) {
-  for (const key of ['page', 'widget', 'panel', 'media']) {
+// A point on a neighbor's visible slice, just inside the screen edge.
+async function neighborPoint(widget, direction) {
+  await atRest(widget);
+  return widget.evaluate((element, direction) => {
+    const viewport = element.querySelector('[data-carousel-viewport]').getBoundingClientRect();
+    const active = element.querySelector('[data-carousel-active="true"]').getBoundingClientRect();
+    return { x: direction > 0 ? viewport.right - 3 : viewport.left + 3, y: active.top + active.height / 2 };
+  }, direction);
+}
+
+function stable(before, after, label, keys = ['page', 'widget', 'panel', 'media']) {
+  for (const key of keys) {
     assert(Math.abs(before[key] - after[key]) < 1, `${label}: ${key} changed: ${JSON.stringify({ before, after })}`);
   }
 }
@@ -114,15 +124,15 @@ function deferred() {
   return { promise, resolve };
 }
 
-// Supply isolated media only in the test response. Production keeps its owner's
-// placeholders, while these exercise future assets through the real component.
+// Supply isolated media only in the test response. These exercise image and
+// local-video loading through the real component, whatever the owner's slides hold.
 async function mediaFixtures(context) {
   await context.route(base + '/portfolio', async route => {
     const response = await route.fetch();
     const html = await response.text();
     let fixtureCount = 0;
     const body = html.replace(/<portfolio-carousel\b[\s\S]*?<\/portfolio-carousel>/, carousel => carousel.replace(
-      /<div class="portfolio-media portfolio-media-placeholder"[^>]*>[\s\S]*?<\/svg>\s*<span>[\s\S]*?<\/span>\s*<\/div>\s*<\/div>/g,
+      /<div class="portfolio-media[\s"][\s\S]*?(?=<div class="profile-card portfolio-feature-copy)/g,
       () => {
         const number = ++fixtureCount;
         const src = number === 3 ? '/videos/portfolio-demo-reel.mp4?carousel-fixture=3' : `/images/carousel-fixture-${number}.svg`;
@@ -132,7 +142,7 @@ async function mediaFixtures(context) {
         return `<div class="portfolio-media" data-portfolio-media data-media-kind="${number === 3 ? 'video' : 'image'}" style="aspect-ratio: 16 / 9;"><template data-media-template>${asset}</template><noscript>${asset}</noscript></div>`;
       }
     ));
-    assert.equal(fixtureCount, count, 'Media fixtures replace all six Small Wins placeholders');
+    assert.equal(fixtureCount, count, 'Media fixtures replace every Small Wins media frame');
     await route.fulfill({ response, body });
   });
 }
@@ -153,8 +163,8 @@ try {
   const page = await context.newPage();
   const widget = await ready(page);
   assert.equal(await page.locator('.portfolio-small-wins .portfolio-section-title').textContent(), 'Small Wins');
-  assert.equal(await widget.locator('.portfolio-media-placeholder').count(), count, 'All six entries are honest media placeholders');
-  assert.equal(await widget.locator('img, video, iframe').count(), 0, 'Placeholders make no asset downloads');
+  assert.equal(await widget.locator('.portfolio-media').count(), count, 'Every card has a media frame');
+  assert.equal(await widget.locator('img, video, iframe').count(), 0, 'A cold landing materializes no carousel media');
   assert.equal(await widget.locator('button:not(.portfolio-carousel-sr-only), [data-carousel-controls]').count(), 0, 'There are no arrow buttons or extra visible navigation hints');
   await selected(widget, 0);
   assert.notEqual(await widget.getAttribute('data-carousel-moving'), 'true', 'Offscreen carousel is idle');
@@ -202,10 +212,11 @@ try {
   // A desktop drag follows the pointer continuously, then eases to its destination.
   await choose(widget, 0);
   await atRest(widget);
+  let bounds;
   const first = widget.locator('[data-carousel-panel]').first();
   const media = first.locator('.portfolio-media');
   await media.scrollIntoViewIfNeeded();
-  let bounds = await media.boundingBox();
+  bounds = await media.boundingBox();
   const startX = bounds.x + bounds.width * 0.8;
   const startY = bounds.y + Math.min(bounds.height / 2, 80);
   const beforeDrag = (await first.boundingBox()).x;
@@ -232,6 +243,19 @@ try {
   assert(deltas.slice(-3).reduce((sum, value) => sum + value, 0) < Math.max(...deltas) * 1.5,
     'The release slows smoothly near the final card');
   await peeks(widget, 1);
+
+  // Clicking a neighbor's visible slice slides that card to the middle.
+  let point = await neighborPoint(widget, 1);
+  await page.mouse.click(point.x, point.y);
+  await selected(widget, 2);
+  await peeks(widget, 2);
+  point = await neighborPoint(widget, -1);
+  await page.mouse.click(point.x, point.y);
+  await selected(widget, 1);
+  bounds = await widget.locator('[data-carousel-active="true"] .portfolio-feature-copy').boundingBox();
+  await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await atRest(widget);
+  await selected(widget, 1);
 
   // Catching a moving track starts from its current rendered position.
   await choose(widget, count - 1);
@@ -288,7 +312,9 @@ try {
         await choose(widget, index);
         await settled(page);
         await peeks(widget, index);
-        stable(initial, await dimensions(widget), `Selecting ${index + 1} at ${width}px/${fontSize}px text`);
+        // Media frames may differ between cards (an embed keeps a minimum
+        // height); the stretched cards and the page around them must not.
+        stable(initial, await dimensions(widget), `Selecting ${index + 1} at ${width}px/${fontSize}px text`, ['page', 'widget', 'panel']);
       }
     }
   }
@@ -320,9 +346,10 @@ try {
   const cdp = await touch.newCDPSession(touchPage);
   async function swipe(dx, dy = 0, duration = 560) {
     await atRest(touchWidget);
-    const media = touchWidget.locator('[data-carousel-active="true"] .portfolio-media');
-    await media.scrollIntoViewIfNeeded();
-    const bounds = await media.boundingBox();
+    // Start on the copy: an embedded player's frame keeps its own touches.
+    const copy = touchWidget.locator('[data-carousel-active="true"] .portfolio-feature-copy');
+    await copy.scrollIntoViewIfNeeded();
+    const bounds = await copy.boundingBox();
     const x = bounds.x + bounds.width * (dx < 0 ? .85 : .15);
     const y = bounds.y + bounds.height / 2;
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
@@ -338,6 +365,13 @@ try {
   await swipe(-210);
   await selected(touchWidget, 1);
   assert(!await touchPage.evaluate(() => document.activeElement?.matches(':focus-visible')), 'A touch swipe does not show the keyboard focus outline');
+  for (const [direction, destination] of [[1, 2], [-1, 1]]) {
+    const point = await neighborPoint(touchWidget, direction);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await selected(touchWidget, destination);
+    await peeks(touchWidget, destination);
+  }
   await choose(touchWidget, 0);
   await atRest(touchWidget);
   await swipe(-210, 0, 24);
@@ -453,7 +487,7 @@ try {
     await fixturePage.emulateMedia({ reducedMotion: 'reduce' });
     await fixturePage.waitForFunction(() => document.querySelector('portfolio-carousel video').paused);
     assert(await video.evaluate(video => !video.autoplay), 'Reduced motion stops carousel autoplay');
-    assert.deepEqual([...requested], [1, 2, 3], 'Unselected cards 4–6 never fetch, including the card peeking beside the selected video');
+    assert.deepEqual([...requested], [1, 2, 3], 'Unselected cards 4–5 never fetch, including the card peeking beside the selected video');
     await choose(fixtureWidget, count - 1);
     const lastImage = fixtureWidget.locator('[data-carousel-panel]').last().locator('img');
     await lastImage.waitFor({ state: 'attached' });
@@ -462,6 +496,109 @@ try {
     assert.deepEqual([...requested], [1, 2, 3, count], 'Jumping to the final card does not eagerly load intermediate cards');
     stable(before, await dimensions(fixtureWidget), `${width}px final decoded image`);
     await fixtureContext.close();
+  }
+
+  // YouTube cards: user-started playback with sound, paused whenever the card
+  // is not visible. A stand-in player speaks the postMessage protocol: it
+  // answers the page's listening handshake, reports play/pause states and
+  // records commands.
+  for (const width of [1440, 390]) {
+    const embedContext = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'no-preference' });
+    const embedRequests = [];
+    const embedGate = deferred();
+    await embedContext.route('https://www.youtube-nocookie.com/**', async route => {
+      embedRequests.push(route.request().url());
+      await embedGate.promise;
+      await route.fulfill({ contentType: 'text/html', body: `<!doctype html><title>Player fixture</title><script>
+        window.commands = [];
+        const report = playerState => parent.postMessage(JSON.stringify({ event: 'infoDelivery', info: { playerState } }), '*');
+        window.play = () => report(1);
+        addEventListener('message', event => {
+          const message = JSON.parse(event.data);
+          if (message.event === 'listening') parent.postMessage(JSON.stringify({ event: 'onReady' }), '*');
+          else if (message.event === 'command') {
+            commands.push(message.func);
+            if (message.func === 'pauseVideo') report(2);
+          }
+        });
+      </script>` });
+    });
+    const embedPage = await embedContext.newPage();
+    const embedWidget = await ready(embedPage, { blockEmbeds: false });
+    const players = await embedWidget.locator('[data-carousel-panel]').evaluateAll(panels => panels
+      .map((panel, index) => panel.querySelector('[data-media-kind="youtube"]') ? index : -1).filter(index => index >= 0));
+    assert(players.length >= 2, 'The carousel holds at least two YouTube cards to switch between');
+    const [one, two] = players;
+    const frame = index => embedWidget.locator('[data-carousel-panel]').nth(index).locator('iframe');
+    const player = async index => (await frame(index).elementHandle()).contentFrame();
+    const commands = async index => (await player(index)).evaluate(() => window.commands);
+    // The visitor presses play inside the player.
+    const play = async index => { await (await player(index)).evaluate(() => window.play()); await embedPage.waitForTimeout(50); };
+    const pauses = async (index, total, message) => {
+      for (let attempt = 0; attempt < 40 && (await commands(index)).length < total; attempt++) await embedPage.waitForTimeout(25);
+      assert.deepEqual(await commands(index), Array(total).fill('pauseVideo'), message);
+    };
+    await embedPage.waitForTimeout(150);
+    assert.deepEqual(embedRequests, [], 'A cold landing requests no carousel player');
+
+    await choose(embedWidget, one);
+    const host = embedWidget.locator('[data-carousel-panel]').nth(one).locator('.portfolio-media');
+    const beforeEmbed = await dimensions(embedWidget);
+    await host.evaluate(element => scrollTo({ top: scrollY + element.getBoundingClientRect().top - innerHeight - 125, behavior: 'instant' }));
+    await frame(one).waitFor({ state: 'attached' });
+    assert.equal(await embedWidget.locator('iframe').count(), 1, 'Only the selected card materializes its player');
+    stable(beforeEmbed, await dimensions(embedWidget), `${width}px blocked player`);
+    const src = new URL(await frame(one).getAttribute('src'));
+    assert.equal(src.searchParams.get('enablejsapi'), '1', 'The player accepts pause commands');
+    assert(!src.searchParams.has('autoplay') && !src.searchParams.has('mute'), 'The player neither autoplays nor starts muted');
+    embedGate.resolve();
+    await embedWidget.locator('[data-carousel-panel]').nth(one).frameLocator('iframe').locator('title').waitFor({ state: 'attached' });
+    await host.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    await atRest(embedWidget);
+    stable(beforeEmbed, await dimensions(embedWidget), `${width}px loaded player`);
+    await embedPage.waitForTimeout(300);
+    assert.deepEqual(await commands(one), [], 'A visible player receives no commands, so it never starts by itself');
+
+    await play(one);
+    await choose(embedWidget, two);
+    await pauses(one, 1, 'Moving to another card pauses the playing player');
+    await frame(two).waitFor({ state: 'attached' });
+    await embedWidget.locator('[data-carousel-panel]').nth(two).frameLocator('iframe').locator('title').waitFor({ state: 'attached' });
+    await atRest(embedWidget);
+    await embedPage.waitForTimeout(300);
+    await choose(embedWidget, one);
+    await atRest(embedWidget);
+    await embedPage.waitForTimeout(100);
+    assert.deepEqual(await commands(two), [], 'A player that is not playing gets no command when its card is left');
+    assert.deepEqual(await commands(one), ['pauseVideo'], 'Revisiting a card does not resume or command its player');
+    assert.equal(await embedWidget.locator('iframe').count(), 2, 'Loaded players are retained for revisits');
+
+    // A start that reports in after the card was left is still stopped.
+    await choose(embedWidget, two);
+    await atRest(embedWidget);
+    await play(one);
+    await pauses(one, 2, 'A player reporting playback while hidden is paused');
+    await choose(embedWidget, one);
+    await atRest(embedWidget);
+
+    await play(one);
+    await embedPage.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+    await pauses(one, 3, 'Scrolling the player out of view pauses it');
+    await host.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    await embedPage.waitForTimeout(150);
+    await play(one);
+    await embedPage.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await pauses(one, 4, 'A hidden tab pauses the visible player');
+    await embedPage.evaluate(() => {
+      delete document.hidden;
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await embedPage.waitForTimeout(100);
+    assert.equal((await commands(one)).length, 4, 'Returning to the tab does not resume or command the player');
+    await embedContext.close();
   }
 
   const printContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -476,5 +613,5 @@ try {
   await readable(printPage, 'Print with media');
   await printContext.close();
   assert.deepEqual(errors, [], 'No browser errors');
-  console.log('Small Wins swipe/drag, velocity-based multi-card travel, smooth settling/interruption, finite peeks, keyboard, responsive geometry, media loading/playback, reduced motion, no-JS and print PASS');
+  console.log('Small Wins swipe/drag, velocity-based multi-card travel, smooth settling/interruption, finite peeks, keyboard, responsive geometry, media loading/playback, YouTube offscreen pausing, reduced motion, no-JS and print PASS');
 } finally { await browser.close(); }

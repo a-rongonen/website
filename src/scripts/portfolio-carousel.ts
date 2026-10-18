@@ -29,6 +29,7 @@ class PortfolioCarousel extends HTMLElement {
     let selected = Math.max(0, Math.min(panels.length - 1, Number(this.dataset.carouselSelected || 1) - 1));
     let shown = -1;
     let step = 0;
+    let width = 0;
     let inset = 0;
     let position = 0;
     let gesture: Gesture | undefined;
@@ -120,7 +121,7 @@ class PortfolioCarousel extends HTMLElement {
     };
     const measure = () => {
       // Width and gap are invalidated by resizing/font changes, never scrolling.
-      const width = panels[0].getBoundingClientRect().width;
+      width = panels[0].getBoundingClientRect().width;
       step = width + parseFloat(getComputedStyle(track).columnGap);
       inset = (viewport.clientWidth - width) / 2;
       finishImmediately();
@@ -181,7 +182,15 @@ class PortfolioCarousel extends HTMLElement {
     const endGesture = (event: PointerEvent, cancelled = false) => {
       const current = gesture;
       if (!current || current.id !== event.pointerId) return;
-      if (!current.dragging) { releaseCapture(); settle(Math.round(position / step)); return; }
+      if (!current.dragging) {
+        releaseCapture();
+        // Neighbors are inert, so their taps reach the track. A tap on a
+        // neighbor's visible slice brings that card to the middle.
+        const offset = event.clientX - viewport.getBoundingClientRect().left - inset + position;
+        const tapped = Math.floor(offset / step);
+        settle(!cancelled && offset - tapped * step <= width ? tapped : Math.round(position / step));
+        return;
+      }
       suppressClick = !cancelled;
       const recent = current.samples.filter(sample => event.timeStamp - sample.time <= 100);
       const first = recent[0];

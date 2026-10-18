@@ -89,7 +89,16 @@ try {
   const hero = page.locator('.portfolio-hero [data-portfolio-media]');
   const heroSource = await mediaSource(hero);
   await page.waitForTimeout(350);
-  assert.deepEqual([...requested], [heroSource], 'A cold landing requests only the opening video');
+  const frameBackground = new URL('/images/unloaded-media-asset.jpg', base).href;
+  assert.deepEqual([...requested].sort(), [heroSource, frameBackground].sort(),
+    'A cold landing requests only the opening video and the shared unloaded-frame image');
+  assert(await page.locator('[data-portfolio-media]').evaluateAll(wrappers => wrappers.every(wrapper =>
+    getComputedStyle(wrapper).backgroundImage.includes('/images/unloaded-media-asset.jpg'))), 'Every reserved frame shows the unloaded-media image');
+  assert(await page.locator('[data-portfolio-media] > noscript').evaluateAll(fallbacks => fallbacks.every(fallback => {
+    const range = document.createRange();
+    range.selectNodeContents(fallback);
+    return range.getClientRects().length === 0;
+  })), 'With scripting enabled, no-JS fallback markup paints no text inside frames');
   assert.equal(await page.locator('[data-portfolio-media] > :is(img, video, iframe)').count(), 1,
     'Only opening media is materialized on arrival');
   assert(await page.locator('[data-portfolio-media]').evaluateAll(wrappers => wrappers.every(wrapper => {

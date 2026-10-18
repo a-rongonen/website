@@ -10,6 +10,10 @@ interface MediaState {
   host: HTMLElement;
   inViewport: boolean;
   video?: HTMLVideoElement;
+  frame?: HTMLIFrameElement;
+  frameReady: boolean;
+  framePlaying: boolean;
+  frameVisible: boolean;
   userPaused: boolean;
   automaticPause: boolean;
   playPending: boolean;
@@ -29,7 +33,57 @@ function selected(host: HTMLElement) {
   return !panel || panel.dataset.casePage === (slider?.value || '1');
 }
 
+// Embedded players never autoplay, but one the visitor started must stop
+// once it can no longer be seen. YouTube's postMessage protocol does this
+// without loading its separate API script: announce that the page is
+// listening, then the player reports readiness and its playing state.
+const post = (frame: HTMLIFrameElement, message: object) =>
+  frame.contentWindow?.postMessage(JSON.stringify(message), new URL(frame.src).origin);
+
+function connectFrame(state: MediaState, frame: HTMLIFrameElement) {
+  state.frame = frame;
+  let attempts = 0;
+  // The player may attach its listener just after load. Retry briefly, as
+  // YouTube's own API does, and stop at the first reply. Messages sent
+  // before the player document exists are dropped by the origin check.
+  const announce = () => {
+    if (state.frameReady || ++attempts > 20) return;
+    post(frame, { event: 'listening' });
+    setTimeout(announce, 250);
+  };
+  frame.addEventListener('load', () => {
+    state.frameReady = false;
+    state.framePlaying = false;
+    attempts = 0;
+    announce();
+  });
+  announce();
+}
+
+addEventListener('message', event => {
+  if (typeof event.data !== 'string') return;
+  for (const state of states.values()) {
+    const frame = state.frame;
+    if (!frame || frame.contentWindow !== event.source || new URL(frame.src).origin !== event.origin) continue;
+    let message: { info?: { playerState?: unknown } };
+    try { message = JSON.parse(event.data); } catch { return; }
+    state.frameReady = true;
+    const playerState = message.info?.playerState;
+    // 1 is playing and 3 buffering; other states cannot produce sound.
+    if (typeof playerState === 'number') state.framePlaying = playerState === 1 || playerState === 3;
+    // Covers a start that raced a card change or scroll before readiness.
+    if (state.framePlaying && !state.frameVisible) pause(state);
+    return;
+  }
+});
+
 function pause(state: MediaState) {
+  const frame = state.frame;
+  // Commands before readiness throw inside the player. A fullscreen player
+  // has left the page layout but is still in view.
+  if (frame && state.frameReady && state.framePlaying && document.fullscreenElement !== frame) {
+    post(frame, { event: 'command', func: 'pauseVideo', args: [] });
+  }
   const video = state.video;
   if (video && !video.paused) {
     if (state.playPending) state.playInterrupted = true;
@@ -40,9 +94,14 @@ function pause(state: MediaState) {
 }
 
 function updatePlayback(state: MediaState) {
+  const visible = state.inViewport && selected(state.host) && !document.hidden && !print.matches;
+  if (state.frame) {
+    state.frameVisible = visible;
+    if (!visible) pause(state);
+    return;
+  }
   const video = state.video;
   if (!video) return;
-  const visible = state.inViewport && selected(state.host) && !document.hidden && !print.matches;
   video.autoplay = visible && !reducedMotion.matches && !state.userPaused;
   if (!video.autoplay) pause(state);
   else if (video.paused && !state.playPending) {
@@ -103,15 +162,20 @@ function load(state: MediaState, printing = false) {
     // browser heuristic postpone a selected slide or an image needed in print.
     if (image) image.loading = 'eager';
     const frame = fragment.querySelector('iframe');
-    if (frame) frame.loading = 'eager';
+    if (frame) {
+      frame.loading = 'eager';
+      connectFrame(state, frame);
+    }
     const video = fragment.querySelector('video');
     if (video) {
       prepareVideo(state, video);
     }
     template.replaceWith(fragment);
-  } else if (!state.video) {
+  } else if (!state.video && !state.frame) {
     const video = host.querySelector('video');
     if (video) prepareVideo(state, video);
+    const frame = host.querySelector('iframe');
+    if (frame) connectFrame(state, frame);
   }
   host.dataset.mediaLoaded = 'true';
   loadObserver.unobserve(host);
@@ -135,7 +199,7 @@ const playbackObserver = new IntersectionObserver(entries => {
 }, { threshold: [0, 0.001] });
 
 for (const host of document.querySelectorAll<HTMLElement>('[data-portfolio-media]')) {
-  const state: MediaState = { host, inViewport: false, userPaused: false, automaticPause: false, playPending: false, playInterrupted: false };
+  const state: MediaState = { host, inViewport: false, frameReady: false, framePlaying: false, frameVisible: false, userPaused: false, automaticPause: false, playPending: false, playInterrupted: false };
   states.set(host, state);
   loadObserver.observe(host);
   playbackObserver.observe(host);

@@ -8,11 +8,17 @@ interface Props extends PortfolioMedia {
 }
 
 const { src, poster, label, width, height, kind = 'video', controls = true, controlsOnInteraction = false, eager = false } = Astro.props;
+// The player accepts pause commands only with its JavaScript API enabled.
+const frameSrc = kind === 'youtube' && src ? (() => {
+  const url = new URL(src);
+  url.searchParams.set('enablejsapi', '1');
+  return url.href;
+})() : src;
 ---
 {kind === 'image' ? (
   <img src={src} alt={label} width={width} height={height} loading="lazy" decoding="async" />
 ) : kind === 'youtube' ? (
-  <iframe src={src} title={label} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen />
+  <iframe src={frameSrc} title={label} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen />
 ) : (
   <video src={src} poster={poster} width={width} height={height} aria-label={label} loop muted playsinline controls={controls}
     disablepictureinpicture={!controls} disableRemotePlayback={!controls} tabindex={controls ? controlsOnInteraction ? 0 : undefined : -1}

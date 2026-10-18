@@ -47,10 +47,16 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--network-base), transparent 65%);
   border-radius: 1rem;
-  background: #090f16;
+  /* Shown in the reserved frame until the media paints over it. One shared
+     image, so every frame reuses the same download. */
+  background: #090f16 url('/images/unloaded-media-asset.jpg') center / cover no-repeat;
 }
 .portfolio-media :is(video, img, iframe) { display: block; width: 100%; height: auto; border: 0; }
-.portfolio-media > noscript { display: contents; }
+/* Only no-JS visitors get the fallback media. With scripting on, noscript
+   holds raw text, and display: contents would paint it inside the frame. */
+@media (scripting: none) {
+  .portfolio-media > noscript { display: contents; }
+}
 .portfolio-media iframe { aspect-ratio: 16 / 9; min-height: 200px; }
 .portfolio-media[data-media-kind='youtube'] { min-height: 200px; }
 .portfolio-media > video:not([controls]):not([data-reveal-controls]) { pointer-events: none; }
@@ -59,7 +65,6 @@
   aspect-ratio: 16 / 9;
   display: grid;
   place-items: center;
-  background: radial-gradient(ellipse at center, #1b2935, #080d15);
 }
 .portfolio-media-message { display: grid; justify-items: center; gap: .7rem; min-width: 0; max-width: 100%; padding: clamp(.5rem, 3vw, 1.5rem); color: #c2cbd3; text-align: center; font-size: .9rem; overflow-wrap: anywhere; }
 .portfolio-media-message svg { color: inherit; opacity: .65; }
