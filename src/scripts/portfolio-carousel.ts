@@ -27,6 +27,7 @@ class PortfolioCarousel extends HTMLElement {
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
     const interactive = 'button, a, input, textarea, select, video, iframe, [contenteditable]';
     let selected = Math.max(0, Math.min(panels.length - 1, Number(this.dataset.carouselSelected || 1) - 1));
+    let shown = -1;
     let step = 0;
     let inset = 0;
     let position = 0;
@@ -52,6 +53,10 @@ class PortfolioCarousel extends HTMLElement {
       delete this.dataset.carouselDragging;
     };
     const updateSelection = (index: number) => {
+      // Taps, vertical scrolls and snap-backs settle on the shown card. Skip the
+      // redundant attribute writes, status re-announcement and media refresh.
+      if (index === shown) return;
+      shown = index;
       const focus = document.activeElement;
       if (focus && panels.some((panel, page) => page !== index && panel.contains(focus))) viewport.focus({ preventScroll: true });
       selected = index;
@@ -157,7 +162,9 @@ class PortfolioCarousel extends HTMLElement {
         if (Math.abs(dy) > Math.abs(dx)) { settle(Math.round(position / step)); return; }
         current.dragging = true;
         viewport.setPointerCapture(event.pointerId);
-        viewport.focus({ preventScroll: true });
+        // Script focus during a touch drag matches :focus-visible and would show
+        // the keyboard outline. Mouse presses already focus the viewport.
+        if (event.pointerType === 'mouse') viewport.focus({ preventScroll: true });
         this.dataset.carouselDragging = 'true';
         this.dataset.carouselMoving = 'true';
         window.getSelection()?.removeAllRanges();

@@ -337,6 +337,7 @@ try {
   // Equal travel at different speeds distinguishes a deliberate step from a fling.
   await swipe(-210);
   await selected(touchWidget, 1);
+  assert(!await touchPage.evaluate(() => document.activeElement?.matches(':focus-visible')), 'A touch swipe does not show the keyboard focus outline');
   await choose(touchWidget, 0);
   await atRest(touchWidget);
   await swipe(-210, 0, 24);
@@ -349,8 +350,16 @@ try {
   await peeks(touchWidget, count - 1);
   await swipe(210);
   await selected(touchWidget, count - 2);
+  await touchWidget.evaluate(element => {
+    window.carouselRewrites = 0;
+    window.carouselObserver = new MutationObserver(records => { window.carouselRewrites += records.length; });
+    for (const panel of element.querySelectorAll('[data-carousel-panel]')) window.carouselObserver.observe(panel, { attributeFilter: ['inert', 'aria-hidden', 'data-carousel-active'] });
+    window.carouselObserver.observe(element.querySelector('[data-carousel-status]'), { childList: true, characterData: true, subtree: true });
+  });
   await swipe(10, -80);
   await selected(touchWidget, count - 2);
+  assert.equal(await touchPage.evaluate(() => { window.carouselObserver.disconnect(); return window.carouselRewrites; }), 0,
+    'A vertical gesture on the current card neither rewrites slide state nor re-announces the status');
   await choose(touchWidget, 0);
   await swipe(210, 0, 24);
   await selected(touchWidget, 0);
