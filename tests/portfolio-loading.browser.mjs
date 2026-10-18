@@ -216,6 +216,8 @@ try {
   await printContext.route('https://www.youtube-nocookie.com/**', route => route.abort());
   await ready(printPage);
   await printPage.emulateMedia({ media: 'print' });
+  // On a slow network, the initial pageshow can arrive after printing began.
+  await printPage.evaluate(() => dispatchEvent(new PageTransitionEvent('pageshow')));
   await printPage.waitForFunction(() => document.querySelectorAll('portfolio-case img').length === 5);
   for (const image of await printPage.locator('portfolio-case img').all()) await image.evaluate(image => image.decode());
   assert.equal(await printPage.locator('portfolio-case video').count(), 0, 'Printing hydrates every case image without downloading case videos');

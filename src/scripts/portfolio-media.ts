@@ -214,7 +214,8 @@ function refresh(state: MediaState) {
     const carousel = state.host.closest('[data-carousel-viewport]')?.getBoundingClientRect();
     state.inViewport = rect.height > 0 && rect.width > 0 && rect.bottom > 0 && rect.top < innerHeight
       && rect.right > (carousel?.left ?? 0) && rect.left < (carousel?.right ?? innerWidth);
-    if (rect.bottom > -lead && rect.top < innerHeight + lead) load(state);
+    // pageshow can arrive late, after printing began; print loads only images.
+    if (rect.bottom > -lead && rect.top < innerHeight + lead) load(state, print.matches);
   } else state.inViewport = false;
   updatePlayback(state);
 }
