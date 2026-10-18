@@ -55,11 +55,11 @@ export const portfolio = {
   "smallWins": {
     "heading": "Small Wins",
     "slides": [
-      { "text": "Small win 01 — details coming soon.", "media": { "src": "/images/moose-centaur-model.jpg", "width": 1280, "height": 720, "kind": "image", "label": "Moose centaur model" } },
-      { "text": "Small win 02 — details coming soon.", "media": { "src": "/images/ubuntu-competition.jpg", "width": 1280, "height": 720, "kind": "image", "label": "Ubuntu competition" } },
-      { "text": "Small win 03 — details coming soon.", "media": { "src": "/images/youtube-channel.jpg", "width": 1280, "height": 720, "kind": "image", "label": "YouTube channel" } },
-      { "text": "Small win 04 — details coming soon.", "media": { "kind": "youtube", "src": "https://www.youtube-nocookie.com/embed/M34NItte2zw?playsinline=1&rel=0", "label": "Panic Lane @ Games First 2026" } },
-      { "text": "Small win 05 — details coming soon.", "media": { "kind": "youtube", "src": "https://www.youtube-nocookie.com/embed/cGK2X261thQ?playsinline=1&rel=0", "label": "Unreal Engine 5.4 Motion Design Features in Action | 1000 SUB SPECIAL" } }
+      { "text": "I'm not a pro modeler, but I managed to frankenstein this skeletal mesh out of three separate assets. I did the scythe myself!\n\n*Drag or click for more wins!* 👉", "media": { "src": "/images/moose-centaur-model.jpg", "width": 1280, "height": 720, "kind": "image", "label": "Moose centaur model" } },
+      { "text": "I made a wallpaper that got enough community votes to be included among the default wallpapers in *Ubuntu* (which is the most popular version of Linux, in case you're not a nerd).", "media": { "src": "/images/ubuntu-competition.jpg", "width": 1280, "height": 720, "kind": "image", "label": "Ubuntu competition" } },
+      { "text": "I have a youtube channel [7 Weird Seeds](https://www.youtube.com/channel/UC8C2WNQOcKGticOvJbM2Itg) that has about 1000 subs. It's not a huge amount, but the most popular video got over 30 000 views.", "media": { "src": "/images/youtube-channel.jpg", "width": 1280, "height": 720, "kind": "image", "label": "YouTube channel" } },
+      { "text": "I got to present my game on a big stage at *Supercell's Games First* event!", "media": { "kind": "youtube", "src": "https://www.youtube-nocookie.com/embed/M34NItte2zw?playsinline=1&rel=0", "label": "Panic Lane @ Games First 2026" } },
+      { "text": "In this video I played with Unreal Engine's *motion design* feature. This is also a \"1000 sub special\" video, so it has some inside jokes but don't let that bother you! :)", "media": { "kind": "youtube", "src": "https://www.youtube-nocookie.com/embed/cGK2X261thQ?playsinline=1&rel=0", "label": "Unreal Engine 5.4 Motion Design Features in Action | 1000 SUB SPECIAL" } }
     ]
   },
   "cases": [
