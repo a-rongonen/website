@@ -57,7 +57,10 @@ export const portfolio = {
     "slides": [
       { "text": "Small win 01 — details coming soon.", "media": { "label": "Media placeholder 01" } },
       { "text": "Small win 02 — details coming soon.", "media": { "label": "Media placeholder 02" } },
-      { "text": "Small win 03 — details coming soon.", "media": { "label": "Media placeholder 03" } }
+      { "text": "Small win 03 — details coming soon.", "media": { "label": "Media placeholder 03" } },
+      { "text": "Small win 04 — details coming soon.", "media": { "label": "Media placeholder 04" } },
+      { "text": "Small win 05 — details coming soon.", "media": { "label": "Media placeholder 05" } },
+      { "text": "Small win 06 — details coming soon.", "media": { "label": "Media placeholder 06" } }
     ]
   },
   "cases": [

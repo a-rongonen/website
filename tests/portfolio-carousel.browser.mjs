@@ -4,6 +4,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || undefined });
 const base = process.env.CV_PREVIEW_URL || 'http://127.0.0.1:8805';
 const errors = [];
+const count = 6;
 const settled = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
 async function ready(page) {
@@ -17,46 +18,85 @@ async function ready(page) {
 }
 
 async function selected(widget, index) {
-  assert.deepEqual(await widget.locator('[data-carousel-panel]').evaluateAll(panels => panels.map(panel => !panel.hidden)),
-    [0, 1, 2].map(value => value === index), 'Exactly the requested carousel slide is selected');
-  assert.equal(await widget.locator('[data-carousel-previous]').isDisabled(), index === 0, 'Previous is disabled only at the beginning');
-  assert.equal(await widget.locator('[data-carousel-next]').isDisabled(), index === 2, 'Next is disabled only at the end');
-  assert.match(await widget.locator('[data-carousel-status]').textContent(), new RegExp(`${index + 1}\\s*(of|/)\\s*3`), 'Status announces the selected slide');
+  await widget.page().waitForFunction(({ element, value }) => element.dataset.carouselSelected === String(value + 1),
+    { element: await widget.elementHandle(), value: index });
+  assert.deepEqual(await widget.locator('[data-carousel-panel]').evaluateAll(panels => panels.map(panel => ({
+    active: panel.dataset.carouselActive === 'true', hidden: panel.hidden, inert: panel.inert, ariaHidden: panel.getAttribute('aria-hidden') === 'true',
+  }))), Array.from({ length: count }, (_, value) => ({ active: value === index, hidden: false, inert: value !== index,
+    ariaHidden: value !== index })), 'Only the current card is accessible; neighboring cards remain in the track');
+  assert.match(await widget.locator('[data-carousel-status]').textContent(), new RegExp(`${index + 1}\\s*(of|/)\\s*${count}`), 'Status announces the selected slide');
 }
 
 async function choose(widget, index) {
-  await widget.locator('[data-carousel-controls]').evaluate((controls, requested) => {
-    controls.dispatchEvent(new KeyboardEvent('keydown', { key: requested === 2 ? 'End' : 'Home', bubbles: true }));
-    if (requested === 1) controls.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+  await widget.locator('[data-carousel-viewport]').evaluate((viewport, requested) => {
+    if (requested === viewport.querySelectorAll('[data-carousel-panel]').length - 1) {
+      viewport.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      return;
+    }
+    viewport.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    for (let step = 0; step < requested; step++) viewport.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
   }, index);
   await selected(widget, index);
 }
 
+async function atRest(widget) {
+  await widget.page().waitForFunction(element => {
+    if (element.dataset.carouselMoving === 'true') return false;
+    const viewport = element.querySelector('[data-carousel-viewport]').getBoundingClientRect();
+    const active = element.querySelector('[data-carousel-active="true"]').getBoundingClientRect();
+    return Math.abs((active.left + active.right - viewport.left - viewport.right) / 2) < 1;
+  }, await widget.elementHandle());
+}
+
+async function peeks(widget, index) {
+  await atRest(widget);
+  const geometry = await widget.evaluate(element => {
+    const viewport = element.querySelector('[data-carousel-viewport]').getBoundingClientRect();
+    const caseWidth = document.querySelector('.portfolio-cases-box').getBoundingClientRect().width;
+    return { viewportLeft: viewport.left, viewportRight: viewport.right, screenWidth: document.documentElement.clientWidth, caseWidth,
+      panels: [...element.querySelectorAll('[data-carousel-panel]')].map(panel => {
+      const rect = panel.getBoundingClientRect();
+      return { width: rect.width, visible: Math.max(0, Math.min(viewport.right, rect.right) - Math.max(viewport.left, rect.left)) };
+    }) };
+  });
+  assert(Math.abs(geometry.viewportLeft) < 1 && Math.abs(geometry.viewportRight - geometry.screenWidth) < 1, 'Carousel clips only at the screen edges, including with a scrollbar');
+  for (const [page, item] of geometry.panels.entries()) {
+    assert(Math.abs(item.width - geometry.caseWidth) < 1, 'Every carousel card matches the large game-design case box width');
+    if (page === index) assert(Math.abs(item.visible - item.width) < 1, 'Current card is fully visible');
+    else if (Math.abs(page - index) === 1) assert(item.visible > 3 && item.visible < item.width / 2, 'An adjacent card shows a partial preview');
+    else assert(item.visible < 1, 'Cards beyond immediate neighbors stay outside the viewport');
+  }
+}
+
 async function readable(page, mode) {
   const widget = page.locator('portfolio-carousel');
-  assert.equal(await widget.locator('[data-carousel-panel]').count(), 3);
-  assert.equal(await widget.locator('[data-carousel-controls]').isVisible(), false, `${mode}: inactive controls are hidden`);
+  assert.equal(await widget.locator('[data-carousel-panel]').count(), count);
+  assert.equal(await widget.locator('[data-carousel-previous], [data-carousel-next], [data-carousel-controls]').count(), 0, `${mode}: no arrow controls`);
+  let previousBottom = -Infinity;
   for (const panel of await widget.locator('[data-carousel-panel]').all()) {
     assert(await panel.isVisible(), `${mode}: every slide is readable`);
     assert(await panel.locator('.portfolio-feature-copy').isVisible(), `${mode}: every caption is readable`);
     assert(await panel.locator('.portfolio-media').isVisible(), `${mode}: every media frame is present`);
+    const rect = await panel.boundingBox();
+    assert(rect.y >= previousBottom - 1, `${mode}: cards form a readable vertical list`);
+    previousBottom = rect.y + rect.height;
   }
 }
 
 async function dimensions(widget) {
   return widget.evaluate(element => {
-    const panel = element.querySelector('[data-carousel-panel]:not([hidden])');
+    const panel = element.querySelector('[data-carousel-active="true"]');
     const rect = panel.getBoundingClientRect();
     const media = panel.querySelector('.portfolio-media').getBoundingClientRect();
     const copy = panel.querySelector('.portfolio-feature-copy').getBoundingClientRect();
-    const controls = element.querySelector('[data-carousel-controls]').getBoundingClientRect();
+    const viewport = element.querySelector('[data-carousel-viewport]').getBoundingClientRect();
     return {
       page: document.documentElement.scrollHeight,
       widget: element.getBoundingClientRect().height,
       panel: rect.height,
       media: media.height,
       stacked: copy.top >= media.bottom - 1,
-      contained: rect.left >= -1 && rect.right <= innerWidth + 1 && controls.left >= -1 && controls.right <= innerWidth + 1,
+      contained: rect.left >= -1 && rect.right <= innerWidth + 1 && viewport.left >= -1 && viewport.right <= innerWidth + 1,
       overflow: document.documentElement.scrollWidth > innerWidth,
     };
   });
@@ -92,7 +132,7 @@ async function mediaFixtures(context) {
         return `<div class="portfolio-media" data-portfolio-media data-media-kind="${number === 3 ? 'video' : 'image'}" style="aspect-ratio: 16 / 9;"><template data-media-template>${asset}</template><noscript>${asset}</noscript></div>`;
       }
     ));
-    assert.equal(fixtureCount, 3, 'Media fixtures replace exactly the three Small Wins placeholders');
+    assert.equal(fixtureCount, count, 'Media fixtures replace all six Small Wins placeholders');
     await route.fulfill({ response, body });
   });
 }
@@ -113,88 +153,141 @@ try {
   const page = await context.newPage();
   const widget = await ready(page);
   assert.equal(await page.locator('.portfolio-small-wins .portfolio-section-title').textContent(), 'Small Wins');
-  assert.equal(await widget.locator('.portfolio-media-placeholder').count(), 3, 'All three entries are honest media placeholders');
+  assert.equal(await widget.locator('.portfolio-media-placeholder').count(), count, 'All six entries are honest media placeholders');
   assert.equal(await widget.locator('img, video, iframe').count(), 0, 'Placeholders make no asset downloads');
+  assert.equal(await widget.locator('button:not(.portfolio-carousel-sr-only), [data-carousel-controls]').count(), 0, 'There are no arrow buttons or extra visible navigation hints');
   await selected(widget, 0);
-  assert.equal(await widget.evaluate(element => element.getAnimations({ subtree: true }).filter(animation => animation.playState === 'running').length), 0,
-    'Offscreen carousel has no running decorative animation');
+  assert.notEqual(await widget.getAttribute('data-carousel-moving'), 'true', 'Offscreen carousel is idle');
   await widget.scrollIntoViewIfNeeded();
-  const previous = widget.locator('[data-carousel-previous]');
-  const next = widget.locator('[data-carousel-next]');
-  for (const button of [previous, next]) {
-    assert(await button.getAttribute('aria-label'), 'Arrow button has an accessible name');
-    const bounds = await button.boundingBox();
-    assert(bounds.width >= 44 && bounds.height >= 44, 'Arrow buttons are usable touch targets');
-  }
-  await next.click();
+  await peeks(widget, 0);
+  const accessibleNext = widget.locator('[data-carousel-accessible-next]');
+  const accessiblePrevious = widget.locator('[data-carousel-accessible-previous]');
+  assert(await accessiblePrevious.isDisabled(), 'Screen-reader previous action stops at the beginning');
+  await accessibleNext.evaluate(button => button.click());
   await selected(widget, 1);
-  await next.click();
-  await selected(widget, 2);
-  // A disabled final control does not wrap even when activated programmatically.
-  await next.evaluate(button => button.click());
-  await selected(widget, 2);
-  await previous.focus();
-  await previous.press('Home');
+  await accessiblePrevious.evaluate(button => button.click());
   await selected(widget, 0);
-  assert(await widget.locator('[data-carousel-controls]').evaluate(element => element === document.activeElement), 'Focus moves to controls when Previous becomes disabled');
+  const viewport = widget.locator('[data-carousel-viewport]');
+  assert.equal(await viewport.getAttribute('tabindex'), '0', 'Carousel can receive keyboard focus');
+  assert(await viewport.getAttribute('aria-label') || await viewport.getAttribute('aria-labelledby'), 'Keyboard viewport has an accessible name');
+  const status = widget.locator('[data-carousel-status]');
+  assert.equal(await status.getAttribute('aria-live'), 'polite');
+  assert(await status.evaluate(element => {
+    const style = getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    return style.position === 'absolute' && (rect.width <= 1 || style.clipPath !== 'none');
+  }), 'Slide count is available to assistive technology without a visible hint');
+  await viewport.focus();
   await page.keyboard.press('ArrowRight');
   await selected(widget, 1);
+  await peeks(widget, 1);
+  await page.keyboard.press('End');
+  await selected(widget, count - 1);
+  await peeks(widget, count - 1);
+  await page.keyboard.press('ArrowRight');
+  await selected(widget, count - 1);
   await page.keyboard.press('Home');
   await selected(widget, 0);
-  await next.focus();
-  await next.press('ArrowLeft');
-  await selected(widget, 0);
-  await next.press('ArrowRight');
-  await selected(widget, 1);
-  await next.press('End');
-  await selected(widget, 2);
-  assert(await widget.locator('[data-carousel-controls]').evaluate(element => element === document.activeElement), 'Focus moves to controls when Next becomes disabled');
   await page.keyboard.press('ArrowLeft');
-  await selected(widget, 1);
-  await page.keyboard.press('End');
-  await selected(widget, 2);
-  await previous.focus();
-  await previous.press('ArrowRight');
-  await selected(widget, 2);
-  await previous.press('ArrowLeft');
-  await selected(widget, 1);
-  await widget.locator('[data-carousel-controls]').evaluate(controls => {
+  await selected(widget, 0);
+  assert(await viewport.evaluate(element => element === document.activeElement), 'Keyboard focus remains on the viewport at either endpoint');
+  await viewport.evaluate(element => {
     for (const key of ['Home', 'ArrowRight', 'End', 'Home', 'End', 'ArrowLeft']) {
-      controls.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
     }
   });
+  await selected(widget, count - 2);
+  await atRest(widget);
+
+  // A desktop drag follows the pointer continuously, then eases to its destination.
+  await choose(widget, 0);
+  await atRest(widget);
+  const first = widget.locator('[data-carousel-panel]').first();
+  const media = first.locator('.portfolio-media');
+  await media.scrollIntoViewIfNeeded();
+  let bounds = await media.boundingBox();
+  const startX = bounds.x + bounds.width * 0.8;
+  const startY = bounds.y + Math.min(bounds.height / 2, 80);
+  const beforeDrag = (await first.boundingBox()).x;
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX - bounds.width * 0.35, startY, { steps: 8 });
+  await settled(page);
+  assert((await first.boundingBox()).x < beforeDrag - bounds.width * 0.2, 'Dragging moves cards before pointer release');
+  await page.mouse.move(startX - bounds.width * 0.65, startY, { steps: 8 });
+  await page.waitForTimeout(180);
+  await page.mouse.up();
   await selected(widget, 1);
-  await page.waitForFunction(element => element.getAnimations({ subtree: true }).some(animation => animation.playState === 'running'), await widget.elementHandle());
+  const easingSamples = await widget.evaluate(element => new Promise(resolve => {
+    const values = [];
+    const sample = () => {
+      values.push(element.querySelector('[data-carousel-panel]').getBoundingClientRect().x);
+      if (element.dataset.carouselMoving === 'true' && values.length < 180) requestAnimationFrame(sample);
+      else resolve(values);
+    };
+    requestAnimationFrame(sample);
+  }));
+  assert(easingSamples.length > 3, 'Release settles over multiple frames');
+  const deltas = easingSamples.slice(1).map((value, index) => Math.abs(value - easingSamples[index]));
+  assert(deltas.slice(-3).reduce((sum, value) => sum + value, 0) < Math.max(...deltas) * 1.5,
+    'The release slows smoothly near the final card');
+  await peeks(widget, 1);
+
+  // Catching a moving track starts from its current rendered position.
+  await choose(widget, count - 1);
+  await page.waitForTimeout(70);
+  bounds = await viewport.boundingBox();
+  const interruptX = bounds.x + bounds.width / 2;
+  const interruptY = bounds.y + Math.min(bounds.height / 2, 100);
+  const beforeCatch = (await first.boundingBox()).x;
+  await page.mouse.move(interruptX, interruptY);
+  await page.mouse.down();
+  const afterCatch = (await first.boundingBox()).x;
+  assert(Math.abs(afterCatch - beforeCatch) < bounds.width * 0.3, 'Pointer down does not jump to the previous animation destination');
+  await page.mouse.move(interruptX + 80, interruptY, { steps: 5 });
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+  await atRest(widget);
+  const interruptedIndex = Number(await widget.getAttribute('data-carousel-selected')) - 1;
+  assert(interruptedIndex < count - 1, 'An interrupted forward animation can settle on an earlier card');
+  await peeks(widget, interruptedIndex);
+
+  await choose(widget, 0);
+  await atRest(widget);
+  await choose(widget, count - 1);
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true });
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await page.waitForFunction(element => element.getAnimations({ subtree: true }).every(animation => animation.playState !== 'running'), await widget.elementHandle());
+  await page.waitForFunction(element => element.dataset.carouselMoving !== 'true', await widget.elementHandle());
   await page.evaluate(() => {
     delete document.hidden;
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await page.waitForFunction(element => element.getAnimations({ subtree: true }).some(animation => animation.playState === 'running'), await widget.elementHandle());
+  await atRest(widget);
+  await choose(widget, 0);
   await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
-  await page.waitForFunction(element => element.getAnimations({ subtree: true }).every(animation => animation.playState !== 'running'), await widget.elementHandle());
+  await page.waitForFunction(element => element.dataset.carouselMoving !== 'true', await widget.elementHandle());
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await widget.scrollIntoViewIfNeeded();
-  await choose(widget, 2);
+  await choose(widget, count - 1);
   await settled(page);
-  assert.equal(await widget.evaluate(element => element.getAnimations({ subtree: true }).filter(animation => animation.playState === 'running').length), 0,
-    'Reduced motion removes slide and glow animation while controls still work');
+  assert.notEqual(await widget.getAttribute('data-carousel-moving'), 'true', 'Reduced motion makes keyboard selection immediate');
+  await peeks(widget, count - 1);
 
-  for (const width of [240, 320, 390, 700, 1440]) {
+  for (const width of [240, 320, 390, 600, 700, 1440, 1920]) {
     for (const fontSize of [16, 32]) {
       await page.setViewportSize({ width, height: 900 });
       await page.evaluate(size => document.documentElement.style.fontSize = `${size}px`, fontSize);
       await choose(widget, 0);
       await settled(page);
+      await peeks(widget, 0);
       const initial = await dimensions(widget);
-      assert(initial.stacked && initial.contained && !initial.overflow, `Media, copy and controls fit ${width}px at ${fontSize}px text`);
-      for (const index of [1, 2, 0]) {
+      assert(initial.stacked && initial.contained && !initial.overflow, `Media, copy and viewport fit ${width}px at ${fontSize}px text`);
+      for (const index of [2, count - 1, 0]) {
         await choose(widget, index);
         await settled(page);
+        await peeks(widget, index);
         stable(initial, await dimensions(widget), `Selecting ${index + 1} at ${width}px/${fontSize}px text`);
       }
     }
@@ -221,36 +314,51 @@ try {
   assert(await fallback.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'No-JavaScript mobile page does not overflow');
   await noJs.close();
 
-  const touch = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  const touch = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 }, reducedMotion: 'no-preference' });
   const touchPage = await touch.newPage();
   const touchWidget = await ready(touchPage);
   const cdp = await touch.newCDPSession(touchPage);
-  async function swipe(dx, dy = 0) {
-    const media = touchWidget.locator('[data-carousel-panel]:not([hidden]) .portfolio-media');
+  async function swipe(dx, dy = 0, duration = 560) {
+    await atRest(touchWidget);
+    const media = touchWidget.locator('[data-carousel-active="true"] .portfolio-media');
     await media.scrollIntoViewIfNeeded();
     const bounds = await media.boundingBox();
-    const x = bounds.x + bounds.width / 2;
+    const x = bounds.x + bounds.width * (dx < 0 ? .85 : .15);
     const y = bounds.y + bounds.height / 2;
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
-    for (let step = 1; step <= 5; step++) {
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + dx * step / 5, y: y + dy * step / 5 }] });
+    const steps = duration < 100 ? 3 : 10;
+    for (let step = 1; step <= steps; step++) {
+      await touchPage.waitForTimeout(duration / steps);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + dx * step / steps, y: y + dy * step / steps }] });
     }
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await settled(touchPage);
+    await atRest(touchWidget);
   }
-  await swipe(-100);
-  await selected(touchWidget, 1);
-  await swipe(-100);
-  await selected(touchWidget, 2);
-  await swipe(-100);
-  await selected(touchWidget, 2);
-  await swipe(100);
-  await selected(touchWidget, 1);
-  await swipe(10, -80);
+  // Equal travel at different speeds distinguishes a deliberate step from a fling.
+  await swipe(-210);
   await selected(touchWidget, 1);
   await choose(touchWidget, 0);
-  await swipe(100);
+  await atRest(touchWidget);
+  await swipe(-210, 0, 24);
+  const fastDestination = Number(await touchWidget.getAttribute('data-carousel-selected')) - 1;
+  assert(fastDestination >= 2 && fastDestination < count, `A quick swipe crosses multiple cards (reached ${fastDestination + 1})`);
+  await peeks(touchWidget, fastDestination);
+  await choose(touchWidget, count - 1);
+  await swipe(-210, 0, 24);
+  await selected(touchWidget, count - 1);
+  await peeks(touchWidget, count - 1);
+  await swipe(210);
+  await selected(touchWidget, count - 2);
+  await swipe(10, -80);
+  await selected(touchWidget, count - 2);
+  await choose(touchWidget, 0);
+  await swipe(210, 0, 24);
   await selected(touchWidget, 0);
+  await peeks(touchWidget, 0);
+  await touchPage.emulateMedia({ reducedMotion: 'reduce' });
+  await swipe(-210);
+  await selected(touchWidget, 1);
+  assert.notEqual(await touchWidget.getAttribute('data-carousel-moving'), 'true', 'Touch works with reduced motion without continuing animation');
   await touch.close();
 
   // Both viewport sizes reserve final frames before and after blocked downloads.
@@ -258,7 +366,7 @@ try {
     const fixtureContext = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'no-preference' });
     await mediaFixtures(fixtureContext);
     const requested = new Set();
-    const gates = new Map([1, 2, 3].map(number => [number, deferred()]));
+    const gates = new Map(Array.from({ length: count }, (_, index) => [index + 1, deferred()]));
     await fixtureContext.route(/carousel-fixture/, async route => {
       const url = route.request().url();
       const number = Number(url.match(/carousel-fixture[-=](\d)/)[1]);
@@ -287,6 +395,7 @@ try {
     gates.get(2).resolve();
     await secondImage.evaluate(image => image.decode());
     assert.deepEqual([...requested], [1, 2], 'Selection loads the second asset without requesting the third');
+    await atRest(fixtureWidget);
     stable(before, await dimensions(fixtureWidget), `${width}px second image`);
     await choose(fixtureWidget, 2);
     const video = fixtureWidget.locator('video');
@@ -302,6 +411,7 @@ try {
     await choose(fixtureWidget, 2);
     gates.get(3).resolve();
     await playing(video);
+    await atRest(fixtureWidget);
     stable(before, await dimensions(fixtureWidget), `${width}px decoded video`);
     await choose(fixtureWidget, 0);
     await fixturePage.waitForFunction(() => document.querySelector('portfolio-carousel video').paused);
@@ -334,6 +444,14 @@ try {
     await fixturePage.emulateMedia({ reducedMotion: 'reduce' });
     await fixturePage.waitForFunction(() => document.querySelector('portfolio-carousel video').paused);
     assert(await video.evaluate(video => !video.autoplay), 'Reduced motion stops carousel autoplay');
+    assert.deepEqual([...requested], [1, 2, 3], 'Unselected cards 4–6 never fetch, including the card peeking beside the selected video');
+    await choose(fixtureWidget, count - 1);
+    const lastImage = fixtureWidget.locator('[data-carousel-panel]').last().locator('img');
+    await lastImage.waitFor({ state: 'attached' });
+    gates.get(count).resolve();
+    await lastImage.evaluate(image => image.decode());
+    assert.deepEqual([...requested], [1, 2, 3, count], 'Jumping to the final card does not eagerly load intermediate cards');
+    stable(before, await dimensions(fixtureWidget), `${width}px final decoded image`);
     await fixtureContext.close();
   }
 
@@ -343,10 +461,11 @@ try {
   const printPage = await printContext.newPage();
   const printWidget = await ready(printPage);
   await printPage.emulateMedia({ media: 'print' });
-  await printWidget.locator('img').nth(1).waitFor({ state: 'attached' });
+  await printWidget.locator('img').nth(count - 2).waitFor({ state: 'attached' });
+  assert.equal(await printWidget.locator('img').count(), count - 1, 'Printing loads every still image, including unvisited cards');
   assert.equal(await printWidget.locator('video').count(), 0, 'Printing loads carousel still images without downloading its video');
   await readable(printPage, 'Print with media');
   await printContext.close();
   assert.deepEqual(errors, [], 'No browser errors');
-  console.log('Small Wins finite navigation, keyboard/touch, rapid selection, reduced motion, offscreen glow, responsive geometry, media loading/playback, no-JS and print PASS');
+  console.log('Small Wins swipe/drag, velocity-based multi-card travel, smooth settling/interruption, finite peeks, keyboard, responsive geometry, media loading/playback, reduced motion, no-JS and print PASS');
 } finally { await browser.close(); }

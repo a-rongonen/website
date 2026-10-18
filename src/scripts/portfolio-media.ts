@@ -147,7 +147,9 @@ for (const host of document.querySelectorAll<HTMLElement>('[data-portfolio-media
 function refresh(state: MediaState) {
   if (selected(state.host) && !document.hidden) {
     const rect = state.host.getBoundingClientRect();
-    state.inViewport = rect.height > 0 && rect.width > 0 && rect.bottom > 0 && rect.top < innerHeight;
+    const carousel = state.host.closest('[data-carousel-viewport]')?.getBoundingClientRect();
+    state.inViewport = rect.height > 0 && rect.width > 0 && rect.bottom > 0 && rect.top < innerHeight
+      && rect.right > (carousel?.left ?? 0) && rect.left < (carousel?.right ?? innerWidth);
     if (rect.bottom > -lead && rect.top < innerHeight + lead) load(state);
   } else state.inViewport = false;
   updatePlayback(state);

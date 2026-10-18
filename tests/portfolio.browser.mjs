@@ -36,6 +36,7 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
     const caseBounds = caseBox.getBoundingClientRect();
     const caseStyle = getComputedStyle(caseBox);
     const featureCards = [...document.querySelectorAll('.portfolio-feature-card')].filter(card => card.getBoundingClientRect().width > 0);
+    const fullWidthFeatures = featureCards.filter(card => !card.closest('portfolio-carousel[data-enhanced="true"]'));
     const hero = bounds('.portfolio-hero');
     const heroPadding = parseFloat(getComputedStyle(document.querySelector('.portfolio-hero-inner')).paddingTop);
     const ranges = [...document.querySelectorAll('.portfolio-owner > span, .portfolio-title-word')].map(element => {
@@ -55,8 +56,8 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
       learningStacked: learning[1].top >= learning[0].bottom,
       backgroundStacked: background[1].top >= background[0].bottom,
       sectionsCentered: [...learning, ...background].every(rect => Math.abs(rect.left + rect.width / 2 - innerWidth / 2) < 1),
-      copyWidthsPreserved: featureCards.every(card => Math.abs(card.querySelector('.portfolio-feature-copy p').getBoundingClientRect().width - expectedCopyWidth) < 1),
-      outerCardsMatchCases: featureCards.every(card => {
+      copyWidthsPreserved: fullWidthFeatures.every(card => Math.abs(card.querySelector('.portfolio-feature-copy p').getBoundingClientRect().width - expectedCopyWidth) < 1),
+      outerCardsMatchCases: fullWidthFeatures.every(card => {
         const rect = card.getBoundingClientRect();
         const style = getComputedStyle(card);
         return Math.abs(rect.width - caseBounds.width) < 1 && Math.abs(rect.left - caseBounds.left) < 1 &&

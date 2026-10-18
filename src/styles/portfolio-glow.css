@@ -16,9 +16,7 @@
   animation-delay: -1s;
 }
 portfolio-case[data-case-in-view='true'] .portfolio-control-glow::before,
-portfolio-case[data-case-in-view='true'] .portfolio-control-glow::after,
-portfolio-carousel[data-carousel-in-view='true'] button:not(:disabled) .portfolio-control-glow::before,
-portfolio-carousel[data-carousel-in-view='true'] button:not(:disabled) .portfolio-control-glow::after {
+portfolio-case[data-case-in-view='true'] .portfolio-control-glow::after {
   animation-play-state: running;
 }
 @keyframes portfolio-control-glow {

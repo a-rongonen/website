@@ -2,7 +2,6 @@
 import type { PortfolioSlide } from '../data/portfolio';
 import PortfolioFeature from './PortfolioFeature.astro';
 import '../styles/portfolio-carousel.css';
-import '../styles/portfolio-glow.css';
 
 interface Props {
   slides: PortfolioSlide[];
@@ -11,113 +10,20 @@ interface Props {
 const { slides, labelledBy } = Astro.props;
 ---
 <portfolio-carousel role="region" aria-roledescription="carousel" aria-labelledby={labelledBy} data-carousel-selected="1">
-  <div class="portfolio-carousel-viewport" data-carousel-viewport>
-    {slides.map((slide, index) => (
-      <div data-carousel-panel data-carousel-page={index + 1} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${slides.length}`}>
-        <PortfolioFeature media={slide.media} text={slide.text} controlsOnInteraction />
-      </div>
-    ))}
+  <div class="portfolio-carousel-viewport" data-carousel-viewport role="group" aria-label="Small Wins cards">
+    <div class="portfolio-carousel-track" data-carousel-track>
+      {slides.map((slide, index) => (
+        <div data-carousel-panel data-carousel-page={index + 1} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${slides.length}`}>
+          <PortfolioFeature media={slide.media} text={slide.text} controlsOnInteraction />
+        </div>
+      ))}
+    </div>
   </div>
-  <div class="portfolio-carousel-controls" data-carousel-controls role="group" aria-label="Small Wins navigation" tabindex="-1" hidden>
-    <button type="button" data-carousel-previous aria-label="Previous small win" disabled>
-      <span class="portfolio-control-glow" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 6-6 6 6 6" /></svg>
-      </span>
-    </button>
-    <output data-carousel-status aria-live="polite" aria-atomic="true"><span class="portfolio-carousel-sr-only">Small win </span><span data-carousel-position>1 / {slides.length}</span></output>
-    <button type="button" data-carousel-next aria-label="Next small win">
-      <span class="portfolio-control-glow" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10 6 6 6-6 6" /></svg>
-      </span>
-    </button>
-  </div>
+  <output class="portfolio-carousel-sr-only" data-carousel-status aria-live="polite" aria-atomic="true"></output>
+  <button class="portfolio-carousel-sr-only" type="button" tabindex="-1" data-carousel-accessible-previous hidden>Previous small win</button>
+  <button class="portfolio-carousel-sr-only" type="button" tabindex="-1" data-carousel-accessible-next hidden>Next small win</button>
 </portfolio-carousel>
 
 <script>
-  import { observePortfolioVisibility } from '../scripts/portfolio-visibility';
-
-  class PortfolioCarousel extends HTMLElement {
-    stopObserving?: () => void;
-    cleanup?: AbortController;
-    transition?: Animation;
-
-    connectedCallback() {
-      this.stopObserving = observePortfolioVisibility(this, 'data-carousel-in-view', () => this.transition?.cancel());
-      const panels = Array.from(this.querySelectorAll<HTMLElement>('[data-carousel-panel]'));
-      const previous = this.querySelector<HTMLButtonElement>('[data-carousel-previous]');
-      const next = this.querySelector<HTMLButtonElement>('[data-carousel-next]');
-      const controls = this.querySelector<HTMLElement>('[data-carousel-controls]');
-      const viewport = this.querySelector<HTMLElement>('[data-carousel-viewport]');
-      const status = this.querySelector<HTMLElement>('[data-carousel-position]');
-      if (!panels.length || !previous || !next || !controls || !viewport || !status) return;
-
-      this.cleanup?.abort();
-      this.cleanup = new AbortController();
-      const { signal } = this.cleanup;
-      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-      let selected = Math.max(0, Math.min(panels.length - 1, Number(this.dataset.carouselSelected || 1) - 1));
-      const select = (value: number, animate = true) => {
-        const index = Math.max(0, Math.min(panels.length - 1, value));
-        if (animate && index === selected) return;
-        const direction = index > selected ? 1 : -1;
-        this.transition?.cancel();
-        selected = index;
-        this.dataset.carouselSelected = String(index + 1);
-        panels.forEach((panel, page) => { panel.hidden = page !== index; });
-        const focusedControl = document.activeElement;
-        previous.disabled = index === 0;
-        next.disabled = index === panels.length - 1;
-        // Preserve a keyboard target when the focused arrow reaches its end.
-        if ((focusedControl === previous && previous.disabled) || (focusedControl === next && next.disabled)) controls.focus({ preventScroll: true });
-        status.textContent = `${index + 1} / ${panels.length}`;
-        this.dispatchEvent(new Event('portfolio:pagechange', { bubbles: true }));
-        if (animate && !reducedMotion.matches && this.dataset.carouselInView === 'true') {
-          this.transition = panels[index].querySelector<HTMLElement>('.portfolio-feature')?.animate([
-            { opacity: 0, transform: `translateX(${direction * 28}px)` },
-            { opacity: 1, transform: 'translateX(0)' },
-          ], { duration: 240, easing: 'ease-out' });
-        }
-      };
-
-      previous.addEventListener('click', () => select(selected - 1), { signal });
-      next.addEventListener('click', () => select(selected + 1), { signal });
-      controls.addEventListener('keydown', event => {
-        const destinations: Record<string, number> = { ArrowLeft: selected - 1, ArrowRight: selected + 1, Home: 0, End: panels.length - 1 };
-        if (!(event.key in destinations) || event.altKey || event.ctrlKey || event.metaKey) return;
-        event.preventDefault();
-        select(destinations[event.key]);
-      }, { signal });
-
-      // Do not intercept native media controls, links, selection or vertical scrolling.
-      let start: { x: number; y: number; id: number } | undefined;
-      const interactive = 'button, a, input, textarea, select, video, iframe, [contenteditable]';
-      viewport.addEventListener('pointerdown', event => {
-        start = undefined;
-        if (event.pointerType !== 'touch' || !event.isPrimary || (event.target as Element).closest(interactive)) return;
-        start = { x: event.clientX, y: event.clientY, id: event.pointerId };
-      }, { passive: true, signal });
-      viewport.addEventListener('pointerup', event => {
-        const origin = start;
-        start = undefined;
-        if (!origin || event.pointerId !== origin.id) return;
-        const x = event.clientX - origin.x;
-        const y = event.clientY - origin.y;
-        if (Math.abs(x) >= 45 && Math.abs(x) > Math.abs(y) * 1.5) select(selected + (x < 0 ? 1 : -1));
-      }, { passive: true, signal });
-      viewport.addEventListener('pointercancel', () => { start = undefined; }, { passive: true, signal });
-      reducedMotion.addEventListener('change', () => { if (reducedMotion.matches) this.transition?.cancel(); }, { signal });
-      window.addEventListener('beforeprint', () => this.transition?.cancel(), { signal });
-      select(selected, false);
-      this.dataset.enhanced = 'true';
-      controls.hidden = panels.length < 2;
-    }
-
-    disconnectedCallback() {
-      this.transition?.cancel();
-      this.cleanup?.abort();
-      this.stopObserving?.();
-    }
-  }
-
-  if (!customElements.get('portfolio-carousel')) customElements.define('portfolio-carousel', PortfolioCarousel);
+  import '../scripts/portfolio-carousel';
 </script>
