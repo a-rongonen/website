@@ -3,6 +3,7 @@ import type { PortfolioCase } from '../data/portfolio';
 import InlineText from './InlineText.astro';
 import PortfolioMedia from './PortfolioMedia.astro';
 import '../styles/portfolio-cases.css';
+import '../styles/portfolio-glow.css';
 
 interface Props {
   cases: PortfolioCase[];
@@ -40,7 +41,7 @@ const { cases } = Astro.props;
                   style={`--case-stop-position: ${item.pages.length > 1 ? pageIndex / (item.pages.length - 1) * 100 : 0}%;`}
                 />
               ))}
-              <span class="portfolio-case-halo" />
+              <span class="portfolio-case-halo portfolio-control-glow" />
             </span>
           </span>
         </label>
@@ -64,30 +65,12 @@ const { cases } = Astro.props;
 ))}
 
 <script>
-  // Keep decorative compositor animations idle outside the viewport and while
-  // the document is hidden. One observer serves every independent case.
-  const caseVisibility = new Map<HTMLElement, boolean>();
-  const updateCaseVisibility = (element: HTMLElement, visible: boolean) => {
-    element.dataset.caseInView = String(visible && !document.hidden);
-  };
-  const caseObserver = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      const element = entry.target as HTMLElement;
-      if (!caseVisibility.has(element)) continue;
-      const visible = entry.isIntersecting;
-      caseVisibility.set(element, visible);
-      updateCaseVisibility(element, visible);
-    }
-  });
-  document.addEventListener('visibilitychange', () => {
-    for (const [element, visible] of caseVisibility) updateCaseVisibility(element, visible);
-  });
+  import { observePortfolioVisibility } from '../scripts/portfolio-visibility';
 
   class PortfolioCase extends HTMLElement {
+    stopObserving?: () => void;
     connectedCallback() {
-      caseVisibility.set(this, false);
-      updateCaseVisibility(this, false);
-      caseObserver.observe(this);
+      this.stopObserving = observePortfolioVisibility(this, 'data-case-in-view');
       if (this.dataset.enhanced === 'true') return;
 
       const panels = Array.from(this.querySelectorAll<HTMLElement>('[data-case-panel]'));
@@ -122,9 +105,7 @@ const { cases } = Astro.props;
     }
 
     disconnectedCallback() {
-      caseObserver.unobserve(this);
-      caseVisibility.delete(this);
-      delete this.dataset.caseInView;
+      this.stopObserving?.();
     }
   }
 

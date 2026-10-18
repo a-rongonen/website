@@ -35,7 +35,7 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
     const caseBox = document.querySelector('.portfolio-cases-box');
     const caseBounds = caseBox.getBoundingClientRect();
     const caseStyle = getComputedStyle(caseBox);
-    const featureCards = [...document.querySelectorAll('.portfolio-feature-card')];
+    const featureCards = [...document.querySelectorAll('.portfolio-feature-card')].filter(card => card.getBoundingClientRect().width > 0);
     const hero = bounds('.portfolio-hero');
     const heroPadding = parseFloat(getComputedStyle(document.querySelector('.portfolio-hero-inner')).paddingTop);
     const ranges = [...document.querySelectorAll('.portfolio-owner > span, .portfolio-title-word')].map(element => {
@@ -203,7 +203,7 @@ try {
   assert.equal(await page.locator('.portfolio-learning .profile-card p').count(), 2);
   assert.match(await page.locator('.portfolio-learning .profile-card p').first().textContent(), /Panic Lane is my UE learning project/);
   assert.equal(await page.locator('.portfolio-learning .profile-card em').textContent(), 'between the biomes');
-  assert.equal(await page.locator('.portfolio-feature-card > .portfolio-media:first-child + .profile-card').count(), 2,
+  assert.equal(await page.locator(':is(.portfolio-background, .portfolio-learning) .portfolio-feature-card > .portfolio-media:first-child + .profile-card').count(), 2,
     'Both section videos precede their paragraph cards in desktop and mobile reading order');
   await loadMedia(page.locator('.portfolio-learning .portfolio-media'));
   const trailer = page.locator('.portfolio-learning video');
@@ -240,7 +240,9 @@ try {
     await selectedPage(widget, 1, false);
   }
   assert.equal(await page.locator('.portfolio-learning h1.portfolio-section-title').textContent(), 'Panic Lane');
-  assert.equal(await page.locator('.cv-history').count(), 1, 'Existing Work and studies remains after the unique sections');
+  assert.equal(await page.locator('.cv-history').count(), 0, 'Small Wins replaces the Work and studies boxes');
+  assert.equal(await page.locator('.portfolio-small-wins h1.portfolio-section-title').textContent(), 'Small Wins');
+  assert.equal(await page.locator('.portfolio-small-wins portfolio-carousel').count(), 1, 'Small Wins has one carousel');
   assert.equal(await page.locator('.cv-profile, .cv-skills, .cv-strengths').count(), 0, 'Replaced and empty CV sections do not leak into the portfolio');
   assert.equal(await page.locator('.portfolio-title-word').evaluate(element => getComputedStyle(element).color), 'rgb(255, 242, 168)', 'Portfolio title starts light yellow');
   await page.locator('.portfolio-hero').evaluate(element => element.style.setProperty('--portfolio-title-color', '#aabbcc'));

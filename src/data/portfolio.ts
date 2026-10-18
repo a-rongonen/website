@@ -13,6 +13,11 @@ export interface PortfolioCase {
   pages: { heading: string; text: string; media: PortfolioMedia }[];
 }
 
+export interface PortfolioSlide {
+  text: string;
+  media: PortfolioMedia;
+}
+
 export const portfolioDesign = {
   titleColor: '#fff2a8', // The PORTFOLIO word only; independent of the shared inline accent.
   titleScale: 1.5, // The PORTFOLIO word only; 1 = original size, 1.5 = 50% larger.
@@ -46,6 +51,14 @@ export const portfolio = {
       "label": "Panic Lane portfolio trailer"
     },
     "text": "Panic Lane is my UE learning project that got 'a bit' out of hand. It's a driving game where the goal is to reach the finish line alive.\n\nThe game has 40+ tracks across 4 biomes. Occasional teleportation *between the biomes* requires quick reactions to changing mechanics."
+  },
+  "smallWins": {
+    "heading": "Small Wins",
+    "slides": [
+      { "text": "Small win 01 — details coming soon.", "media": { "label": "Media placeholder 01" } },
+      { "text": "Small win 02 — details coming soon.", "media": { "label": "Media placeholder 02" } },
+      { "text": "Small win 03 — details coming soon.", "media": { "label": "Media placeholder 03" } }
+    ]
   },
   "cases": [
     {
@@ -169,4 +182,5 @@ export const portfolio = {
   background: { heading: string; text: string; video: PortfolioMedia };
   learning: { heading: string[]; text: string; video: PortfolioMedia };
   cases: PortfolioCase[];
+  smallWins: { heading: string; slides: PortfolioSlide[] };
 };

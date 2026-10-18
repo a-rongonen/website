@@ -1,0 +1,33 @@
+/* Crossfade static shadows: the pulse changes only compositor opacity. */
+.portfolio-control-glow::before, .portfolio-control-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: portfolio-control-glow 2s ease-in-out infinite paused;
+}
+.portfolio-control-glow::before {
+  box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--cv-accent-color) 14%, transparent), 0 0 .6rem color-mix(in srgb, var(--cv-accent-color) 35%, transparent);
+}
+.portfolio-control-glow::after {
+  opacity: 0;
+  box-shadow: 0 0 0 .45rem color-mix(in srgb, var(--cv-accent-color) 12%, transparent), 0 0 1.5rem color-mix(in srgb, var(--cv-accent-color) 70%, transparent);
+  animation-delay: -1s;
+}
+portfolio-case[data-case-in-view='true'] .portfolio-control-glow::before,
+portfolio-case[data-case-in-view='true'] .portfolio-control-glow::after,
+portfolio-carousel[data-carousel-in-view='true'] button:not(:disabled) .portfolio-control-glow::before,
+portfolio-carousel[data-carousel-in-view='true'] button:not(:disabled) .portfolio-control-glow::after {
+  animation-play-state: running;
+}
+@keyframes portfolio-control-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-control-glow::before, .portfolio-control-glow::after { animation: none; }
+}
+@media (forced-colors: active), print {
+  .portfolio-control-glow::before, .portfolio-control-glow::after { display: none; }
+}

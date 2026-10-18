@@ -20,6 +20,9 @@ const states = new Map<HTMLElement, MediaState>();
 
 function selected(host: HTMLElement) {
   if (host.closest('[hidden]')) return false;
+  // Guard initial upgrade order for carousels as well as case sliders.
+  const slide = host.closest<HTMLElement>('[data-carousel-panel]');
+  if (slide && slide.dataset.carouselPage !== (host.closest<HTMLElement>('portfolio-carousel')?.dataset.carouselSelected || '1')) return false;
   // Also guard the interval before the case custom element has upgraded.
   const panel = host.closest<HTMLElement>('[data-case-panel]');
   const slider = host.closest('portfolio-case')?.querySelector<HTMLInputElement>('[data-case-slider]');

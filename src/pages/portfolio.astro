@@ -1,21 +1,16 @@
 ---
 import PageLayout from '../layouts/PageLayout.astro';
 import CvNetwork from '../components/CvNetwork.astro';
-import CvSection from '../components/CvSection.astro';
 import PortfolioMedia from '../components/PortfolioMedia.astro';
 import PortfolioCases from '../components/PortfolioCases.astro';
 import PortfolioFeature from '../components/PortfolioFeature.astro';
-import { cvEnglish } from '../data/cv';
-import { visibleCvSections } from '../data/cv-sections';
+import PortfolioCarousel from '../components/PortfolioCarousel.astro';
 import { networkContentPalette, networkSectionStyle, type NetworkSection } from '../data/cv-network';
 import { portfolio, portfolioDesign } from '../data/portfolio';
 import '../styles/cv.css';
 import '../styles/portfolio.css';
 
-// The first three CV sections (hero, Profile, Skills) are replaced here.
-// Keep all remaining entries, including the reusable empty final entry.
-const sections = visibleCvSections(cvEnglish.sections.slice(2));
-const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (_, index) => networkContentPalette(index));
+const palettes: NetworkSection[] = Array.from({ length: 5 }, (_, index) => networkContentPalette(index));
 ---
 
 <PageLayout title={`${portfolio.name} Portfolio`} description={`${portfolio.name} portfolio, featuring game design cases from Panic Lane.`} isPortfolio>
@@ -55,7 +50,13 @@ const palettes: NetworkSection[] = Array.from({ length: 4 + sections.length }, (
     </div>
   </section>
 
-  {sections.map((section, index) => <CvSection section={section} palettes={palettes} index={index + 4} />)}
+  <section class="cv-section cv-network-section portfolio-unique portfolio-small-wins" data-network-section={palettes[4]}
+    style={networkSectionStyle(palettes[4], palettes, 4)} aria-labelledby="small-wins-heading">
+    <div class="cv-container">
+      <h1 class="portfolio-section-title" id="small-wins-heading">{portfolio.smallWins.heading}</h1>
+      <PortfolioCarousel slides={portfolio.smallWins.slides} labelledBy="small-wins-heading" />
+    </div>
+  </section>
 </PageLayout>
 
 <script>
