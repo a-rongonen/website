@@ -77,11 +77,21 @@ addEventListener('message', event => {
   }
 });
 
+// A fullscreen player has left the page layout, so the observers no longer
+// describe whether it can be seen. Mobile browsers also reflow and often
+// rotate the page underneath it. iPhone video fullscreen uses its own API.
+function fullscreen(state: MediaState) {
+  const media = state.video ?? state.frame;
+  if (!media) return false;
+  if ((media as HTMLVideoElement & { webkitDisplayingFullscreen?: boolean }).webkitDisplayingFullscreen) return true;
+  const element = document.fullscreenElement ?? (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement;
+  return !!element?.contains(media);
+}
+
 function pause(state: MediaState) {
   const frame = state.frame;
-  // Commands before readiness throw inside the player. A fullscreen player
-  // has left the page layout but is still in view.
-  if (frame && state.frameReady && state.framePlaying && document.fullscreenElement !== frame) {
+  // Commands before readiness throw inside the player.
+  if (frame && state.frameReady && state.framePlaying) {
     post(frame, { event: 'command', func: 'pauseVideo', args: [] });
   }
   const video = state.video;
@@ -94,7 +104,8 @@ function pause(state: MediaState) {
 }
 
 function updatePlayback(state: MediaState) {
-  const visible = state.inViewport && selected(state.host) && !document.hidden && !print.matches;
+  const full = fullscreen(state);
+  const visible = (full || (state.inViewport && selected(state.host))) && !document.hidden && !print.matches;
   if (state.frame) {
     state.frameVisible = visible;
     if (!visible) pause(state);
@@ -103,8 +114,10 @@ function updatePlayback(state: MediaState) {
   const video = state.video;
   if (!video) return;
   video.autoplay = visible && !reducedMotion.matches && !state.userPaused;
-  if (!video.autoplay) pause(state);
-  else if (video.paused && !state.playPending) {
+  // Leave a visitor's fullscreen playback alone, also with reduced motion.
+  if (!video.autoplay) {
+    if (!visible || !full) pause(state);
+  } else if (video.paused && !state.playPending) {
     state.playPending = true;
     void video.play().catch(() => {}).finally(() => {
       state.playPending = false;
@@ -146,8 +159,10 @@ function prepareVideo(state: MediaState, video: HTMLVideoElement) {
   video.addEventListener('play', () => {
     state.userPaused = false;
     // Native controls still allow deliberate playback with reduced motion.
-    if (!state.inViewport || !selected(state.host) || document.hidden || print.matches) pause(state);
+    if ((!fullscreen(state) && (!state.inViewport || !selected(state.host))) || document.hidden || print.matches) pause(state);
   });
+  // iPhone fullscreen fires no document event. Reconcile once it closes.
+  video.addEventListener('webkitendfullscreen', () => refresh(state));
 }
 
 function load(state: MediaState, printing = false) {
@@ -231,6 +246,13 @@ document.addEventListener('visibilitychange', () => {
     else refresh(state);
   }
 });
+// Returning from fullscreen restores the page layout without necessarily
+// crossing an observer threshold.
+for (const type of ['fullscreenchange', 'webkitfullscreenchange']) {
+  document.addEventListener(type, () => {
+    for (const state of states.values()) refresh(state);
+  });
+}
 reducedMotion.addEventListener('change', () => {
   for (const state of states.values()) updatePlayback(state);
 });

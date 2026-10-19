@@ -74,7 +74,7 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
         return style.backgroundImage === 'none' && style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.boxShadow === 'none' && parseFloat(style.borderWidth) === 0;
       }),
       heroCenter: (title.top + media.bottom) / 2 - hero.top,
-      expectedMobileHeroCenter: Math.max(innerHeight * .35, heroPadding + (media.bottom - title.top) / 2),
+      expectedMobileHeroCenter: Math.max(innerHeight * .4, heroPadding + (media.bottom - title.top) / 2),
       ranges,
     };
   });
@@ -87,7 +87,7 @@ async function geometry(page, width, fontSize, javaScriptEnabled) {
   assert(result.learningStacked && result.backgroundStacked, 'Both section videos sit above their text cards: ' + label);
   assert(result.sectionsCentered && result.copyWidthsPreserved && result.copyHasNoBox, 'Centered invisible copy retains its former text width: ' + label);
   assert(result.outerCardsMatchCases && result.videosFillPaddedCards, 'Feature cards match case boxes and maximize video size within shared padding: ' + label);
-  if (width < 700) assert(Math.abs(result.heroCenter - result.expectedMobileHeroCenter) < 1, 'Mobile hero targets 35% with header clearance: ' + label);
+  if (width < 700) assert(Math.abs(result.heroCenter - result.expectedMobileHeroCenter) < 1, 'Mobile hero targets 40% with header clearance: ' + label);
 }
 
 async function selectedPage(widget, index, announce = true) {
