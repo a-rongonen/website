@@ -7,12 +7,13 @@ interface Props {
   media: Media;
   text: string;
   controlsOnInteraction?: boolean;
+  id?: string;
 }
 
-const { media, text, controlsOnInteraction = false } = Astro.props;
+const { media, text, controlsOnInteraction = false, id } = Astro.props;
 ---
 <div class="portfolio-feature">
-  <div class="glass portfolio-box portfolio-feature-card">
+  <div class="glass portfolio-box portfolio-feature-card" id={id}>
     <PortfolioMedia {...media} controlsOnInteraction={controlsOnInteraction} />
     <div class="profile-card portfolio-feature-copy">
       {text.split(/\n\s*\n/).filter(paragraph => paragraph.trim()).map(paragraph => (

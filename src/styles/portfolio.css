@@ -86,7 +86,8 @@
 .portfolio-section-title > span { display: block; }
 .portfolio-box { padding: clamp(12px, 4vw, 3rem); }
 .portfolio-feature { container-type: inline-size; }
-.portfolio-feature-card { display: grid; justify-items: center; gap: 2rem; }
+.portfolio-feature-card { display: grid; justify-items: center; gap: 2rem; scroll-margin-top: 1.5rem; }
+.portfolio-page .portfolio-section-title { scroll-margin-top: 1.5rem; }
 .portfolio-feature-copy.profile-card {
   /* Retain the former card's text area, excluding its padding and 1px borders. */
   --former-copy-padding: clamp(1rem, 4vw, 3rem);

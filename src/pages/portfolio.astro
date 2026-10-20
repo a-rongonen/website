@@ -30,7 +30,7 @@ const palettes: NetworkSection[] = Array.from({ length: 5 }, (_, index) => netwo
     style={networkSectionStyle(palettes[1], palettes, 1)} aria-labelledby="background-heading">
     <div class="cv-container">
       <h1 class="portfolio-section-title" id="background-heading">{portfolio.background.heading}</h1>
-      <PortfolioFeature media={portfolio.background.video} text={portfolio.background.text} />
+      <PortfolioFeature id="background-video" media={portfolio.background.video} text={portfolio.background.text} />
     </div>
   </section>
 

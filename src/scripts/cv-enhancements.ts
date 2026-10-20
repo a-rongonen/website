@@ -67,3 +67,9 @@ for (const stack of document.querySelectorAll<HTMLElement>('[data-card-stack]'))
   for (const card of cards) observer.observe(card);
   observer.observe(stack);
 }
+
+// Smooth page scrolling stops Chromium's own jump to a URL fragment on load.
+// Reloads and history navigation keep the browser's restored position.
+const fragmentTarget = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+if (fragmentTarget && navigation?.type === 'navigate') fragmentTarget.scrollIntoView({ behavior: 'instant' });
