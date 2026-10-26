@@ -35,9 +35,9 @@ const palettes: NetworkSection[] = Array.from({ length: 5 }, (_, index) => netwo
   </section>
 
   <section class="cv-section cv-network-section portfolio-unique portfolio-learning" data-network-section={palettes[2]}
-    style={networkSectionStyle(palettes[2], palettes, 2)} aria-labelledby="learning-heading">
+    style={networkSectionStyle(palettes[2], palettes, 2)} aria-labelledby="panic-lane">
     <div class="cv-container">
-      <h1 class="portfolio-section-title" id="learning-heading">{portfolio.learning.heading.map(line => <span>{line}</span>)}</h1>
+      <h1 class="portfolio-section-title" id="panic-lane">{portfolio.learning.heading.map(line => <span>{line}</span>)}</h1>
       <PortfolioFeature media={portfolio.learning.video} text={portfolio.learning.text} controlsOnInteraction />
     </div>
   </section>
